@@ -1,7 +1,7 @@
 # 🥑 Yumi App
 > **Your AI Buddy** | *Revoluční kalorická aplikace s duší.*
 
-![Figma](https://www.figma.com/design/bFfSw4wdaiBHYuMloq0Db6/Yumi?node-id=27-317&t=indb5V3jGFt1YbD0-1)
+🔗 **[Figma design](https://www.figma.com/design/bFfSw4wdaiBHYuMloq0Db6/Yumi?node-id=27-317&t=indb5V3jGFt1YbD0-1)**
 
 **Yumi** není jen další nudná tabulka na kalorie. Je to tvůj digitální parťák (kawaii avokádo), o kterého se staráš tím, že se staráš o sebe. Aplikace využívá nejmodernější AI modely pro okamžitou analýzu jídla z fotek a gamifikuje tvou cestu za zdravějším já.
 
@@ -80,6 +80,18 @@ EXPO_PUBLIC_OPENAI_API_KEY=tvuj_gpt5_mini_klic
 ```bash
 npx expo start
 ```
+
+---
+
+## 📄 Licence
+
+Tento projekt používá **Nekomerční licenci (Non-Commercial License)**. 
+Zdrojový kód je dostupný pro prohlížení a osobní/vzdělávací účely. **Je přísně zakázáno projekt jakkoliv monetizovat** (např. pomocí reklam, předplatného nebo prodeje) bez výslovného písemného souhlasu autora. 
+
+Plné znění naleznete v souboru [LICENSE](LICENSE.txt).
+
+---
+*Vytvořeno s cílem udělat ze zdravého životního stylu hru. Level up your plate with Yumi!* 🥑✨
 
 ---
 *Vytvořeno s cílem udělat ze zdravého životního stylu hru. Your AI Buddy!* 🥑✨
