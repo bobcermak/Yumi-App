@@ -91,7 +91,5 @@ Zdrojový kód je dostupný pro prohlížení a osobní/vzdělávací účely. *
 Plné znění naleznete v souboru [LICENSE](LICENSE.txt).
 
 ---
-*Vytvořeno s cílem udělat ze zdravého životního stylu hru. Level up your plate with Yumi!* 🥑✨
 
----
 *Vytvořeno s cílem udělat ze zdravého životního stylu hru. Your AI Buddy!* 🥑✨
