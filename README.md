@@ -19,10 +19,9 @@
 * **Interakce:** Kliknutím na Yumiho získáš vtipné hlášky nebo tipy na další jídlo.
 
 ### 🎮 Gamifikace & Sociální funkce
-* **YumiCoins:** Virtuální měna získávaná za konzistenci a poctivé zapisování. Kup si nové skiny pro Yumiho nebo "Streak Freeze".
 * **Squad & Poke:** Přidej si kámoše přes QR kód. Vidíš, že kámoš dlouho nejedl? Pošli mu "Poke" a vzbuď jeho Yumiho vtipnou push notifikací.
 * **Skupinové Leaderboardy:** Žebříčky v rámci skupin přátel založené na sériích (streaks).
-* **Monthly Rewind:** Každý měsíc dostaneš AI generovaný souhrn (koláž progres fotek + analýzu návyků do hloubky pro Premium).
+* **Weekly Rewind:** Každý týden dostaneš AI generovaný souhrn (koláž progres fotek + analýzu návyků do hloubky pro Premium).
 
 ## 💰 Byznys Model a Revenue Matematika
 
