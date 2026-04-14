@@ -3,6 +3,16 @@
 
 🔗 **[Figma design](https://www.figma.com/design/bFfSw4wdaiBHYuMloq0Db6/Yumi?node-id=27-317&t=indb5V3jGFt1YbD0-1)**
 
+---
+
+<p align="center">
+  <img src="./assets/images/app-menu.png" width="30%" alt="Menu"/>
+  <img src="./assets/images/app-add-food--magic-scan.png" width="30%" alt="Scan"/>
+  <img src="./assets/images/app-search.png" width="30%" alt="Search"/>
+</p>
+
+---
+
 **Yumi** není jen další nudná tabulka na kalorie. Je to tvůj digitální parťák (kawaii avokádo), o kterého se staráš tím, že se staráš o sebe. Aplikace využívá nejmodernější AI modely pro okamžitou analýzu jídla z fotek a gamifikuje tvou cestu za zdravějším já.
 
 ## ✨ Klíčové funkce
