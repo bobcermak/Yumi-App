@@ -1,20 +1,30 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { ThemeProvider, DarkTheme } from "@react-navigation/native";
 import "./globals.css";
 
+const customTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: "#121212"
+  }
+};
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <StatusBar style="light" />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="magic-scan" />
-        <Stack.Screen name="quick-add" />
-        <Stack.Screen name="users/[id]" />
-      </Stack>
-    </SafeAreaProvider>
-  );
+    <ThemeProvider value={customTheme}>
+      <SafeAreaProvider>
+        <StatusBar style="light" />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)"/>  
+          <Stack.Screen name="magic-scan"/>
+          <Stack.Screen name="quick-add"/>
+          <Stack.Screen name="users/[id]"/>
+        </Stack>
+      </SafeAreaProvider>
+    </ThemeProvider>
+  )
 }
 // ─────────────────────────────────────────────────────────────────────────────
 // 🔐 PRODUCTION FLOW
