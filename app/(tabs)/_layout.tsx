@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { Tabs } from "expo-router";
 import { TabIcon } from "@/components";
 
 const _Layout = () => {

@@ -2,23 +2,14 @@ import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 
-const WelcomeScreen = () => {
+const Signup = () => {
   //Hooks
   const router = useRouter();
 
   return (
     <View className="flex-1 bg-[#121212] justify-center items-center px-6">
-      <Text className="text-white text-3xl font-bold mb-4">Welcome To Yumi</Text>
-      
-      {/* TODO: Add illustration/graphics here */}
-
-      <TouchableOpacity 
-        className="bg-indigo-600 rounded-2xl w-full p-4 mt-10 items-center"
-        onPress={() => router.push('/(onboarding)/slides')}
-      >
-        <Text className="text-white font-bold text-lg">Get Started</Text>
-      </TouchableOpacity>
-
+      <Text className="text-white text-3xl font-bold mb-4">Sign Up</Text>
+      <Text className="text-gray-400 mb-8">Zde bude vytvoření účtu (přesměrováno po onboardingu).</Text>
       <TouchableOpacity 
         className="mt-6"
         onPress={() => router.replace('/(auth)/login')}
@@ -28,4 +19,4 @@ const WelcomeScreen = () => {
     </View>
   );
 }
-export default WelcomeScreen;
+export default Signup;
