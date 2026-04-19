@@ -1,13 +1,14 @@
-import { HouseIcon, Icon, ListIcon, MagnifyingGlassIcon, PlusIcon, UsersIcon } from "phosphor-react-native";
+import { House, MagnifyingGlass, Plus, Users, List, IconProps } from "phosphor-react-native";
 import { FC, useEffect, useRef } from "react";
 import { Animated } from "react-native";
 
+type Icon = React.FC<IconProps>;
 const ICONS: Record<string, Icon> = {
-  index: HouseIcon,
-  search: MagnifyingGlassIcon,
-  'add-food': PlusIcon,
-  groups: UsersIcon,
-  profile: ListIcon,
+  index: House,
+  search: MagnifyingGlass,
+  'add-food': Plus,
+  groups: Users,
+  profile: List,
 };
 const BOLD_ICONS = ['add-food', 'profile'];
 const AnimatedTabIcon: FC<{ route: string; focused: boolean }> = ({ route, focused }) => {

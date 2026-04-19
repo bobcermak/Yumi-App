@@ -2,6 +2,7 @@
 > **Your AI Buddy** | *Revoluční kalorická aplikace s duší.*
 
 🔗 **[Figma design](https://www.figma.com/design/bFfSw4wdaiBHYuMloq0Db6/Yumi?node-id=27-317&t=indb5V3jGFt1YbD0-1)**
+📝 **[Dokumentace](./RP2025-26_Cermak-Yumi.docx)**
 
 ---
 

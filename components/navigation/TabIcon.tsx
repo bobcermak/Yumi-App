@@ -1,8 +1,8 @@
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { Plus } from 'phosphor-react-native';
 import { FC, useEffect, useRef, useState } from "react";
 import { Animated, TouchableOpacity, View } from 'react-native';
-import { PlusIcon } from 'phosphor-react-native';
-import { AnimatedTabIcon } from '@/components';
+import AnimatedTabIcon from './AnimatedTabIcon';
 
 const TabIcon: FC<BottomTabBarProps> = ({ state, navigation }) => {
   //Hooks
@@ -67,7 +67,7 @@ const TabIcon: FC<BottomTabBarProps> = ({ state, navigation }) => {
                   elevation: 5
                 }}
               >
-                <PlusIcon size={28} color="#FFFFFF" weight={focused ? "bold" : "regular"}/>
+                <Plus size={28} color="#FFFFFF" weight={focused ? "bold" : "regular"} />
               </TouchableOpacity>
             );
           }
@@ -78,7 +78,7 @@ const TabIcon: FC<BottomTabBarProps> = ({ state, navigation }) => {
               activeOpacity={0.7}
               className="flex-1 h-full justify-center items-center"
             >
-              <AnimatedTabIcon route={route.name} focused={focused}/>
+              <AnimatedTabIcon route={route.name} focused={focused} />
             </TouchableOpacity>
           );
         })}

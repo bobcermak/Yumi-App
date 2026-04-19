@@ -1,3 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  .title {
+    @apply font-nunito-700 text-xl text-white/80 tracking-[-0.005em];
+  }
+
+  .title--bigger {
+    @apply font-nunito-800 text-xl text-white tracking-[-0.005em];
+  }
+
+  .title--smaller {
+    @apply font-nunito-700 text-lg text-white/60 tracking-[-0.005em];
+  }
+
+  .base-text {
+    @apply font-nunito-600 text-base text-white/80 tracking-[-0.005em] leading-6;
+  }
+}
