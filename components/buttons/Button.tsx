@@ -20,7 +20,8 @@ const Button: FC<ButtonProps> = ({ icon, children, className, textClassName, ...
             shadowColor: "#C5E384",
             shadowOffset: { width: 0, height: 1 },
             shadowOpacity: 0.25,
-            shadowRadius: 4
+            shadowRadius: 4,
+            elevation: 5
         }}
         >
             {icon ? (
