@@ -56,11 +56,11 @@ const WelcomeScreen = () => {
         />
       </View>
       <View className="bg-dark p-8 py-16 rounded-t-[40px] shadow-xl gap-[2rem]">
-        <View className="max-w-[340px]">
+        <View className="w-[90%] mx-auto">
           <Text className="title text-5xl text-center font-nunito-800 text-white leading-[44px] pt-2">Welcome to <Text className="text-yellow">Yumi</Text> app</Text>
           <Text className="base-text text-center text-white/50 mt-3">Skip the search. <Text className="font-nunito-700 text-yellow">Yumi's AI scans</Text> and identifies your food instantly. Your camera is now your <Text className="font-nunito-700 text-pink">nutritionist</Text>.</Text>
         </View>
-        <Button className="rounded-[30px] mx-0 w-full py-5 px-2" textClassName="text-xl" onPress={() => router.push("/user-information")}>
+        <Button className="rounded-[30px] mx-0 w-full py-5" textClassName="text-xl" onPress={() => router.push("/user-information")}>
           Get Started
         </Button>
         <TouchableOpacity>

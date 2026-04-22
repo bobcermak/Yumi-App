@@ -1,14 +1,9 @@
-import { Text, View } from "react-native";
-import { Icon } from "@/components"
-import { ArrowLeft } from "phosphor-react-native";
+import { View, Text } from "react-native";
 
-const UserInformation = () => {
+const CalculateWeight = () => {
     return (
-        <View className="flex-1 items-center mt-[88px]">
-            <Icon onPress={() => {}}>
-                <ArrowLeft size={20} color="#1D1D1D"/>
-            </Icon>
-            <View className="mt-[120px] max-w-[340px] items-center">
+        <View className="flex-1 items-center justify-center self-center pb-16 gap-12 w-[360px]">
+            <View className="items-center">
                 <Text className="title text-center font-nunito-800 text-white text-4xl">
                     Setup Your Account
                 </Text>
@@ -19,4 +14,4 @@ const UserInformation = () => {
         </View>
     );
 }
-export default UserInformation;
+export default CalculateWeight;

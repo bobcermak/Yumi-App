@@ -7,21 +7,22 @@ type ButtonProps = TouchableOpacityProps & {
   textClassName?: string,
   children: ReactNode,
 };
-const Button: FC<ButtonProps> = ({ icon, children, className, textClassName, ...props }) => {
+const Button: FC<ButtonProps> = ({ icon, children, className, textClassName, disabled, ...props }) => {
     const defaultButtonStyles = "bg-yellow px-4 py-3 rounded-[10px] mx-auto flex-row justify-center items-center shadow-xl";
-    const defaultTextStyles = "text-base font-nunito-800 text-dark text-center";
+    const defaultTextStyles = "text-base font-nunito-800 text-dark text-center w-full";
     
     return (
         <TouchableOpacity
         activeOpacity={0.25}
-        className={`${defaultButtonStyles} ${className || ""}`}
+        disabled={disabled}
+        className={`${defaultButtonStyles} ${className || ""} ${disabled ? "opacity-50" : ""}`}
         {...props}
         style={{
-            shadowColor: "#C5E384",
+            shadowColor: disabled ? "transparent" : "#C5E384",
             shadowOffset: { width: 0, height: 1 },
             shadowOpacity: 0.25,
             shadowRadius: 4,
-            elevation: 5
+            elevation: disabled ? 0 : 5
         }}
         >
             {icon ? (

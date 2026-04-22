@@ -5,7 +5,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "./globals.css";
-import { Image } from "react-native";
+import { Image, View } from "react-native";
 
 const customTheme = {
   ...DarkTheme,
@@ -23,11 +23,13 @@ const RootLayout = () => {
       <ThemeProvider value={customTheme}>
         <SafeAreaProvider>
           <StatusBar style="light"/>
-          <Image
-            source={require("@/assets/images/shadow.png")}
-            resizeMode="cover"
-            className="absolute top-0 left-0 w-full h-[200px] z-[999]"
-          />
+          <View pointerEvents="none" className="absolute top-0 left-0 w-full h-[200px] z-[999]">
+            <Image
+              source={require("@/assets/images/shadow.png")}
+              resizeMode="cover"
+              className="w-full h-full"
+            />
+          </View>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(auth)"/>
             <Stack.Screen name="(onboarding)"/>
