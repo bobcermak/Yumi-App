@@ -11,7 +11,7 @@ const SlidesLayout = () => {
 
     return (
         <View className="flex-1 mt-[88px] w-[380px] mx-auto">
-            <View className="flex-row items-center gap-4">
+            <View className="flex-row items-center gap-4 pb-6">
                 <Icon onPress={handleBack}>
                     <ArrowLeft size={20} color="#1D1D1D"/>
                 </Icon>
@@ -20,7 +20,7 @@ const SlidesLayout = () => {
                         <ProgressSegment key={index} isActive={index <= currentIndex}/>
                     ))}
                 </View>
-                </View>
+            </View>
             <Stack screenOptions={{
                 headerShown: false,
                 animation: "slide_from_right",

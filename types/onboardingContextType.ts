@@ -8,6 +8,14 @@ export type OnboardingContextType = {
     nicknameTaken: boolean;
     isNicknameLoading: boolean;
     suggestions: string[];
+    currentWeight: number;
+    setCurrentWeight: (weight: number) => void;
+    targetWeight: number;
+    setTargetWeight: (weight: number) => void;
+    weightUnit: 'kg' | 'lb';
+    setWeightUnit: (unit: 'kg' | 'lb') => void;
+    goalDate: string | null;
+    setGoalDate: (date: string | null) => void;
     currentIndex: number;
     totalSteps: number;
     handleContinue: () => void;

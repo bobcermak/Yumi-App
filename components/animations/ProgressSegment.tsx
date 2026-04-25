@@ -1,5 +1,5 @@
 import Animated, { useAnimatedStyle, withTiming, interpolateColor, useDerivedValue } from "react-native-reanimated";
-import { FC } from "react";
+import { type FC } from "react";
 
 type ProgressSegment = {
     isActive: boolean

@@ -1,4 +1,4 @@
-import { FC, useEffect } from "react";
+import { type FC, useEffect } from "react";
 import { Image, ImageResizeMode, ImageSourcePropType, ViewStyle } from "react-native";
 import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming, Easing } from "react-native-reanimated";
 
@@ -65,14 +65,16 @@ const FloatingImage: FC<FloatingImageProps> = ({ source, className, style, delay
   return (
     <Animated.View
       entering={FadeInUp.delay(delay).duration(1200).springify()}
-      style={[style, animatedStyle]}
+      style={style}
       className={className}
     >
-      <Image
-        source={source}
-        resizeMode={resizeMode}
-        className={imageClassName}
-      />
+      <Animated.View style={animatedStyle}>
+        <Image
+          source={source}
+          resizeMode={resizeMode}
+          className={imageClassName}
+        />
+      </Animated.View>
     </Animated.View>
   );
 };

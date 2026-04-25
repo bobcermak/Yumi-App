@@ -1,5 +1,5 @@
 import { Text, TouchableOpacity, TouchableOpacityProps, View } from "react-native";
-import { FC, ReactNode } from "react";
+import { type FC, ReactNode } from "react";
 
 type ButtonProps = TouchableOpacityProps & {
   icon?: ReactNode,

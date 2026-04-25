@@ -1,5 +1,5 @@
 import { TouchableOpacity } from "react-native";
-import { FC } from "react";
+import { type FC } from "react";
 
 type IconProps = {
     onPress: () => void,

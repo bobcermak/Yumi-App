@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useState, FC } from "react";
+import React, { createContext, useEffect, useState, type FC } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter, useSegments } from "expo-router";
 import supabase from "@/lib/services/supabase/client";

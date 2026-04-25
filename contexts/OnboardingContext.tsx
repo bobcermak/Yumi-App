@@ -12,33 +12,30 @@ export const OnboardingContext = createContext<OnboardingContextType | undefined
 type OnboardingProviderProps = {
   children: ReactNode;
 }
-
 const OnboardingProvider: FC<OnboardingProviderProps> = ({ children }) => {
   //Hooks
   const router = useRouter();
   const pathname = usePathname();
-
-  //State - User Data
   const [fullName, setFullName] = useState<string>("");
   const [nickname, setNickname] = useState<string>("");
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  
-  //Validation & Fetching
+  const [currentWeight, setCurrentWeight] = useState<number>(70);
+  const [targetWeight, setTargetWeight] = useState<number>(65);
+  const [weightUnit, setWeightUnit] = useState<'kg' | 'lb'>('kg');
+  const [goalDate, setGoalDate] = useState<string | null>(null);
+
+  //Fetch
   const fetchNicknameStatus = useCallback(() => checkNicknameIfExists(nickname), [nickname]);
-  
   const { data: nicknameTakenResult, loading: isNicknameLoading, refetch: refetchNickname, reset: resetNicknameStatus } = useFetch(
     fetchNicknameStatus,
     false
   );
-
   const nicknameTaken = !!nicknameTakenResult;
-
-  //Computed
+  
   const currentIndex = SLIDES.findIndex((slide) => pathname.includes(slide));
   const totalSteps = SLIDES.length;
-
-  //Debounce nickname check
+  
   useEffect(() => {
     if (nickname.trim().length >= 2) {
       const timeout = setTimeout(() => {
@@ -50,8 +47,6 @@ const OnboardingProvider: FC<OnboardingProviderProps> = ({ children }) => {
       setSuggestions([]);
     }
   }, [nickname, refetchNickname, resetNicknameStatus]);
-
-  //Generate suggestions when nickname is taken
   useEffect(() => {
     if (!isNicknameLoading) {
       if (nicknameTakenResult) {
@@ -63,27 +58,21 @@ const OnboardingProvider: FC<OnboardingProviderProps> = ({ children }) => {
       setSuggestions([]);
     }
   }, [nicknameTakenResult, isNicknameLoading, nickname]);
-
-  //Functions - Navigation
+  //Functions
   const handleContinue = useCallback(() => {
     const nextIndex = currentIndex + 1;
     if (nextIndex < SLIDES.length) {
       router.push(`/(onboarding)/(slides)/${SLIDES[nextIndex]}` as any);
     }
   }, [currentIndex, router]);
-
   const handleBack = useCallback(() => {
     if (router.canGoBack()) router.back();
   }, [router]);
-
-  //Functions - Submit
   const handleFinish = useCallback(() => {
-    //TODO: Save data to database / API
     console.log("Onboarding finished:", { fullName, nickname, photoUri });
     router.replace("/(tabs)");
   }, [fullName, nickname, photoUri, router]);
-
-  //Memoized Value
+  //Memorized Value
   const value = useMemo<OnboardingContextType>(() => ({
     fullName,
     setFullName,
@@ -94,6 +83,14 @@ const OnboardingProvider: FC<OnboardingProviderProps> = ({ children }) => {
     nicknameTaken,
     isNicknameLoading,
     suggestions,
+    currentWeight,
+    setCurrentWeight,
+    targetWeight,
+    setTargetWeight,
+    weightUnit,
+    setWeightUnit,
+    goalDate,
+    setGoalDate,
     currentIndex,
     totalSteps,
     handleContinue,
@@ -106,18 +103,20 @@ const OnboardingProvider: FC<OnboardingProviderProps> = ({ children }) => {
     nicknameTaken, 
     isNicknameLoading, 
     suggestions, 
+    currentWeight,
+    targetWeight,
+    weightUnit,
+    goalDate,
     currentIndex, 
     totalSteps, 
     handleContinue, 
     handleBack, 
     handleFinish
   ]);
-
   return (
     <OnboardingContext.Provider value={value}>
       {children}
     </OnboardingContext.Provider>
   );
 };
-
 export default OnboardingProvider;

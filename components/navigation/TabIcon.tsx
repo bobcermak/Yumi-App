@@ -1,6 +1,6 @@
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Plus } from 'phosphor-react-native';
-import { FC, useEffect, useRef, useState } from "react";
+import { type FC, useEffect, useRef, useState } from "react";
 import { Animated, TouchableOpacity, View } from 'react-native';
 import AnimatedTabIcon from './AnimatedTabIcon';
 

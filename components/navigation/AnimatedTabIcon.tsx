@@ -1,5 +1,5 @@
 import { House, MagnifyingGlass, Plus, Users, List, IconProps } from "phosphor-react-native";
-import { FC, useEffect, useRef } from "react";
+import { type FC, useEffect, useRef } from "react";
 import { Animated } from "react-native";
 
 type Icon = React.FC<IconProps>;
