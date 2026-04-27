@@ -57,7 +57,7 @@ const TabIcon: FC<BottomTabBarProps> = ({ state, navigation }) => {
               <TouchableOpacity
                 key={route.key}
                 onPress={onPress}
-                activeOpacity={1}
+                activeOpacity={0.25}
                 className="w-[64px] h-[64px] rounded-full bg-green justify-center items-center mx-2 mb-10"
                 style={{
                   shadowColor: "#84C754",
@@ -75,7 +75,7 @@ const TabIcon: FC<BottomTabBarProps> = ({ state, navigation }) => {
             <TouchableOpacity
               key={route.key}
               onPress={onPress}
-              activeOpacity={0.7}
+              activeOpacity={0.25}
               className="flex-1 h-full justify-center items-center"
             >
               <AnimatedTabIcon route={route.name} focused={focused} />

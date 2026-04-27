@@ -14,6 +14,10 @@ export type OnboardingContextType = {
     setTargetWeight: (weight: number) => void;
     weightUnit: 'kg' | 'lb';
     setWeightUnit: (unit: 'kg' | 'lb') => void;
+    activityLevel: string;
+    setActivityLevel: (level: string) => void;
+    dailyCalories: number;
+    setDailyCalories: (calories: number) => void;
     goalDate: string | null;
     setGoalDate: (date: string | null) => void;
     currentIndex: number;

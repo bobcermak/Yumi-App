@@ -1,5 +1,7 @@
-import { View, Text, PanResponder } from "react-native";
-import { useRef, useState, useEffect, type FC } from "react";
+import * as Haptics from "expo-haptics";
+import React, { useEffect, useRef, useState, type FC } from "react";
+import { PanResponder, Text, View, Animated } from "react-native";
+import { Tick } from "@/components"
 
 type CustomSliderProps = {
     value: number,
@@ -8,44 +10,75 @@ type CustomSliderProps = {
     step?: number,
     onValueChange: (val: number) => void,
     trackColor?: string,
+    unit: "kg" | "lb"
 }
-const CustomSlider: FC<CustomSliderProps> = ({ value, minimumValue, maximumValue, step = 1, onValueChange, trackColor = "#C5E384" }) => {
+const CustomSlider: FC<CustomSliderProps> = ({ value, minimumValue, maximumValue, step = 1, onValueChange, trackColor = "#C5E384", unit }) => {
     //Constants 
     const SLIDER_WIDTH = 360;
     const PIXELS_PER_UNIT = 10;
     //Hooks
     const [localValue, setLocalValue] = useState(value);
+    const scrollAnim = useRef(new Animated.Value(-(value - minimumValue) * PIXELS_PER_UNIT)).current;
+    const initialScrollRef = useRef(-(value - minimumValue) * PIXELS_PER_UNIT);
+
     useEffect(() => {
+        const targetScroll = -(value - minimumValue) * PIXELS_PER_UNIT;
         setLocalValue(value);
-    }, [value]);
-    const initialValueRef = useRef(localValue);
+        Animated.spring(scrollAnim, {
+            toValue: targetScroll,
+            useNativeDriver: true,
+            bounciness: 0,
+        }).start();
+    }, [value, minimumValue]);
     const localValueRef = useRef(localValue);
     localValueRef.current = localValue;
+    const minRef = useRef(minimumValue);
+    minRef.current = minimumValue;
+    const maxRef = useRef(maximumValue);
+    maxRef.current = maximumValue;
+    const stepRef = useRef(step);
+    stepRef.current = step;
     const onValueChangeRef = useRef(onValueChange);
     onValueChangeRef.current = onValueChange;
-
     const panResponder = useRef(PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > Math.abs(gs.dy) && Math.abs(gs.dx) > 5,
         onPanResponderGrant: () => {
-            initialValueRef.current = localValueRef.current;
+            scrollAnim.stopAnimation((v) => {
+                initialScrollRef.current = v;
+            });
         },
-        onPanResponderMove: (e, gestureState) => {
-            const raw = initialValueRef.current - (gestureState.dx / PIXELS_PER_UNIT);
-            const stepped = Math.round(raw / step) * step;
-            const newVal = Math.max(minimumValue, Math.min(maximumValue, stepped));
+        onPanResponderMove: (_, gs) => {
+            const newScroll = initialScrollRef.current + gs.dx;
+            const minScroll = -(maxRef.current - minRef.current) * PIXELS_PER_UNIT;
+            const maxScroll = 0;
+            const boundedScroll = Math.max(minScroll, Math.min(maxScroll, newScroll));
+            scrollAnim.setValue(boundedScroll);
+            const rawVal = minRef.current + (Math.abs(boundedScroll) / PIXELS_PER_UNIT);
+            const stepped = Math.round(rawVal / stepRef.current) * stepRef.current;
+            const newVal = Math.max(minRef.current, Math.min(maxRef.current, stepped));
+            
             if (newVal !== localValueRef.current) {
                 setLocalValue(newVal);
+                Haptics.selectionAsync();
             }
         },
         onPanResponderRelease: () => {
-            onValueChangeRef.current(localValueRef.current);
+            const finalVal = localValueRef.current;
+            Animated.spring(scrollAnim, {
+                toValue: -(finalVal - minRef.current) * PIXELS_PER_UNIT,
+                useNativeDriver: true,
+                tension: 60,
+                friction: 12,
+            }).start();
+            onValueChangeRef.current(finalVal);
         }
     })).current;
-    //Calculations
-    const trackTranslateX = -(localValue - minimumValue) * PIXELS_PER_UNIT;
     return (
-        <View className="w-full items-center">
+        <View 
+            className="w-full items-center"
+            {...panResponder.panHandlers}
+        >
             <View
                 style={{
                     width: SLIDER_WIDTH,
@@ -57,16 +90,15 @@ const CustomSlider: FC<CustomSliderProps> = ({ value, minimumValue, maximumValue
                     elevation: 8,
                 }}
                 className="h-[180px] rounded-[24px] justify-end relative self-center overflow-hidden"
-                {...panResponder.panHandlers}
             >
-                <Text className="absolute top-6 left-0 right-0 text-center text-5xl font-nunito-700 text-dark pb-1">
-                    <Text className="font-nunito-800">{localValue}</Text> kg
+                <Text className="absolute top-6 left-0 right-0 text-center text-5xl font-nunito-700 text-dark py-2">
+                    <Text className="font-nunito-800">{localValue}</Text> {unit}
                 </Text>
-                <View
+                <Animated.View
                     style={{
                         paddingLeft: SLIDER_WIDTH / 2 - PIXELS_PER_UNIT / 2,
                         paddingRight: SLIDER_WIDTH / 2 - PIXELS_PER_UNIT / 2,
-                        transform: [{ translateX: trackTranslateX }],
+                        transform: [{ translateX: scrollAnim }],
                     }}
                     className="flex-row items-center h-[90px] mb-4"
                 >
@@ -76,27 +108,17 @@ const CustomSlider: FC<CustomSliderProps> = ({ value, minimumValue, maximumValue
                         const isMinor = val % 5 === 0 && !isMajor;
                         const isSelected = val === localValue;
                         return (
-                            <View key={i} style={{ width: PIXELS_PER_UNIT }} className="items-center justify-center h-full relative">
-                                <View
-                                    style={{
-                                        height: isSelected ? 48 : (isMajor ? 32 : (isMinor ? 20 : 10)),
-                                        backgroundColor: isSelected ? '#1D1D1D' : (isMajor ? 'rgba(29, 29, 29, 0.8)' : 'rgba(29, 29, 29, 0.4)'),
-                                        width: isSelected ? 4 : 2,
-                                        borderRadius: isSelected ? 2 : 1
-                                    }}
-                                />
-                                {isMajor && (
-                                    <Text
-                                        style={{ left: (PIXELS_PER_UNIT - 50) / 2 }}
-                                        className="text-dark/80 text-md font-nunito-700 absolute bottom-0 w-[50px] text-center"
-                                    >
-                                        {val}
-                                    </Text>
-                                )}
-                            </View>
+                            <Tick 
+                                key={i} 
+                                val={val} 
+                                isSelected={isSelected} 
+                                isMajor={isMajor} 
+                                isMinor={isMinor} 
+                                PIXELS_PER_UNIT={PIXELS_PER_UNIT} 
+                            />
                         );
                     })}
-                </View>
+                </Animated.View>
             </View>
             <View className="h-[10px] w-8 overflow-hidden items-center mt-2">
                 <View

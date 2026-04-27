@@ -1,8 +1,9 @@
-import { Text, View, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
+import { Text, View, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Keyboard, TouchableWithoutFeedback } from "react-native";
 import { Button } from "@/components";
 import { useOnboarding } from "@/lib/hooks/useOnboarding";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
+import Animated, { FadeInDown, FadeInUp, FadeInLeft, FadeInRight } from "react-native-reanimated";
 
 const UserInformation = () => {
     //Context
@@ -11,7 +12,9 @@ const UserInformation = () => {
     const [error, setError] = useState<string>("");
 
     const hasFullName = fullName.trim().split(/\s+/).length >= 2;
-    const isValid = hasFullName && nickname.trim().length > 0 && !nicknameTaken && !isNicknameLoading;
+    const nicknameRegex = /^[a-z0-9_]{3,15}$/;
+    const isValidNickname = nicknameRegex.test(nickname);
+    const isValid = hasFullName && isValidNickname && !nicknameTaken && !isNicknameLoading;
 
     //Functions
     const onContinue = () => {
@@ -27,6 +30,18 @@ const UserInformation = () => {
             setError("Please choose a nickname.");
             return;
         }
+        if (nickname.length < 3) {
+            setError("Nickname must be at least 3 characters long.");
+            return;
+        }
+        if (nickname.length > 15) {
+            setError("Nickname cannot exceed 15 characters.");
+            return;
+        }
+        if (!isValidNickname) {
+            setError("Nickname can only contain lowercase letters, numbers, and underscores.");
+            return;
+        }
         if (nicknameTaken) {
             setError("This nickname is already taken.");
             return;
@@ -40,26 +55,34 @@ const UserInformation = () => {
     };
     return (
         <KeyboardAvoidingView 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
             style={{ flex: 1, width: '100%' }}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 140 : 0}
         >
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerClassName="flex-grow items-center justify-center pb-16 pt-8 gap-12"
-                keyboardShouldPersistTaps="handled"
-            >
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    contentContainerClassName="flex-grow items-center justify-center pb-16 pt-8 gap-12"
+                    keyboardShouldPersistTaps="handled"
+                >
                 <View className="w-[360px] gap-12 self-center">
-                    <View className="items-center">
+                    <Animated.View 
+                        entering={FadeInDown.delay(200).duration(250)}
+                        className="items-center"
+                    >
                         <Text className="title text-center font-nunito-800 text-white text-4xl">
                             Setup Your Account
                         </Text>
                         <Text className="base-text text-center text-white/50 mt-3">
                             Let's get to know you <Text className="font-nunito-700 text-yellow">better</Text> so we can personalize your nutrition plan and help you reach your health <Text className="font-nunito-700 text-pink">goals faster</Text>.
                         </Text>
-                    </View>
+                    </Animated.View>
                     <View className="gap-12">
                         <View className="gap-6">
-                            <View className="gap-1">
+                            <Animated.View 
+                                entering={FadeInLeft.delay(400).duration(250)}
+                                className="gap-1"
+                            >
                                 <Text className="base-text text-lg font text-white/80 ml-1">Full Name</Text>
                                 <View
                                     style={{
@@ -85,15 +108,19 @@ const UserInformation = () => {
                                             onChangeText={(text) => setFullName(text.replace(/(^|\s)\S/g, match => match.toUpperCase()))}
                                             placeholder="John Doe"
                                             placeholderTextColor="rgba(255,255,255,0.5)"
-                                            className="bg-transparent px-4 py-4 text-white text-base"
+                                            className="bg-transparent px-4 py-4 text-white text-base font-nunito-600"
+                                            style={{ includeFontPadding: false }}
                                         />
                                     </LinearGradient>
                                 </View>
                                 {fullName.trim().length > 0 && !hasFullName && (
                                     <Text className="text-pink font-nunito-600 text-sm ml-1 mt-1">Enter your first and last name.</Text>
                                 )}
-                            </View>
-                            <View className="gap-1">
+                            </Animated.View>
+                            <Animated.View 
+                                entering={FadeInRight.delay(600).duration(250)}
+                                className="gap-1"
+                            >
                                 <Text className="base-text text-lg text-white/80 ml-1">Nickname</Text>
                                 <View
                                     style={{
@@ -117,16 +144,23 @@ const UserInformation = () => {
                                         <View className="flex-row items-center pr-4">
                                             <TextInput
                                                 value={nickname}
-                                                onChangeText={setNickname}
+                                                onChangeText={(text) => setNickname(text.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
                                                 placeholder="john_doe"
                                                 placeholderTextColor="rgba(255,255,255,0.5)"
-                                                className="bg-transparent px-4 py-4 text-white text-base flex-1"
+                                                className="bg-transparent px-4 py-4 text-white text-base flex-1 font-nunito-600"
                                                 autoCapitalize="none"
+                                                maxLength={15}
+                                                style={{ includeFontPadding: false }}
                                             />
                                             {isNicknameLoading && <ActivityIndicator size="small" color="#C5E384"/>}
                                         </View>
                                     </LinearGradient>
                                 </View>
+                                {nickname.length > 0 && !isValidNickname && (
+                                    <Text className="text-pink font-nunito-600 text-sm ml-1 mt-1">
+                                        {nickname.length < 3 ? "At least 3 characters." : "Only lowercase, numbers & underscores."}
+                                    </Text>
+                                )}
                                 {nicknameTaken && !isNicknameLoading && suggestions.length > 0 && (
                                     <View className="mt-3 gap-2">
                                         <Text className="text-pink font-nunito-700 text-sm ml-2">This nickname is taken. Try one of these:</Text>
@@ -151,9 +185,12 @@ const UserInformation = () => {
                                         </View>
                                     </View>
                                 )}
-                            </View>
+                            </Animated.View>
                         </View>
-                        <View className="gap-4">
+                        <Animated.View 
+                            entering={FadeInUp.delay(800).duration(250)}
+                            className="gap-4"
+                        >
                             <Button
                                 className="rounded-[30px] mx-0 w-full py-5"
                                 textClassName="text-xl"
@@ -165,10 +202,11 @@ const UserInformation = () => {
                             {error ? (
                                 <Text className="text-pink text-center font-nunito-600 text-sm">{error}</Text>
                             ) : null}
-                        </View>
+                        </Animated.View>
                     </View>
                 </View>
-            </ScrollView>
+                </ScrollView>
+            </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
     );
 }

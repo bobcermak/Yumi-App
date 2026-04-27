@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
+
 type SegmentedControlProps<T extends string> = {
     options: readonly T[] | T[],
     selectedValue: T,
@@ -17,7 +18,7 @@ const SegmentedControl = <T extends string>({ options, selectedValue, onValueCha
 
     useEffect(() => {
         translateX.value = withSpring(selectedIndex * itemWidth, {
-            damping: 20,
+            damping: 50,
             stiffness: 200,
         });
     }, [selectedIndex, itemWidth]);
@@ -28,8 +29,8 @@ const SegmentedControl = <T extends string>({ options, selectedValue, onValueCha
     });
     return (
         <View 
-            style={{ width, backgroundColor: '#1D1D1D' }} 
-            className="flex-row items-center h-[52px] rounded-full relative p-[6px] self-center border border-white/5"
+            style={{ width }} 
+            className="flex-row items-center h-[60px] rounded-full relative p-[6px] self-center border border-white/5 bg-dark"
         >
             <Animated.View
                 style={[
@@ -49,11 +50,17 @@ const SegmentedControl = <T extends string>({ options, selectedValue, onValueCha
                         key={option}
                         style={{ width: itemWidth }}
                         className="h-full items-center justify-center z-10"
-                        onPress={() => onValueChange(option)}
-                        activeOpacity={0.8}
+                        onPress={() => {
+                            translateX.value = withSpring(index * itemWidth, {
+                                damping: 50,
+                                stiffness: 200,
+                            });
+                            onValueChange(option);
+                        }}
+                        activeOpacity={0.25}
                     >
                         <Text 
-                            className={`text-lg font-nunito-700 ${isActive ? 'text-dark' : 'text-white'}`}
+                            className={`text-base font-nunito-700 ${isActive ? 'text-dark' : 'text-white'}`}
                         >
                             {option.toUpperCase()}
                         </Text>

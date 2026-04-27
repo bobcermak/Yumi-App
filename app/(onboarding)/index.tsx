@@ -8,7 +8,7 @@ const WelcomeScreen = () => {
 
   return (
     <View className="flex-1 mt-[200px] justify-end">
-      <View className="w-full items-center justify-center relative -top-[12.5%]">
+      <View className="w-full items-center justify-center relative -top-[7.5%]">
         <FloatingImage
           source={require("@/assets/images/yumi-welcome.png")}
           resizeMode="cover"

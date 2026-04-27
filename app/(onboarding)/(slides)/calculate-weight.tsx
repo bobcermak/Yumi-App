@@ -1,14 +1,16 @@
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, ScrollView } from "react-native";
 import { useOnboarding } from "@/lib/hooks/useOnboarding";
 import { Calendar } from "react-native-calendars";
 import { Button, CustomSlider, SegmentedControl } from "@/components";
 import { useState } from "react";
+import Animated, { FadeInDown, FadeInUp, FadeInLeft, FadeInRight, FadeIn } from "react-native-reanimated";
 
 const CalculateWeight = () => {
     //Context
     const { currentWeight, setCurrentWeight, targetWeight, setTargetWeight, weightUnit, setWeightUnit, goalDate, setGoalDate, handleContinue } = useOnboarding();
     //Hooks
     const [error, setError] = useState<string>("");
+
     //Calculations
     const minWeight = weightUnit === 'kg' ? 15 : 33;
     const maxWeight = weightUnit === 'kg' ? 200 : 440;
@@ -17,12 +19,14 @@ const CalculateWeight = () => {
     const toggleUnit = (unit: 'kg' | 'lb') => {
         if (unit !== weightUnit) {
             setWeightUnit(unit);
+            const newMin = unit === 'kg' ? 15 : 33;
+            const newMax = unit === 'kg' ? 200 : 440;
             if (unit === 'lb') {
-                setCurrentWeight(Math.round(currentWeight * 2.20462));
-                setTargetWeight(Math.round(targetWeight * 2.20462));
+                setCurrentWeight(Math.max(newMin, Math.min(newMax, Math.round(currentWeight * 2.20462))));
+                setTargetWeight(Math.max(newMin, Math.min(newMax, Math.round(targetWeight * 2.20462))));
             } else {
-                setCurrentWeight(Math.round(currentWeight / 2.20462));
-                setTargetWeight(Math.round(targetWeight / 2.20462));
+                setCurrentWeight(Math.max(newMin, Math.min(newMax, Math.round(currentWeight / 2.20462))));
+                setTargetWeight(Math.max(newMin, Math.min(newMax, Math.round(targetWeight / 2.20462))));
             }
         }
     };
@@ -44,7 +48,10 @@ const CalculateWeight = () => {
             className="w-[360px] self-center"
             showsVerticalScrollIndicator={false}
         >
-            <View className="items-center mb-8">
+            <Animated.View 
+                entering={FadeInDown.delay(200).duration(250)}
+                className="items-center mb-12"
+            >
                 <Text className="title text-center font-nunito-800 text-white text-4xl">
                     Goal Settings
                 </Text>
@@ -53,16 +60,19 @@ const CalculateWeight = () => {
                     <Text className="font-nunito-700 text-pink">target weight</Text> and choose a date on the calendar to see when you'll celebrate your first{" "}
                     <Text className="font-nunito-700 text-yellow">success</Text>.
                 </Text>
-            </View>
-            <View className="w-full gap-8">
-                <SegmentedControl
-                    options={['kg', 'lb']}
-                    selectedValue={weightUnit}
-                    onValueChange={toggleUnit}
-                    width={200}
-                />
-                <View>
-                    <Text className="title mb-4">Current Weight</Text>
+            </Animated.View>
+            <View className="w-full gap-12">
+                <Animated.View entering={FadeIn.delay(300).duration(250)}>
+                    <SegmentedControl
+                        options={['kg', 'lb']}
+                        selectedValue={weightUnit}
+                        onValueChange={toggleUnit}
+                        width={200}
+                    />
+                </Animated.View>
+                
+                <Animated.View entering={FadeInLeft.delay(400).duration(250)}>
+                    <Text className="text-2xl font-nunito-700 text-white text-center mb-4">Current Weight</Text>
                     <CustomSlider
                         value={currentWeight}
                         minimumValue={minWeight}
@@ -70,10 +80,12 @@ const CalculateWeight = () => {
                         step={1}
                         onValueChange={setCurrentWeight}
                         trackColor="#C5E384"
+                        unit={weightUnit}
                     />
-                </View>
-                <View>
-                    <Text className="title mb-4">Target Weight</Text>
+                </Animated.View>
+                
+                <Animated.View entering={FadeInRight.delay(500).duration(250)}>
+                    <Text className="text-2xl font-nunito-700 text-white text-center mb-4">Target Weight</Text>
                     <CustomSlider
                         value={targetWeight}
                         minimumValue={minWeight}
@@ -81,26 +93,31 @@ const CalculateWeight = () => {
                         step={1}
                         onValueChange={setTargetWeight}
                         trackColor="#CA877E"
+                        unit={weightUnit}
                     />
-                </View>
-                <View className="gap-4 w-full mt-2">
-                    <Text className="title mb-4">Target Date</Text>
-                    <View className="rounded-3xl overflow-hidden border border-white/10 bg-dark">
+                </Animated.View>
+
+                <Animated.View 
+                    entering={FadeInUp.delay(600).duration(250)}
+                    className="gap-4 w-full"
+                >
+                    <Text className="text-2xl font-nunito-700 text-white text-center mb-0">Target Date</Text>
+                    <View className="rounded-[20px] overflow-hidden border border-white/10 bg-dark">
                         <Calendar
                             minDate={today}
                             onDayPress={(day: any) => setGoalDate(day.dateString)}
                             markedDates={{
                                 [today]: {
                                     customStyles: {
-                                        container: { backgroundColor: '#C5E384', borderRadius: 8 },
-                                        text: { color: '#000', fontFamily: 'Nunito_700Bold' },
+                                        container: { backgroundColor: '#C5E384', borderRadius: 100 },
+                                        text: { color: '#000', fontFamily: 'Nunito-700' },
                                     },
                                 },
                                 ...(goalDate && goalDate !== today ? {
                                     [goalDate]: {
                                         customStyles: {
-                                            container: { backgroundColor: '#CA877E', borderRadius: 8 },
-                                            text: { color: '#000', fontFamily: 'Nunito_700Bold' },
+                                            container: { backgroundColor: '#CA877E', borderRadius: 100 },
+                                            text: { color: '#000', fontFamily: 'Nunito-700' },
                                         }
                                     }
                                 } : {}),
@@ -120,17 +137,22 @@ const CalculateWeight = () => {
                                 arrowColor: '#C5E384',
                                 monthTextColor: '#ffffff',
                                 indicatorColor: '#C5E384',
-                                textDayFontFamily: 'Nunito_600SemiBold',
-                                textMonthFontFamily: 'Nunito_700Bold',
-                                textDayHeaderFontFamily: 'Nunito_600SemiBold',
+                                textDayFontFamily: 'Nunito-600',
+                                textMonthFontFamily: 'Nunito-800',
+                                textMonthFontWeight: '800',
+                                textDayHeaderFontFamily: 'Nunito-600',
                                 textDayFontSize: 16,
-                                textMonthFontSize: 16,
+                                textMonthFontSize: 20,
                                 textDayHeaderFontSize: 14,
                             }}
                         />
                     </View>
-                </View>
-                <View className="gap-4 w-full mt-6">
+                </Animated.View>
+                
+                <Animated.View 
+                    entering={FadeInUp.delay(700).duration(250)}
+                    className="gap-4 w-full"
+                >
                     <Button
                         className="rounded-[30px] mx-0 w-full py-5"
                         textClassName="text-xl"
@@ -142,7 +164,7 @@ const CalculateWeight = () => {
                     {error ? (
                         <Text className="text-pink text-center font-nunito-600 text-sm">{error}</Text>
                     ) : null}
-                </View>
+                </Animated.View>
             </View>
         </ScrollView>
     );
