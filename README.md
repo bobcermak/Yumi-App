@@ -83,7 +83,7 @@ npm install
 ```
 
 **3. Konfigurace prostředí:**
-Vytvoř soubor `.env` a vlož své klíče:
+Vytvoř soubor `.env.local` a vlož své klíče:
 ```env
 EXPO_PUBLIC_SUPABASE_URL=tvuj_supabase_url
 EXPO_PUBLIC_SUPABASE_ANON_KEY=tvuj_supabase_klic
