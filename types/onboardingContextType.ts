@@ -5,6 +5,9 @@ export type OnboardingContextType = {
     setNickname: (nickname: string) => void;
     photoUri: string | null;
     setPhotoUri: (uri: string | null) => void;
+    progressPhotos: string[];
+    setProgressPhotos: (photos: string[]) => void;
+    deleteProgressPhoto: (index: number) => void;
     nicknameTaken: boolean;
     isNicknameLoading: boolean;
     suggestions: string[];
@@ -14,12 +17,13 @@ export type OnboardingContextType = {
     setTargetWeight: (weight: number) => void;
     weightUnit: 'kg' | 'lb';
     setWeightUnit: (unit: 'kg' | 'lb') => void;
+    toggleWeightUnit: (unit: 'kg' | 'lb') => void;
     activityLevel: string;
     setActivityLevel: (level: string) => void;
     dailyCalories: number;
     setDailyCalories: (calories: number) => void;
     goalDate: string | null;
-    setGoalDate: (date: string | null) => void;
+    setGoalDate: (date: string | null) => boolean;
     currentIndex: number;
     totalSteps: number;
     handleContinue: () => void;

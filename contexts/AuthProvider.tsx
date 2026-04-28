@@ -58,7 +58,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
         router.replace('/(auth)/login');
       }
     } else {
-      if (!inOnboardingGroup) {
+      if (!inOnboardingGroup && !inAuthGroup) {
         router.replace('/(onboarding)');
       }
     }

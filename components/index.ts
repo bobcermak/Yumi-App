@@ -8,3 +8,5 @@ export { default as ProgressSegment } from "./animations/ProgressSegment";
 export { default as CustomSlider } from "./sliders/CustomSlider";
 export { default as SegmentedControl } from "./buttons/SegmentedControl";
 export { default as Tick } from "./sliders/Tick";
+export { default as PhotoUploadCard } from "./onboarding/PhotoUploadCard";
+export { default as ImageSourcePicker } from "./onboarding/ImageSourcePicker";

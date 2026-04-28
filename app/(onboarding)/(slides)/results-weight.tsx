@@ -1,12 +1,12 @@
 import { View, Text, TextInput, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform } from "react-native";
+import * as Haptics from "expo-haptics";
 import { useOnboarding } from "@/lib/hooks/useOnboarding";
 import { Button } from "@/components";
 import { Calendar } from "react-native-calendars";
-import { PencilSimple } from "phosphor-react-native";
+import { PencilSimple, CaretLeft, CaretRight } from "phosphor-react-native";
 import { useState, useEffect, useMemo } from "react";
-import Animated, { FadeInDown, FadeInUp, ZoomIn } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeInUp, ZoomIn, useSharedValue, useAnimatedStyle, withSequence, withTiming, interpolateColor, withDelay } from "react-native-reanimated";
 import { daysUntil } from "@/lib/helpers/onBoardingHelpers";
-import { MIN_CALORIES } from "@/lib/helpers/onBoardingHelpers";
 
 const ResultsWeight = () => {
     //Context
@@ -14,7 +14,14 @@ const ResultsWeight = () => {
     //Hooks
     const [isEditing, setIsEditing] = useState(false);
     const [localInput, setLocalInput] = useState(dailyCalories.toString());
+    const [calendarKey, setCalendarKey] = useState(0);
 
+    useEffect(() => {
+        if (dailyCalories < 600 || dailyCalories > 8000) {
+            const clamped = Math.min(8000, Math.max(dailyCalories, 600));
+            setDailyCalories(clamped);
+        }
+    }, [dailyCalories]);
     useEffect(() => {
         if (!isEditing) setLocalInput(dailyCalories.toString());
     }, [dailyCalories, isEditing]);
@@ -30,13 +37,50 @@ const ResultsWeight = () => {
         const n = parseInt(cleaned, 10);
         if (!isNaN(n)) setDailyCalories(n);
     };
-    const handleCalorieBlur = () => {
-        setIsEditing(false);
-        setLocalInput(dailyCalories.toString());
-    };
     const handleDateSelect = (day: { dateString: string }) => {
-        setGoalDate(day.dateString);
+        const wasClamped = setGoalDate(day.dateString);
+        if (wasClamped) {
+            triggerWarning();
+            setCalendarKey(prev => prev + 1);
+        }
     };
+    const shake = useSharedValue(0);
+    const borderColor = useSharedValue(0);
+    const warningOpacity = useSharedValue(0);
+    const triggerWarning = () => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        warningOpacity.value = withSequence(
+            withTiming(1, { duration: 300 }),
+            withDelay(3000, withTiming(0, { duration: 500 }))
+        );
+        shake.value = withSequence(
+            withTiming(10, { duration: 50 }),
+            withTiming(-10, { duration: 50 }),
+            withTiming(10, { duration: 50 }),
+            withTiming(0, { duration: 50 })
+        );
+        borderColor.value = withSequence(
+            withTiming(1, { duration: 200 }),
+            withTiming(0, { duration: 1000 })
+        );
+    };
+    const animatedStyle = useAnimatedStyle(() => {
+        return {
+            transform: [{ translateX: shake.value }],
+            borderColor: interpolateColor(
+                borderColor.value,
+                [0, 1],
+                ['rgba(255, 255, 255, 0.1)', '#CA877E']
+            )
+        };
+    });
+    const textStyle = useAnimatedStyle(() => {
+        return { opacity: warningOpacity.value };
+    });
+    const isLowCalories = dailyCalories < 1200;
+    const isHighCalories = dailyCalories > 5000;
+    const isWarning = isLowCalories || isHighCalories;
+    const textColorClass = isWarning ? "text-pink" : "text-white";
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -71,16 +115,17 @@ const ResultsWeight = () => {
                                 onBlur={() => {
                                     const n = parseInt(localInput, 10);
                                     if (!isNaN(n)) {
-                                        const finalVal = Math.max(n, MIN_CALORIES); 
-                                        setDailyCalories(finalVal);
-                                        setLocalInput(finalVal.toString());
+                                        setDailyCalories(n);
+                                        setCalendarKey(prev => prev + 1);
+                                    } else {
+                                        setLocalInput(dailyCalories.toString());
                                     }
                                     setIsEditing(false);
                                 }}
                                 keyboardType="numeric"
                                 autoFocus
                                 textAlignVertical="center"
-                                className="text-white text-8xl font-nunito-800 min-w-[200px] text-center"
+                                className={`${textColorClass} text-8xl font-nunito-800 min-w-[200px] text-center`}
                                 style={{ includeFontPadding: false, lineHeight: 96, height: 120 }}
                             />
                         ) : (
@@ -92,7 +137,7 @@ const ResultsWeight = () => {
                                 className="items-center"
                             >
                                 <Text 
-                                    className="text-white text-8xl font-nunito-800"
+                                    className={`${textColorClass} text-8xl font-nunito-800`}
                                     style={{ lineHeight: 96, height: 125 }}
                                 >
                                     {dailyCalories}
@@ -106,6 +151,21 @@ const ResultsWeight = () => {
                     <Text className="text-white/50 font-nunito-700 text-xl tracking-widest -mt-8">
                         Cal Per Day
                     </Text>
+                    {isLowCalories && (
+                        <Text className="text-pink text-center font-nunito-600 mt-4 px-6 text-sm">
+                            <Text className="font-nunito-800">WARNING:</Text> Eating less than 1,200 calories per day can be dangerous to your health and metabolism. Please consult a doctor.
+                        </Text>
+                    )}
+                    {isHighCalories && (
+                        <Text className="text-pink text-center font-nunito-600 mt-4 px-6 text-sm">
+                            <Text className="font-nunito-800">WARNING:</Text> Consuming over 5,000 calories per day is extreme and may lead to rapid, unhealthy weight gain.
+                        </Text>
+                    )}
+                    {!isWarning && (
+                        <Text className="text-yellow text-center font-nunito-600 mt-4 px-6 text-sm">
+                            <Text className="font-nunito-800">OPTIMAL:</Text> This target promotes a normal, healthy diet, making your journey much easier to sustain and manage.
+                        </Text>
+                    )}
                 </Animated.View>
                 <Animated.View
                     entering={FadeInUp.delay(600).duration(250)}
@@ -120,10 +180,13 @@ const ResultsWeight = () => {
                             <Text className="text-white/50 font-nunito-600 text-base">days left</Text>
                         </View>
                     </View>
-                    <View className="rounded-[20px] overflow-hidden border border-white/10 bg-dark">
+                    <Animated.View style={[animatedStyle, { borderWidth: 1 }]} className="rounded-[20px] overflow-hidden bg-dark">
                         <Calendar
+                            key={`cal-${calendarKey}`}
+                            current={goalDate || todayStr}
                             minDate={todayStr}
                             onDayPress={handleDateSelect}
+                            renderArrow={(direction) => direction === 'left' ? <CaretLeft color="#C5E384" size={24} weight="bold"/> : <CaretRight color="#C5E384" size={24} weight="bold"/>}
                             markedDates={{
                                 [todayStr]: {
                                     customStyles: {
@@ -163,11 +226,14 @@ const ResultsWeight = () => {
                                 textDayHeaderFontSize: 14,
                             }}
                         />
-                    </View>
+                    </Animated.View>
+                    <Animated.Text style={textStyle} className="text-pink text-center font-nunito-600 text-sm -mt-2">
+                        This timeframe is too short. We adjusted it to a safe timeline.
+                    </Animated.Text>
                 </Animated.View>
                 <Animated.View
                     entering={FadeInUp.delay(800).duration(250)}
-                    className="w-full mt-10"
+                    className="w-full mt-2"
                 >
                     <Button
                         className="rounded-[30px] mx-0 w-full py-5"

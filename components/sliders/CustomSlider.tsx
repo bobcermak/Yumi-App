@@ -10,9 +10,11 @@ type CustomSliderProps = {
     step?: number,
     onValueChange: (val: number) => void,
     trackColor?: string,
-    unit: "kg" | "lb"
+    unit: "kg" | "lb",
+    onSlidingStart?: () => void,
+    onSlidingComplete?: () => void
 }
-const CustomSlider: FC<CustomSliderProps> = ({ value, minimumValue, maximumValue, step = 1, onValueChange, trackColor = "#C5E384", unit }) => {
+const CustomSlider: FC<CustomSliderProps> = ({ value, minimumValue, maximumValue, step = 1, onValueChange, trackColor = "#C5E384", unit, onSlidingStart, onSlidingComplete }) => {
     //Constants 
     const SLIDER_WIDTH = 360;
     const PIXELS_PER_UNIT = 10;
@@ -40,6 +42,10 @@ const CustomSlider: FC<CustomSliderProps> = ({ value, minimumValue, maximumValue
     stepRef.current = step;
     const onValueChangeRef = useRef(onValueChange);
     onValueChangeRef.current = onValueChange;
+    const onSlidingStartRef = useRef(onSlidingStart);
+    onSlidingStartRef.current = onSlidingStart;
+    const onSlidingCompleteRef = useRef(onSlidingComplete);
+    onSlidingCompleteRef.current = onSlidingComplete;
     const panResponder = useRef(PanResponder.create({
         onStartShouldSetPanResponder: () => false,
         onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > Math.abs(gs.dy) && Math.abs(gs.dx) > 5,
@@ -47,6 +53,7 @@ const CustomSlider: FC<CustomSliderProps> = ({ value, minimumValue, maximumValue
             scrollAnim.stopAnimation((v) => {
                 initialScrollRef.current = v;
             });
+            onSlidingStartRef.current?.();
         },
         onPanResponderMove: (_, gs) => {
             const newScroll = initialScrollRef.current + gs.dx;
@@ -72,6 +79,10 @@ const CustomSlider: FC<CustomSliderProps> = ({ value, minimumValue, maximumValue
                 friction: 12,
             }).start();
             onValueChangeRef.current(finalVal);
+            onSlidingCompleteRef.current?.();
+        },
+        onPanResponderTerminate: () => {
+            onSlidingCompleteRef.current?.();
         }
     })).current;
     return (

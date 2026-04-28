@@ -1,49 +1,67 @@
 import { View, Text, ScrollView } from "react-native";
+import * as Haptics from "expo-haptics";
 import { useOnboarding } from "@/lib/hooks/useOnboarding";
 import { Calendar } from "react-native-calendars";
 import { Button, CustomSlider, SegmentedControl } from "@/components";
 import { useState } from "react";
-import Animated, { FadeInDown, FadeInUp, FadeInLeft, FadeInRight, FadeIn } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeInUp, FadeInLeft, FadeInRight, FadeIn, useSharedValue, useAnimatedStyle, withSequence, withTiming, interpolateColor, withDelay } from "react-native-reanimated";
+import { CaretLeft, CaretRight } from "phosphor-react-native";
 
 const CalculateWeight = () => {
     //Context
-    const { currentWeight, setCurrentWeight, targetWeight, setTargetWeight, weightUnit, setWeightUnit, goalDate, setGoalDate, handleContinue } = useOnboarding();
+    const { currentWeight, setCurrentWeight, targetWeight, setTargetWeight, weightUnit, toggleWeightUnit, goalDate, setGoalDate, handleContinue } = useOnboarding();
     //Hooks
-    const [error, setError] = useState<string>("");
+    const [error,] = useState<string>("");
+    const [scrollEnabled, setScrollEnabled] = useState<boolean>(true);
+    const [calendarKey, setCalendarKey] = useState(0);
+    const shake = useSharedValue(0);
+    const borderColor = useSharedValue(0);
+    const warningOpacity = useSharedValue(0);
 
     //Calculations
     const minWeight = weightUnit === 'kg' ? 15 : 33;
     const maxWeight = weightUnit === 'kg' ? 200 : 440;
     const today = new Date().toISOString().split('T')[0];
-    //Functions
-    const toggleUnit = (unit: 'kg' | 'lb') => {
-        if (unit !== weightUnit) {
-            setWeightUnit(unit);
-            const newMin = unit === 'kg' ? 15 : 33;
-            const newMax = unit === 'kg' ? 200 : 440;
-            if (unit === 'lb') {
-                setCurrentWeight(Math.max(newMin, Math.min(newMax, Math.round(currentWeight * 2.20462))));
-                setTargetWeight(Math.max(newMin, Math.min(newMax, Math.round(targetWeight * 2.20462))));
-            } else {
-                setCurrentWeight(Math.max(newMin, Math.min(newMax, Math.round(currentWeight / 2.20462))));
-                setTargetWeight(Math.max(newMin, Math.min(newMax, Math.round(targetWeight / 2.20462))));
-            }
-        }
+    const triggerWarning = () => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        warningOpacity.value = withSequence(
+            withTiming(1, { duration: 300 }),
+            withDelay(3000, withTiming(0, { duration: 500 }))
+        );
+        shake.value = withSequence(
+            withTiming(10, { duration: 50 }),
+            withTiming(-10, { duration: 50 }),
+            withTiming(10, { duration: 50 }),
+            withTiming(0, { duration: 50 })
+        );
+        borderColor.value = withSequence(
+            withTiming(1, { duration: 200 }),
+            withTiming(0, { duration: 1000 })
+        );
     };
-    const onContinue = () => {
-        if (!goalDate) {
-            setError("Please select a target date.");
-            return;
+    const animatedStyle = useAnimatedStyle(() => {
+        return {
+            transform: [{ translateX: shake.value }],
+            borderColor: interpolateColor(
+                borderColor.value,
+                [0, 1],
+                ['rgba(255, 255, 255, 0.1)', '#CA877E']
+            )
+        };
+    });
+    const textStyle = useAnimatedStyle(() => {
+        return { opacity: warningOpacity.value };
+    });
+    const handleDateSelect = (day: any) => {
+        const wasClamped = setGoalDate(day.dateString);
+        if (wasClamped) {
+            triggerWarning();
+            setCalendarKey(prev => prev + 1);
         }
-        if (targetWeight === currentWeight) {
-            setError("Target weight must be different from current weight.");
-            return;
-        }
-        setError("");
-        handleContinue();
     };
     return (
         <ScrollView
+            scrollEnabled={scrollEnabled}
             contentContainerClassName="items-center pb-16 pt-8"
             className="w-[360px] self-center"
             showsVerticalScrollIndicator={false}
@@ -66,11 +84,10 @@ const CalculateWeight = () => {
                     <SegmentedControl
                         options={['kg', 'lb']}
                         selectedValue={weightUnit}
-                        onValueChange={toggleUnit}
+                        onValueChange={toggleWeightUnit}
                         width={200}
                     />
                 </Animated.View>
-                
                 <Animated.View entering={FadeInLeft.delay(400).duration(250)}>
                     <Text className="text-2xl font-nunito-700 text-white text-center mb-4">Current Weight</Text>
                     <CustomSlider
@@ -81,9 +98,10 @@ const CalculateWeight = () => {
                         onValueChange={setCurrentWeight}
                         trackColor="#C5E384"
                         unit={weightUnit}
+                        onSlidingStart={() => setScrollEnabled(false)}
+                        onSlidingComplete={() => setScrollEnabled(true)}
                     />
                 </Animated.View>
-                
                 <Animated.View entering={FadeInRight.delay(500).duration(250)}>
                     <Text className="text-2xl font-nunito-700 text-white text-center mb-4">Target Weight</Text>
                     <CustomSlider
@@ -94,18 +112,22 @@ const CalculateWeight = () => {
                         onValueChange={setTargetWeight}
                         trackColor="#CA877E"
                         unit={weightUnit}
+                        onSlidingStart={() => setScrollEnabled(false)}
+                        onSlidingComplete={() => setScrollEnabled(true)}
                     />
                 </Animated.View>
-
                 <Animated.View 
                     entering={FadeInUp.delay(600).duration(250)}
                     className="gap-4 w-full"
                 >
                     <Text className="text-2xl font-nunito-700 text-white text-center mb-0">Target Date</Text>
-                    <View className="rounded-[20px] overflow-hidden border border-white/10 bg-dark">
+                    <Animated.View style={[animatedStyle, { borderWidth: 1 }]} className="rounded-[20px] overflow-hidden bg-dark">
                         <Calendar
+                            key={`cal-${calendarKey}`}
+                            current={goalDate || today}
                             minDate={today}
-                            onDayPress={(day: any) => setGoalDate(day.dateString)}
+                            onDayPress={handleDateSelect}
+                            renderArrow={(direction) => direction === 'left' ? <CaretLeft color="#C5E384" size={24} weight="bold"/> : <CaretRight color="#C5E384" size={24} weight="bold"/>}
                             markedDates={{
                                 [today]: {
                                     customStyles: {
@@ -146,17 +168,19 @@ const CalculateWeight = () => {
                                 textDayHeaderFontSize: 14,
                             }}
                         />
-                    </View>
+                    </Animated.View>
+                    <Animated.Text style={textStyle} className="text-pink text-center font-nunito-600 text-sm -mt-2">
+                        This timeframe is too short. We adjusted it to a safe timeline.
+                    </Animated.Text>
                 </Animated.View>
-                
                 <Animated.View 
                     entering={FadeInUp.delay(700).duration(250)}
-                    className="gap-4 w-full"
+                    className="gap-4 w-full -mt-10"
                 >
                     <Button
                         className="rounded-[30px] mx-0 w-full py-5"
                         textClassName="text-xl"
-                        onPress={onContinue}
+                        onPress={handleContinue}
                         disabled={!goalDate}
                     >
                         Continue
