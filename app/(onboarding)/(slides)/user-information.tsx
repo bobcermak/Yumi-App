@@ -1,6 +1,7 @@
 import { Text, View, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Keyboard, TouchableWithoutFeedback } from "react-native";
 import { Button } from "@/components";
 import { useOnboarding } from "@/lib/hooks/useOnboarding";
+import { validateFullName, validateNickname } from "@/lib/helpers/onBoardingHelpers";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import Animated, { FadeInDown, FadeInUp, FadeInLeft, FadeInRight } from "react-native-reanimated";
@@ -11,9 +12,8 @@ const UserInformation = () => {
     //Hooks
     const [error, setError] = useState<string>("");
 
-    const hasFullName = fullName.trim().split(/\s+/).length >= 2;
-    const nicknameRegex = /^[a-z0-9_]{3,15}$/;
-    const isValidNickname = nicknameRegex.test(nickname);
+    const hasFullName = validateFullName(fullName);
+    const isValidNickname = validateNickname(nickname);
     const isValid = hasFullName && isValidNickname && !nicknameTaken && !isNicknameLoading;
 
     //Functions
@@ -74,7 +74,7 @@ const UserInformation = () => {
                             Setup Your Account
                         </Text>
                         <Text className="base-text text-center text-white/50 mt-3">
-                            Let's get to know you <Text className="font-nunito-700 text-yellow">better</Text> so we can personalize your nutrition plan and help you reach your health <Text className="font-nunito-700 text-pink">goals faster</Text>.
+                            Let&apos;s get to know you <Text className="font-nunito-700 text-yellow">better</Text> so we can personalize your nutrition plan and help you reach your health <Text className="font-nunito-700 text-pink">goals faster</Text>.
                         </Text>
                     </Animated.View>
                     <View className="gap-12">

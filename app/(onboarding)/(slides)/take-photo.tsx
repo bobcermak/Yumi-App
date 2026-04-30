@@ -1,10 +1,10 @@
-import { Button, PhotoUploadCard, ImageSourcePicker } from "@/components";
+import { Button, ImageSourcePicker, PhotoUploadCard } from "@/components";
 import { useOnboarding } from "@/lib/hooks/useOnboarding";
-import { User, X } from "phosphor-react-native";
-import { Image, ScrollView, Text, TouchableOpacity, View, Alert, Pressable } from "react-native";
-import Animated, { FadeIn, FadeInUp, FadeOut } from "react-native-reanimated";
-import * as ImagePicker from 'expo-image-picker';
+import { pickImageHelper } from "@/lib/helpers/imageHelpers";
+import { User } from "phosphor-react-native";
 import { useState } from "react";
+import { Image, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 
 const TakePhoto = () => {
     //Context
@@ -15,62 +15,27 @@ const TakePhoto = () => {
     const [isDeleteMode, setIsDeleteMode] = useState(false);
 
     //Functions
-    const requestPermissions = async (type: 'camera' | 'library') => {
-        if (type === 'camera') {
-            const { status } = await ImagePicker.requestCameraPermissionsAsync();
-            return status === 'granted';
-        } else {
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            return status === 'granted';
-        }
-    };
     const pickImage = async (type: 'camera' | 'library') => {
         if (!pickingFor) return;
         const { isProfile, index } = pickingFor;
         setPickerVisible(false);
-        const hasPermission = await requestPermissions(type);
-        if (!hasPermission) {
-            Alert.alert('Permission required', `We need access to your ${type === 'camera' ? 'camera' : 'gallery'} to upload photos.`);
-            return;
-        }
+        const countOtherFilled = progressPhotos.filter((p, idx) => p && idx !== index).length;
+        const limit = isProfile ? 1 : Math.max(1, 3 - countOtherFilled);
         setTimeout(async () => {
-            try {
-                let result;
-                if (type === 'camera') {
-                    result = await ImagePicker.launchCameraAsync({
-                        allowsEditing: true,
-                        aspect: isProfile ? [1, 1] : [3, 4],
-                        quality: 0.8,
-                    });
+            const optimizedUris = await pickImageHelper(type, { isProfile, limit });
+            if (optimizedUris && optimizedUris.length > 0) {
+                if (isProfile) {
+                    setPhotoUri(optimizedUris[0]);
                 } else {
-                    const countOtherFilled = progressPhotos.filter((p, idx) => p && idx !== index).length;
-                    const limit = isProfile ? 1 : Math.max(1, 3 - countOtherFilled);
-
-                    result = await ImagePicker.launchImageLibraryAsync({
-                        allowsMultipleSelection: !isProfile,
-                        selectionLimit: limit,
-                        allowsEditing: isProfile,
-                        aspect: isProfile ? [1, 1] : undefined,
-                        quality: 0.8,
+                    const newPhotos = [...progressPhotos];
+                    optimizedUris.forEach((uri, i) => {
+                        const targetIndex = (index !== undefined ? index + i : i);
+                        if (targetIndex < 3) {
+                            newPhotos[targetIndex] = uri;
+                        }
                     });
+                    setProgressPhotos(newPhotos);
                 }
-                if (!result.canceled && result.assets && result.assets.length > 0) {
-                    if (isProfile) {
-                        setPhotoUri(result.assets[0].uri);
-                    } else {
-                        const newPhotos = [...progressPhotos];
-                        result.assets.forEach((asset, i) => {
-                            const targetIndex = (index !== undefined ? index + i : i);
-                            if (targetIndex < 3) {
-                                newPhotos[targetIndex] = asset.uri;
-                            }
-                        });
-                        setProgressPhotos(newPhotos);
-                    }
-                }
-            } catch (error) {
-                console.error("ImagePicker Error:", error);
-                Alert.alert("Error", "Could not launch the photo picker.");
             }
         }, 100);
     };
@@ -85,8 +50,8 @@ const TakePhoto = () => {
         }
     };
     return (
-        <Pressable 
-            className="flex-1" 
+        <Pressable
+            className="flex-1"
             onPress={() => isDeleteMode && setIsDeleteMode(false)}
         >
             <ScrollView
@@ -101,7 +66,7 @@ const TakePhoto = () => {
                         Your Photos
                     </Text>
                     <Text className="base-text text-center text-white/50 mt-2">
-                        Let's capture your <Text className="font-nunito-700 text-yellow">starting point</Text>. These will help you track your amazing <Text className="font-nunito-700 text-pink">transformation</Text>.
+                        Let&apos;s capture your <Text className="font-nunito-700 text-yellow">starting point</Text>. These will help you track your amazing <Text className="font-nunito-700 text-pink">transformation</Text>.
                     </Text>
                 </Animated.View>
                 <Animated.View
@@ -171,7 +136,7 @@ const TakePhoto = () => {
                     </TouchableOpacity>
                 </Animated.View>
             </ScrollView>
-            <ImageSourcePicker 
+            <ImageSourcePicker
                 visible={pickerVisible}
                 onClose={() => setPickerVisible(false)}
                 onSelect={pickImage}

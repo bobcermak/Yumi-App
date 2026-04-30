@@ -14,7 +14,7 @@ const Login = () => {
         className="mt-6"
         onPress={() => router.replace('/(auth)/signup')}
       >
-        <Text className="text-gray-400 font-medium">Don't have an account? <Text className="text-indigo-400">Sign up</Text></Text>
+        <Text className="text-gray-400 font-medium">Don&apos;t have an account? <Text className="text-indigo-400">Sign up</Text></Text>
       </TouchableOpacity>
     </View>
   );

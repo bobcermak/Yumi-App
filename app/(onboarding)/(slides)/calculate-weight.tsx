@@ -1,6 +1,7 @@
 import { View, Text, ScrollView } from "react-native";
 import * as Haptics from "expo-haptics";
 import { useOnboarding } from "@/lib/hooks/useOnboarding";
+import { getTodayString } from "@/lib/helpers/dateHelpers";
 import { Calendar } from "react-native-calendars";
 import { Button, CustomSlider, SegmentedControl } from "@/components";
 import { useState } from "react";
@@ -21,7 +22,7 @@ const CalculateWeight = () => {
     //Calculations
     const minWeight = weightUnit === 'kg' ? 15 : 33;
     const maxWeight = weightUnit === 'kg' ? 200 : 440;
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayString();
     const triggerWarning = () => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         warningOpacity.value = withSequence(
@@ -75,7 +76,7 @@ const CalculateWeight = () => {
                 </Text>
                 <Text className="base-text text-center text-white/50 mt-3">
                     Every journey needs a destination. Set your{" "}
-                    <Text className="font-nunito-700 text-pink">target weight</Text> and choose a date on the calendar to see when you'll celebrate your first{" "}
+                    <Text className="font-nunito-700 text-pink">target weight</Text> and choose a date on the calendar to see when you&apos;ll celebrate your first{" "}
                     <Text className="font-nunito-700 text-yellow">success</Text>.
                 </Text>
             </Animated.View>

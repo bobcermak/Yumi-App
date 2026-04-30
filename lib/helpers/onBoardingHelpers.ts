@@ -1,6 +1,10 @@
 import { ACTIVITY_MULTIPLIERS } from "@/types/activityLevelsType";
 
 export const MIN_CALORIES = 600;
+export const NICKNAME_REGEX = /^[a-z0-9_]{3,15}$/;
+
+export const validateFullName = (name: string) => name.trim().split(/\s+/).length >= 2;
+export const validateNickname = (nickname: string) => NICKNAME_REGEX.test(nickname);
 
 export const generateSuggestions = (nickname: string): string[] => {
   if (!nickname.trim()) return [];
@@ -26,11 +30,9 @@ export const daysFromCalories = (calories: number, currentKg: number, targetKg: 
   const tdee = computeTDEE(currentKg, activityLevel);
   const totalKcal = computeTotalKcal(currentKg, targetKg);
   const dailyDelta = calories - tdee;
-
   if (Math.abs(totalKcal) < 0.1) return 0;
   if (Math.sign(totalKcal) !== Math.sign(dailyDelta)) return null;
   if (Math.abs(dailyDelta) < 10) return null;
-
   const days = Math.ceil(totalKcal / dailyDelta);
   return days >= 0 && days < 3650 ? days : null;
 };

@@ -7,6 +7,7 @@ import { PencilSimple, CaretLeft, CaretRight } from "phosphor-react-native";
 import { useState, useEffect, useMemo } from "react";
 import Animated, { FadeInDown, FadeInUp, ZoomIn, useSharedValue, useAnimatedStyle, withSequence, withTiming, interpolateColor, withDelay } from "react-native-reanimated";
 import { daysUntil } from "@/lib/helpers/onBoardingHelpers";
+import { getTodayString } from "@/lib/helpers/dateHelpers";
 
 const ResultsWeight = () => {
     //Context
@@ -25,7 +26,7 @@ const ResultsWeight = () => {
     useEffect(() => {
         if (!isEditing) setLocalInput(dailyCalories.toString());
     }, [dailyCalories, isEditing]);
-    const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
+    const todayStr = useMemo(() => getTodayString(), []);
     const calculatedDays = useMemo(() => {
         if (!goalDate) return 0;
         return daysUntil(goalDate);
@@ -99,7 +100,7 @@ const ResultsWeight = () => {
                         Daily Goal
                     </Text>
                     <Text className="base-text text-center text-white/50 mt-3">
-                        We've optimised your intake for{" "}
+                        We&apos;ve optimised your intake for{" "}
                         <Text className="font-nunito-700 text-yellow">maximum efficiency</Text>
                     </Text>
                 </Animated.View>
