@@ -85,11 +85,10 @@ const ResultsWeight = () => {
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : undefined}
-            className="flex-1"
+            className="flex-1 w-[360px] self-center h-full"
         >
             <ScrollView
-                contentContainerClassName="items-center pb-16 pt-8"
-                className="w-[360px] self-center"
+                contentContainerClassName="items-center pb-40 pt-8"
                 showsVerticalScrollIndicator={false}
             >
                 <Animated.View
@@ -232,19 +231,19 @@ const ResultsWeight = () => {
                         This timeframe is too short. We adjusted it to a safe timeline.
                     </Animated.Text>
                 </Animated.View>
-                <Animated.View
-                    entering={FadeInUp.delay(800).duration(250)}
-                    className="w-full mt-2"
-                >
-                    <Button
-                        className="rounded-[30px] mx-0 w-full py-5"
-                        textClassName="text-xl"
-                        onPress={handleContinue}
-                    >
-                        Looks Great!
-                    </Button>
-                </Animated.View>
             </ScrollView>
+            <Animated.View
+                entering={FadeInUp.delay(800).duration(250)}
+                className="w-full absolute bottom-16 left-0 right-0"
+            >
+                <Button
+                    className="rounded-[30px] mx-0 w-full py-5"
+                    textClassName="text-xl"
+                    onPress={handleContinue}
+                >
+                    Looks Great!
+                </Button>
+            </Animated.View>
         </KeyboardAvoidingView>
     );
 };

@@ -10,3 +10,6 @@ export { default as SegmentedControl } from "./buttons/SegmentedControl";
 export { default as Tick } from "./sliders/Tick";
 export { default as PhotoUploadCard } from "./onboarding/PhotoUploadCard";
 export { default as ImageSourcePicker } from "./onboarding/ImageSourcePicker";
+export { default as TextField } from "./inputs/TextField";
+export { default as Checkbox } from "./inputs/Checkbox";
+export { default as LoginIconButton } from "./buttons/LoginIconButton";

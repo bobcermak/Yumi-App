@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import React, { type FC } from "react";
 import { View, Text } from 'react-native';
 
 type TickProps = {

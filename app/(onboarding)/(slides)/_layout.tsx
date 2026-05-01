@@ -10,7 +10,7 @@ const SlidesLayout = () => {
     const { currentIndex, handleBack } = useOnboarding();
 
     return (
-        <View className="flex-1 mt-[88px] w-[380px] px-1 mx-auto">
+        <View className="flex-1 mt-[88px] w-[380px] px-1 mx-auto bg-black">
             <View className="flex-row items-center gap-4 pb-6">
                 <Icon onPress={handleBack}>
                     <ArrowLeft size={20} color="#1D1D1D"/>

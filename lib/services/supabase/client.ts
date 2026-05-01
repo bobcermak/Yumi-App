@@ -1,6 +1,7 @@
 import "react-native-url-polyfill/auto";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
+import { Database } from "@/types/database/supabase.types";
 import { Platform } from "react-native";
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
@@ -34,7 +35,7 @@ const storageAdapter = {
     return AsyncStorage.removeItem(key);
   },
 };
-const supabase = createClient(supabaseUrl || "", supabaseAnonKey || "", {
+const supabase = createClient<Database>(supabaseUrl || "", supabaseAnonKey || "", {
   auth: {
     storage: storageAdapter as any,
     autoRefreshToken: true,

@@ -8,10 +8,11 @@ type PhotoUploadCardProps = {
     onPress: () => void,
     onLongPress: () => void,
     onDelete: () => void,
+    onRetake: () => void,
     isDeleteMode: boolean,
     index: number
 }
-const PhotoUploadCard = ({ uri, onPress, onLongPress, onDelete, isDeleteMode, index }: PhotoUploadCardProps) => {
+const PhotoUploadCard = ({ uri, onPress, onLongPress, onDelete, onRetake, isDeleteMode, index }: PhotoUploadCardProps) => {
     //Hooks
     const rotation = useSharedValue(0);
 

@@ -1,5 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
+import { FlipType } from 'expo-image-manipulator';
 import { Alert } from 'react-native';
 
 export const requestImagePermissions = async (type: 'camera' | 'library') => {
@@ -11,13 +12,17 @@ export const requestImagePermissions = async (type: 'camera' | 'library') => {
     return status === 'granted';
   }
 };
-export const optimizeImage = async (uri: string, isProfile: boolean = false) => {
+export const optimizeImage = async (uri: string, isProfile: boolean = false, fromCamera: boolean = false) => {
   try {
+    const actions: ImageManipulator.Action[] = [
+      { resize: { width: 1200 } },
+    ];
+    if (fromCamera) {
+      actions.push({ flip: FlipType.Horizontal });
+    }
     const manipResult = await ImageManipulator.manipulateAsync(
       uri,
-      [
-        { resize: { width: 1200 } }
-      ],
+      actions,
       { 
         compress: 0.75,
         format: ImageManipulator.SaveFormat.WEBP
@@ -58,7 +63,7 @@ export const pickImageHelper = async (
   }
   if (!result.canceled && result.assets && result.assets.length > 0) {
     const optimizedUris = await Promise.all(
-      result.assets.map(async (asset) => await optimizeImage(asset.uri, options.isProfile))
+      result.assets.map(async (asset) => await optimizeImage(asset.uri, options.isProfile, type === 'camera'))
     );
     return optimizedUris;
   }

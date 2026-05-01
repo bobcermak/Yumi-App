@@ -61,137 +61,138 @@ const CalculateWeight = () => {
         }
     };
     return (
-        <ScrollView
-            scrollEnabled={scrollEnabled}
-            contentContainerClassName="items-center pb-16 pt-8"
-            className="w-[360px] self-center"
-            showsVerticalScrollIndicator={false}
-        >
-            <Animated.View 
-                entering={FadeInDown.delay(200).duration(250)}
-                className="items-center mb-12"
+        <View className="w-[360px] self-center h-full">
+            <ScrollView
+                scrollEnabled={scrollEnabled}
+                contentContainerClassName="items-center pb-40 pt-8"
+                showsVerticalScrollIndicator={false}
             >
-                <Text className="title text-center font-nunito-800 text-white text-4xl">
-                    Goal Settings
-                </Text>
-                <Text className="base-text text-center text-white/50 mt-3">
-                    Every journey needs a destination. Set your{" "}
-                    <Text className="font-nunito-700 text-pink">target weight</Text> and choose a date on the calendar to see when you&apos;ll celebrate your first{" "}
-                    <Text className="font-nunito-700 text-yellow">success</Text>.
-                </Text>
-            </Animated.View>
-            <View className="w-full gap-12">
-                <Animated.View entering={FadeIn.delay(300).duration(250)}>
-                    <SegmentedControl
-                        options={['kg', 'lb']}
-                        selectedValue={weightUnit}
-                        onValueChange={toggleWeightUnit}
-                        width={200}
-                    />
-                </Animated.View>
-                <Animated.View entering={FadeInLeft.delay(400).duration(250)}>
-                    <Text className="text-2xl font-nunito-700 text-white text-center mb-4">Current Weight</Text>
-                    <CustomSlider
-                        value={currentWeight}
-                        minimumValue={minWeight}
-                        maximumValue={maxWeight}
-                        step={1}
-                        onValueChange={setCurrentWeight}
-                        trackColor="#C5E384"
-                        unit={weightUnit}
-                        onSlidingStart={() => setScrollEnabled(false)}
-                        onSlidingComplete={() => setScrollEnabled(true)}
-                    />
-                </Animated.View>
-                <Animated.View entering={FadeInRight.delay(500).duration(250)}>
-                    <Text className="text-2xl font-nunito-700 text-white text-center mb-4">Target Weight</Text>
-                    <CustomSlider
-                        value={targetWeight}
-                        minimumValue={minWeight}
-                        maximumValue={maxWeight}
-                        step={1}
-                        onValueChange={setTargetWeight}
-                        trackColor="#CA877E"
-                        unit={weightUnit}
-                        onSlidingStart={() => setScrollEnabled(false)}
-                        onSlidingComplete={() => setScrollEnabled(true)}
-                    />
-                </Animated.View>
                 <Animated.View 
-                    entering={FadeInUp.delay(600).duration(250)}
-                    className="gap-4 w-full"
+                    entering={FadeInDown.delay(200).duration(250)}
+                    className="items-center mb-12"
                 >
-                    <Text className="text-2xl font-nunito-700 text-white text-center mb-0">Target Date</Text>
-                    <Animated.View style={[animatedStyle, { borderWidth: 1 }]} className="rounded-[20px] overflow-hidden bg-dark">
-                        <Calendar
-                            key={`cal-${calendarKey}`}
-                            current={goalDate || today}
-                            minDate={today}
-                            onDayPress={handleDateSelect}
-                            renderArrow={(direction) => direction === 'left' ? <CaretLeft color="#C5E384" size={24} weight="bold"/> : <CaretRight color="#C5E384" size={24} weight="bold"/>}
-                            markedDates={{
-                                [today]: {
-                                    customStyles: {
-                                        container: { backgroundColor: '#C5E384', borderRadius: 100 },
-                                        text: { color: '#000', fontFamily: 'Nunito-700' },
-                                    },
-                                },
-                                ...(goalDate && goalDate !== today ? {
-                                    [goalDate]: {
-                                        customStyles: {
-                                            container: { backgroundColor: '#CA877E', borderRadius: 100 },
-                                            text: { color: '#000', fontFamily: 'Nunito-700' },
-                                        }
-                                    }
-                                } : {}),
-                            }}
-                            markingType="custom"
-                            theme={{
-                                backgroundColor: 'transparent',
-                                calendarBackground: 'transparent',
-                                textSectionTitleColor: '#ffffff50',
-                                selectedDayBackgroundColor: '#CA877E',
-                                selectedDayTextColor: '#000000',
-                                todayTextColor: '#000',
-                                dayTextColor: '#ffffff',
-                                textDisabledColor: '#ffffff20',
-                                dotColor: '#CA877E',
-                                selectedDotColor: '#ffffff',
-                                arrowColor: '#C5E384',
-                                monthTextColor: '#ffffff',
-                                indicatorColor: '#C5E384',
-                                textDayFontFamily: 'Nunito-600',
-                                textMonthFontFamily: 'Nunito-800',
-                                textMonthFontWeight: '800',
-                                textDayHeaderFontFamily: 'Nunito-600',
-                                textDayFontSize: 16,
-                                textMonthFontSize: 20,
-                                textDayHeaderFontSize: 14,
-                            }}
+                    <Text className="title text-center font-nunito-800 text-white text-4xl">
+                        Goal Settings
+                    </Text>
+                    <Text className="base-text text-center text-white/50 mt-3">
+                        Every journey needs a destination. Set your{" "}
+                        <Text className="font-nunito-700 text-pink">target weight</Text> and choose a date on the calendar to see when you&apos;ll celebrate your first{" "}
+                        <Text className="font-nunito-700 text-yellow">success</Text>.
+                    </Text>
+                </Animated.View>
+                <View className="w-full gap-12">
+                    <Animated.View entering={FadeIn.delay(300).duration(250)}>
+                        <SegmentedControl
+                            options={['kg', 'lb']}
+                            selectedValue={weightUnit}
+                            onValueChange={toggleWeightUnit}
+                            width={200}
                         />
                     </Animated.View>
-                    <Animated.Text style={textStyle} className="text-pink text-center font-nunito-600 text-sm -mt-2">
-                        This timeframe is too short. We adjusted it to a safe timeline.
-                    </Animated.Text>
-                </Animated.View>
-                <Animated.View 
-                    entering={FadeInUp.delay(700).duration(250)}
-                    className="gap-4 w-full -mt-10"
-                >
-                    <Button
-                        className="rounded-[30px] mx-0 w-full py-5"
-                        textClassName="text-xl"
-                        onPress={handleContinue}
-                        disabled={!goalDate}
+                    <Animated.View entering={FadeInLeft.delay(400).duration(250)}>
+                        <Text className="text-2xl font-nunito-700 text-white text-center mb-4">Current Weight</Text>
+                        <CustomSlider
+                            value={currentWeight}
+                            minimumValue={minWeight}
+                            maximumValue={maxWeight}
+                            step={1}
+                            onValueChange={setCurrentWeight}
+                            trackColor="#C5E384"
+                            unit={weightUnit}
+                            onSlidingStart={() => setScrollEnabled(false)}
+                            onSlidingComplete={() => setScrollEnabled(true)}
+                        />
+                    </Animated.View>
+                    <Animated.View entering={FadeInRight.delay(500).duration(250)}>
+                        <Text className="text-2xl font-nunito-700 text-white text-center mb-4">Target Weight</Text>
+                        <CustomSlider
+                            value={targetWeight}
+                            minimumValue={minWeight}
+                            maximumValue={maxWeight}
+                            step={1}
+                            onValueChange={setTargetWeight}
+                            trackColor="#CA877E"
+                            unit={weightUnit}
+                            onSlidingStart={() => setScrollEnabled(false)}
+                            onSlidingComplete={() => setScrollEnabled(true)}
+                        />
+                    </Animated.View>
+                    <Animated.View 
+                        entering={FadeInUp.delay(600).duration(250)}
+                        className="gap-4 w-full"
                     >
-                        Continue
-                    </Button>
-                    {error ? (
-                        <Text className="text-pink text-center font-nunito-600 text-sm">{error}</Text>
-                    ) : null}
-                </Animated.View>
-            </View>
-        </ScrollView>
+                        <Text className="text-2xl font-nunito-700 text-white text-center mb-0">Target Date</Text>
+                        <Animated.View style={[animatedStyle, { borderWidth: 1 }]} className="rounded-[20px] overflow-hidden bg-dark">
+                            <Calendar
+                                key={`cal-${calendarKey}`}
+                                current={goalDate || today}
+                                minDate={today}
+                                onDayPress={handleDateSelect}
+                                renderArrow={(direction) => direction === 'left' ? <CaretLeft color="#C5E384" size={24} weight="bold"/> : <CaretRight color="#C5E384" size={24} weight="bold"/>}
+                                markedDates={{
+                                    [today]: {
+                                        customStyles: {
+                                            container: { backgroundColor: '#C5E384', borderRadius: 100 },
+                                            text: { color: '#000', fontFamily: 'Nunito-700' },
+                                        },
+                                    },
+                                    ...(goalDate && goalDate !== today ? {
+                                        [goalDate]: {
+                                            customStyles: {
+                                                container: { backgroundColor: '#CA877E', borderRadius: 100 },
+                                                text: { color: '#000', fontFamily: 'Nunito-700' },
+                                            }
+                                        }
+                                    } : {}),
+                                }}
+                                markingType="custom"
+                                theme={{
+                                    backgroundColor: 'transparent',
+                                    calendarBackground: 'transparent',
+                                    textSectionTitleColor: '#ffffff50',
+                                    selectedDayBackgroundColor: '#CA877E',
+                                    selectedDayTextColor: '#000000',
+                                    todayTextColor: '#000',
+                                    dayTextColor: '#ffffff',
+                                    textDisabledColor: '#ffffff20',
+                                    dotColor: '#CA877E',
+                                    selectedDotColor: '#ffffff',
+                                    arrowColor: '#C5E384',
+                                    monthTextColor: '#ffffff',
+                                    indicatorColor: '#C5E384',
+                                    textDayFontFamily: 'Nunito-600',
+                                    textMonthFontFamily: 'Nunito-800',
+                                    textMonthFontWeight: '800',
+                                    textDayHeaderFontFamily: 'Nunito-600',
+                                    textDayFontSize: 16,
+                                    textMonthFontSize: 20,
+                                    textDayHeaderFontSize: 14,
+                                }}
+                            />
+                        </Animated.View>
+                        <Animated.Text style={textStyle} className="text-pink text-center font-nunito-600 text-sm -mt-2">
+                            This timeframe is too short. We adjusted it to a safe timeline.
+                        </Animated.Text>
+                    </Animated.View>
+                </View>
+            </ScrollView>
+            <Animated.View 
+                entering={FadeInUp.delay(700).duration(250)}
+                className="gap-4 w-full absolute bottom-16 left-0 right-0"
+            >
+                <Button
+                    className="rounded-[30px] mx-0 w-full py-5"
+                    textClassName="text-xl"
+                    onPress={handleContinue}
+                    disabled={!goalDate}
+                >
+                    Continue
+                </Button>
+                {error ? (
+                    <Text className="text-pink text-center font-nunito-600 text-sm">{error}</Text>
+                ) : null}
+            </Animated.View>
+        </View>
     );
 };
 export default CalculateWeight;

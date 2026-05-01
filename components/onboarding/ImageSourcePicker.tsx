@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, Modal, Pressable } from "react-native";
 import { Camera, Image as ImageIcon } from "phosphor-react-native";
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from "react-native-reanimated";
