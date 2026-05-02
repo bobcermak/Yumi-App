@@ -1,20 +1,20 @@
 import { Text, View, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Keyboard, TouchableWithoutFeedback } from "react-native";
 import { Button } from "@/components";
 import { useOnboarding } from "@/lib/hooks/useOnboarding";
-import { validateFullName, validateNickname } from "@/lib/helpers/onBoardingHelpers";
+import { validateFullName, validateUsername } from "@/lib/helpers/onBoardingHelpers";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import Animated, { FadeInDown, FadeInUp, FadeInLeft, FadeInRight } from "react-native-reanimated";
 
 const UserInformation = () => {
     //Context
-    const { fullName, setFullName, nickname, setNickname, handleContinue, nicknameTaken, isNicknameLoading, suggestions } = useOnboarding();
+    const { fullName, setFullName, username, setUsername, handleContinue, usernameTaken, isUsernameLoading, suggestions } = useOnboarding();
     //Hooks
     const [error, setError] = useState<string>("");
-
+    
     const hasFullName = validateFullName(fullName);
-    const isValidNickname = validateNickname(nickname);
-    const isValid = hasFullName && isValidNickname && !nicknameTaken && !isNicknameLoading;
+    const isValidUsername = validateUsername(username);
+    const isValid = hasFullName && isValidUsername && !usernameTaken && !isUsernameLoading;
 
     //Functions
     const onContinue = () => {
@@ -26,31 +26,31 @@ const UserInformation = () => {
             setError("Please enter both first and last name.");
             return;
         }
-        if (!nickname.trim()) {
-            setError("Please choose a nickname.");
+        if (!username.trim()) {
+            setError("Please choose a username.");
             return;
         }
-        if (nickname.length < 3) {
-            setError("Nickname must be at least 3 characters long.");
+        if (username.length < 3) {
+            setError("Username must be at least 3 characters long.");
             return;
         }
-        if (nickname.length > 15) {
-            setError("Nickname cannot exceed 15 characters.");
+        if (username.length > 15) {
+            setError("Username cannot exceed 15 characters.");
             return;
         }
-        if (!isValidNickname) {
-            setError("Nickname can only contain lowercase letters, numbers, and underscores.");
+        if (!isValidUsername) {
+            setError("Username can only contain lowercase letters, numbers, and underscores.");
             return;
         }
-        if (nicknameTaken) {
-            setError("This nickname is already taken.");
+        if (usernameTaken) {
+            setError("This username is already taken.");
             return;
         }
         setError("");
         handleContinue();
     };
     const selectSuggestion = (suggested: string) => {
-        setNickname(suggested);
+        setUsername(suggested);
         setError("");
     };
     return (
@@ -121,7 +121,7 @@ const UserInformation = () => {
                                 entering={FadeInRight.delay(600).duration(250)}
                                 className="gap-1"
                             >
-                                <Text className="base-text text-lg text-white/80 ml-1">Nickname</Text>
+                                <Text className="base-text text-lg text-white/80 ml-1">Username</Text>
                                 <View
                                     style={{
                                         shadowColor: "#000000",
@@ -143,8 +143,8 @@ const UserInformation = () => {
                                     >
                                         <View className="flex-row items-center pr-4">
                                             <TextInput
-                                                value={nickname}
-                                                onChangeText={(text) => setNickname(text.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                                                value={username}
+                                                onChangeText={(text) => setUsername(text.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
                                                 placeholder="john_doe"
                                                 placeholderTextColor="rgba(255,255,255,0.5)"
                                                 className="bg-transparent px-4 py-4 text-white text-base flex-1 font-nunito-600"
@@ -152,18 +152,18 @@ const UserInformation = () => {
                                                 maxLength={15}
                                                 style={{ includeFontPadding: false }}
                                             />
-                                            {isNicknameLoading && <ActivityIndicator size="small" color="#C5E384"/>}
+                                            {isUsernameLoading && <ActivityIndicator size="small" color="#C5E384"/>}
                                         </View>
                                     </LinearGradient>
                                 </View>
-                                {nickname.length > 0 && !isValidNickname && (
+                                {username.length > 0 && !isValidUsername && (
                                     <Text className="text-pink font-nunito-600 text-sm ml-1 mt-1">
-                                        {nickname.length < 3 ? "At least 3 characters." : "Only lowercase, numbers & underscores."}
+                                        {username.length < 3 ? "At least 3 characters." : "Only lowercase, numbers & underscores."}
                                     </Text>
                                 )}
-                                {nicknameTaken && !isNicknameLoading && suggestions.length > 0 && (
+                                {usernameTaken && !isUsernameLoading && suggestions.length > 0 && (
                                     <View className="mt-3 gap-2">
-                                        <Text className="text-pink font-nunito-700 text-sm ml-2">This nickname is taken. Try one of these:</Text>
+                                        <Text className="text-pink font-nunito-700 text-sm ml-2">This username is taken. Try one of these:</Text>
                                         <View className="flex-row gap-1.5 flex-wrap ml-2">
                                             {suggestions.map((s) => (
                                                 <TouchableOpacity

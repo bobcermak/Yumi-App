@@ -1,15 +1,15 @@
 export type OnboardingContextType = {
     fullName: string;
     setFullName: (name: string) => void;
-    nickname: string;
-    setNickname: (nickname: string) => void;
+    username: string;
+    setUsername: (username: string) => void;
     photoUri: string | null;
     setPhotoUri: (uri: string | null) => void;
     progressPhotos: string[];
     setProgressPhotos: (photos: string[]) => void;
     deleteProgressPhoto: (index: number) => void;
-    nicknameTaken: boolean;
-    isNicknameLoading: boolean;
+    usernameTaken: boolean;
+    isUsernameLoading: boolean;
     suggestions: string[];
     currentWeight: number;
     setCurrentWeight: (weight: number) => void;
@@ -18,8 +18,8 @@ export type OnboardingContextType = {
     weightUnit: 'kg' | 'lb';
     setWeightUnit: (unit: 'kg' | 'lb') => void;
     toggleWeightUnit: (unit: 'kg' | 'lb') => void;
-    activityLevel: string;
-    setActivityLevel: (level: string) => void;
+    activityLevel: number;
+    setActivityLevel: (level: number) => void;
     dailyCalories: number;
     setDailyCalories: (calories: number) => void;
     goalDate: string | null;

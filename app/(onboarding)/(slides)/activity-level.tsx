@@ -33,8 +33,8 @@ const ActivityLevel = () => {
                         >
                             <ActivityCard
                                 level={level}
-                                isSelected={activityLevel === level.id}
-                                onPress={() => setActivityLevel(level.id)}
+                                isSelected={activityLevel === index}
+                                onPress={() => setActivityLevel(index)}
                             />
                         </Animated.View>
                     ))}

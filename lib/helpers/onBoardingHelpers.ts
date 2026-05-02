@@ -1,32 +1,35 @@
-import { ACTIVITY_MULTIPLIERS } from "@/types/activityLevelsType";
+import { ACTIVITY_MULTIPLIERS, ACTIVITY_LEVELS } from "@/types/activityLevelsType";
 
 export const MIN_CALORIES = 600;
-export const NICKNAME_REGEX = /^[a-z0-9_]{3,15}$/;
+export const USERNAME_REGEX = /^[a-z0-9_]{3,15}$/;
 
 export const validateFullName = (name: string) => name.trim().split(/\s+/).length >= 2;
-export const validateNickname = (nickname: string) => NICKNAME_REGEX.test(nickname);
+export const validateUsername = (username: string) => USERNAME_REGEX.test(username);
 
-export const generateSuggestions = (nickname: string): string[] => {
-  if (!nickname.trim()) return [];
-  const base = nickname.trim();
+export const generateSuggestions = (username: string): string[] => {
+  if (!username.trim()) return [];
+  const base = username.trim();
   const random1 = Math.floor(Math.random() * 99) + 1;
   const random2 = Math.floor(Math.random() * 999) + 100;
   return [`${base}_${random1}`, `${base}${random2}`, `${base}_yumi`];
 };
 export const toKg = (value: number, unit: "kg" | "lb") => unit === "lb" ? value * 0.453592 : value;
-export const computeTDEE = (weightKg: number, activityLevel: string) => {
+export const computeTDEE = (weightKg: number, activityLevel: string | number) => {
   const bmr = weightKg * 22;
-  return bmr * (ACTIVITY_MULTIPLIERS[activityLevel] ?? 1.55);
+  const levelId = typeof activityLevel === "number" 
+    ? ACTIVITY_LEVELS[activityLevel]?.id 
+    : activityLevel;
+  return bmr * (ACTIVITY_MULTIPLIERS[levelId] ?? 1.55);
 };
 export const computeTotalKcal = (currentKg: number, targetKg: number) => (targetKg - currentKg) * 7700;
-export const caloriesFromDays = (days: number, currentKg: number, targetKg: number, activityLevel: string) => {
+export const caloriesFromDays = (days: number, currentKg: number, targetKg: number, activityLevel: string | number) => {
   const tdee = computeTDEE(currentKg, activityLevel);
   const totalKcal = computeTotalKcal(currentKg, targetKg);
   if (days <= 0) return Math.round(tdee);
   const daily = tdee + totalKcal / days;
   return Math.max(Math.round(daily), MIN_CALORIES);
 };
-export const daysFromCalories = (calories: number, currentKg: number, targetKg: number, activityLevel: string) => {
+export const daysFromCalories = (calories: number, currentKg: number, targetKg: number, activityLevel: string | number) => {
   const tdee = computeTDEE(currentKg, activityLevel);
   const totalKcal = computeTotalKcal(currentKg, targetKg);
   const dailyDelta = calories - tdee;

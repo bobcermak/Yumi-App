@@ -42,7 +42,7 @@
 ## 💰 Byznys Model a Revenue Matematika
 
 Aplikace je navržena jako udržitelný **Freemium** model.
-* **Free:** 3 AI skeny denně + statické bannery. Extra skeny za zhlédnutí video reklamy (Rewarded Ads).
+* **Free:** 4 AI skeny denně. Extra skeny za zhlédnutí video reklamy (Rewarded Ads).
 * **Yumi+ (Premium):** 99 Kč/měsíc za neomezené skenování, hluboké AI analýzy a nulové reklamy.
 
 **Jednotková ekonomika (Unit Economics):**

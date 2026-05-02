@@ -1,33 +1,35 @@
+import { caloriesFromDays, computeTDEE, computeTotalKcal, dateStringFromToday, daysFromCalories, daysUntil, generateSuggestions, toKg } from "@/lib/helpers/onBoardingHelpers";
+import useFetch from "@/lib/hooks/useFetch";
+import { checkUsernameIfExists } from "@/lib/services/supabase/queries/setupUserAccount";
 import { OnboardingContextType } from "@/types/onboardingContextType";
 import { usePathname, useRouter } from "expo-router";
 import { createContext, useCallback, useEffect, useMemo, useState, type FC, type ReactNode } from "react";
-import useFetch from "@/lib/hooks/useFetch";
-import { checkNicknameIfExists } from "@/lib/services/supabase/queries/setupUserAccount";
-import { generateSuggestions, toKg, caloriesFromDays, daysFromCalories, dateStringFromToday, daysUntil, computeTDEE, computeTotalKcal } from "@/lib/helpers/onBoardingHelpers";
 
 const SLIDES = ["user-information", "calculate-weight", "activity-level", "results-weight", "take-photo"];
 
 export const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
 
-type OnboardingProviderProps = { children: ReactNode };
+type OnboardingProviderProps = {
+  children: ReactNode
+};
 const OnboardingProvider: FC<OnboardingProviderProps> = ({ children }) => {
   //Hooks
   const router = useRouter();
   const pathname = usePathname();
-  const [fullName, setFullName] = useState("");
-  const [nickname, setNickname] = useState("");
+  const [fullName, setFullName] = useState<string>("");
+  const [username, setUsername] = useState<string>("");
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [progressPhotos, setProgressPhotos] = useState<string[]>(["", "", ""]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [currentWeight, setCurrentWeight] = useState(70);
-  const [targetWeight, setTargetWeight] = useState(65);
+  const [currentWeight, setCurrentWeight] = useState<number>(70);
+  const [targetWeight, setTargetWeight] = useState<number>(65);
   const [weightUnit, setWeightUnit] = useState<"kg" | "lb">("kg");
-  const [activityLevel, setActivityLevel] = useState("moderate");
-  const [dailyCalories, setDailyCaloriesRaw] = useState(2000);
+  const [activityLevel, setActivityLevel] = useState<number>(2);
+  const [dailyCalories, setDailyCaloriesRaw] = useState<number>(2000);
   const [goalDate, setGoalDateRaw] = useState<string | null>(null);
   //Fetch
-  const fetchNicknameStatus = useCallback(() => checkNicknameIfExists(nickname), [nickname]);
-  const { data: nicknameTakenResult, loading: isNicknameLoading, refetch: refetchNickname, reset: resetNicknameStatus } = useFetch(fetchNicknameStatus, false);
+  const fetchUsernameStatus = useCallback(() => checkUsernameIfExists(username), [username]);
+  const { data: usernameTakenResult, loading: isUsernameLoading, refetch: refetchUsername, reset: resetUsernameStatus } = useFetch(fetchUsernameStatus, false);
 
   //Calculations
   const currentKg = useMemo(() => toKg(currentWeight, weightUnit), [currentWeight, weightUnit]);
@@ -114,20 +116,22 @@ const OnboardingProvider: FC<OnboardingProviderProps> = ({ children }) => {
       }
     }
   }, [pathname, currentKg, targetKg, activityLevel]);
-  const nicknameTaken = !!nicknameTakenResult;
+  const usernameTaken = !!usernameTakenResult;
   useEffect(() => {
-    if (nickname.trim().length >= 2) {
-      const t = setTimeout(refetchNickname, 500);
+    if (username.trim().length >= 2) {
+      resetUsernameStatus();
+      setSuggestions([]);
+      const t = setTimeout(refetchUsername, 300);
       return () => clearTimeout(t);
     }
-    resetNicknameStatus();
+    resetUsernameStatus();
     setSuggestions([]);
-  }, [nickname, refetchNickname, resetNicknameStatus]);
+  }, [username, refetchUsername, resetUsernameStatus]);
   useEffect(() => {
-    if (!isNicknameLoading) {
-      setSuggestions(nicknameTakenResult ? generateSuggestions(nickname.trim()) : []);
+    if (!isUsernameLoading) {
+      setSuggestions(usernameTakenResult ? generateSuggestions(username.trim()) : []);
     }
-  }, [nicknameTakenResult, isNicknameLoading, nickname]);
+  }, [usernameTakenResult, isUsernameLoading, username]);
   const currentIndex = SLIDES.findIndex((s) => pathname.includes(s));
   const totalSteps = SLIDES.length;
   const handleContinue = useCallback(() => {
@@ -142,10 +146,10 @@ const OnboardingProvider: FC<OnboardingProviderProps> = ({ children }) => {
   }, [router]);
   const value = useMemo<OnboardingContextType>(() => ({
     fullName, setFullName,
-    nickname, setNickname,
+    username, setUsername,
     photoUri, setPhotoUri,
     progressPhotos, setProgressPhotos, deleteProgressPhoto,
-    nicknameTaken, isNicknameLoading, suggestions,
+    usernameTaken, isUsernameLoading, suggestions,
     currentWeight, setCurrentWeight,
     targetWeight, setTargetWeight,
     weightUnit, setWeightUnit, toggleWeightUnit,
@@ -155,7 +159,7 @@ const OnboardingProvider: FC<OnboardingProviderProps> = ({ children }) => {
     currentIndex, totalSteps,
     handleContinue, handleBack, handleFinish,
   }), [
-    fullName, nickname, photoUri, progressPhotos, deleteProgressPhoto, nicknameTaken, isNicknameLoading, suggestions,
+    fullName, username, photoUri, progressPhotos, deleteProgressPhoto, usernameTaken, isUsernameLoading, suggestions,
     currentWeight, targetWeight, weightUnit, toggleWeightUnit, activityLevel, dailyCalories, setDailyCalories,
     goalDate, setGoalDate, currentIndex, totalSteps, handleContinue, handleBack, handleFinish
   ]);

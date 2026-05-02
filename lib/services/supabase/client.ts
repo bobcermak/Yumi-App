@@ -1,4 +1,3 @@
-import "react-native-url-polyfill/auto";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database/supabase.types";
@@ -8,6 +7,8 @@ const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn("Supabase URL or Anon Key is missing. Check your .env.local file.");
+} else {
+  console.log("[Supabase] Client initialized with URL:", supabaseUrl);
 }
 const storageAdapter = {
   getItem: (key: string) => {
