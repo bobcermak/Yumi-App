@@ -1,8 +1,8 @@
 import { House, MagnifyingGlass, Plus, Users, List, IconProps } from "phosphor-react-native";
 import { type FC, useEffect, useRef } from "react";
-import { Animated } from "react-native";
+import { Animated, View } from "react-native";
 
-type Icon = React.FC<IconProps>;
+type Icon = FC<IconProps>;
 const ICONS: Record<string, Icon> = {
   index: House,
   search: MagnifyingGlass,
@@ -11,26 +11,46 @@ const ICONS: Record<string, Icon> = {
   profile: List,
 };
 const BOLD_ICONS = ['add-food', 'profile'];
-const AnimatedTabIcon: FC<{ route: string; focused: boolean }> = ({ route, focused }) => {
+type AnimatedTabIconProps = {
+  route: string,
+  focused: boolean,
+  isNotification?: boolean
+}
+const AnimatedTabIcon: FC<AnimatedTabIconProps> = ({ route, focused, isNotification = false }) => {
   //Hooks
+  const scale = useRef(new Animated.Value(focused ? 1.15 : 1)).current;
   const opacity = useRef(new Animated.Value(focused ? 1 : 0.5)).current;
 
   const IconComponent = ICONS[route];
   const isBold = BOLD_ICONS.includes(route);
+
   useEffect(() => {
-    Animated.timing(opacity, {
-      toValue: focused ? 1 : 0.5,
-      duration: 250,
-      useNativeDriver: true,
-    }).start();
+    Animated.parallel([
+      Animated.spring(scale, {
+        toValue: focused ? 1.15 : 1,
+        useNativeDriver: true,
+        damping: 15,
+        stiffness: 150,
+      }),
+      Animated.timing(opacity, {
+        toValue: focused ? 1 : 0.5,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start();
   }, [focused]);
   return (
-    <Animated.View style={{ opacity }}>
-      <IconComponent
-        size={28}
-        color="#FFFFFF"
-        weight={focused ? (isBold ? "bold" : "fill") : "regular"}
-      />
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Animated.View style={{ opacity }}>
+        <IconComponent
+          size={28}
+          color="#FFFFFF"
+          weight={focused ? (isBold ? "bold" : "fill") : "regular"}
+        />
+      </Animated.View>
+      {isNotification && (
+        <View className="absolute top-full w-[6px] h-[6px] rounded-full bg-[#CA877E] self-center mt-0.5"/>
+      )}
     </Animated.View>
   );
 };

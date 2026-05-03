@@ -1,11 +1,11 @@
 import { completeOnboarding } from "@/lib/helpers/authHelpers";
 import supabase from "@/lib/services/supabase/client";
-import { getProfile } from "@/lib/services/supabase/queries/setupUserAccount";
+import { getProfile, checkUsernameIfExists } from "@/lib/services/supabase/queries/setupUserAccount";
 import { AuthContextType } from "@/types/authContextType";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Session } from "@supabase/supabase-js";
 import { useRouter, useSegments } from "expo-router";
-import { createContext, useEffect, useState, type FC } from "react";
+import React, { createContext, useEffect, useState, type FC } from "react";
 
 type AuthProviderProps = {
   children: React.ReactNode
@@ -48,7 +48,11 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
       } catch (e) {
         console.error("Auth initialization error:", e);
       } finally {
-        if (mounted) setIsReady(true);
+        if (mounted) {
+          setTimeout(() => {
+            if (mounted) setIsReady(true);
+          }, 200);
+        }
       }
     };
     loadState();
@@ -61,7 +65,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     };
   }, []);
   useEffect(() => {
-    if (!isReady || !segments || !router) return;
+    if (!isReady || !segments || !router || isLoading) return;
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboardingGroup = segments[0] === '(onboarding)';
     const inTabsGroup = segments[0] === '(tabs)';
@@ -69,16 +73,14 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
       if (!inTabsGroup) {
         router.replace('/(tabs)');
       }
-    } else if (hasOnboarded) {
-      if (!inAuthGroup) {
-        router.replace('/(auth)/login');
-      }
     } else {
-      if (!inOnboardingGroup && !inAuthGroup) {
-        router.replace('/(onboarding)');
+      if (inTabsGroup) {
+        router.replace(hasOnboarded ? '/(auth)/login' : '/(onboarding)');
+      } else if (!inAuthGroup && !inOnboardingGroup) {
+        router.replace(hasOnboarded ? '/(auth)/login' : '/(onboarding)');
       }
     }
-  }, [isReady, session, hasOnboarded, segments]);
+  }, [isReady, session, hasOnboarded, segments, isLoading]);
   const signUp = async (onboardingData?: {
     fullName: string;
     username: string;
@@ -97,11 +99,18 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
       const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
       if (!emailRegex.test(email)) return { error: { message: "Please enter a valid email address." } };
       if (!passwordRegex.test(password)) return { error: { message: "Password must be at least 8 chars long with a letter and a number." } };
+      if (onboardingData) {
+        const isTaken = await checkUsernameIfExists(onboardingData.username);
+        if (isTaken) return { error: { message: "This username is already taken. Please choose a different one." } };
+      }
       const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
-      if (authError || !authData.user) return { error: authError };
+      if (authError || !authData.user) return { error: authError ?? { message: "Sign up failed." } };
       if (onboardingData) {
         const { error: onboardingError } = await completeOnboarding(authData.user.id, onboardingData);
-        if (onboardingError) return { error: onboardingError };
+        if (onboardingError) {
+          await supabase.auth.signOut();
+          return { error: onboardingError };
+        }
       }
       setHasOnboarded(true);
       await AsyncStorage.setItem("v1_onboarding_done", "true");

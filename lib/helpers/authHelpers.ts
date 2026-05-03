@@ -23,7 +23,7 @@ export const completeOnboarding = async (userId: string, onboardingData: {
   }
   const profileData: ProfileInsert = {
     id: userId,
-    username: onboardingData.username,
+    username: onboardingData.username.trim(),
     full_name: onboardingData.fullName,
     avatar_url: avatarUrl,
     current_weight: onboardingData.currentWeight,
@@ -36,6 +36,9 @@ export const completeOnboarding = async (userId: string, onboardingData: {
   const { error: profileError } = await createProfile(profileData);
   if (profileError) {
     console.error("[Onboarding] DATABASE ERROR:", profileError);
+    if (profileError.code === "23505") {
+      return { error: { message: "This username is already taken. Please choose a different one." } };
+    }
     return { error: { message: `Database error: ${profileError.message}` } };
   }
   const validProgressPhotos = onboardingData.progressPhotos.filter((p: string) => p !== "");

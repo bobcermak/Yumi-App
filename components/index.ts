@@ -1,4 +1,4 @@
-export { default as TabIcon } from "./navigation/TabIcon";
+export { default as Navigation } from "./navigation/Navigation";
 export { default as AnimatedTabIcon } from "./navigation/AnimatedTabIcon";
 export { default as Button } from "./buttons/Button";
 export { default as FloatingImage } from "./onboarding/FloatingImage";
@@ -13,3 +13,5 @@ export { default as ImageSourcePicker } from "./onboarding/ImageSourcePicker";
 export { default as TextField } from "./inputs/TextField";
 export { default as Checkbox } from "./inputs/Checkbox";
 export { default as LoginIconButton } from "./buttons/LoginIconButton";
+export { default as AnimatedBackground } from "./animations/AnimatedBackground";
+export { default as DashboardSheet } from "./navigation/DashboardSheet";

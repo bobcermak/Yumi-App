@@ -1,10 +1,11 @@
-import { View, Text } from "react-native";
+import { Text, View } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
 
 const Index = () => {
     return (
-        <View className="mt-[88px]">
+        <ScrollView className="mt-[88px]">
             <Text className="text-white">Index</Text>
-        </View>
+        </ScrollView>
     )
 }
 export default Index;

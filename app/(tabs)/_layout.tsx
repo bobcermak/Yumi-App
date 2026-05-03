@@ -1,10 +1,10 @@
 import { Tabs } from "expo-router";
-import { TabIcon } from "@/components";
+import { Navigation } from "@/components";
 
 const _Layout = () => {
   return (
     <Tabs
-      tabBar={(props) => <TabIcon {...props} />}
+      tabBar={(props) => <Navigation {...props} />}
       screenOptions={{
         headerShown: false,
       }}

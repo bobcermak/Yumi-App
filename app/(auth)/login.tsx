@@ -9,7 +9,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 const Login = () => {
   //Hooks
   const router = useRouter();
-  const { email, setEmail, password, setPassword, signIn, signInWithGoogle, signInWithApple, isLoading } = useAuth();
+  const { email, setEmail, password, setPassword, signIn, signInWithGoogle, signInWithApple, setHasOnboarded, isLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
   //Functions
@@ -39,8 +39,14 @@ const Login = () => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       className="flex-1"
     >
-      <Icon className="ml-1" onPress={() => router.push("/(onboarding)")}>
-        <ArrowLeft size={20} color="#1D1D1D" />
+      <Icon className="ml-1" onPress={() => {
+        Keyboard.dismiss();
+        setHasOnboarded(false);
+        setTimeout(() => {
+          router.replace("/(onboarding)");
+        }, 50);
+      }}>
+        <ArrowLeft size={20} color="#1D1D1D"/>
       </Icon>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View className="w-[360px] mt-6 mx-auto flex-1 justify-center">

@@ -64,19 +64,14 @@ const OnboardingProvider: FC<OnboardingProviderProps> = ({ children }) => {
   const setDailyCalories = useCallback((calories: number) => {
     const tdee = computeTDEE(currentKg, activityLevel);
     const totalKcal = computeTotalKcal(currentKg, targetKg);
-    let cal = calories;
-    const isLosing = totalKcal < 0;
-    const isGaining = totalKcal > 0;
-    if (isLosing && cal >= tdee) cal = tdee - 10;
-    else if (isGaining && cal <= tdee) cal = tdee + 10;
-    cal = Math.max(600, Math.min(8000, cal));
-    let days = daysFromCalories(cal, currentKg, targetKg, activityLevel);
-    if (days === null) {
-      days = 3649;
+    let days = daysFromCalories(calories, currentKg, targetKg, activityLevel);
+    let finalCal = calories;
+    if (days === null || days > 730) {
+      days = 730;
       const exactRaw = tdee + totalKcal / days;
-      cal = Math.max(600, Math.min(8000, exactRaw));
+      finalCal = Math.round(exactRaw);
     }
-    setDailyCaloriesRaw(Math.round(cal));
+    setDailyCaloriesRaw(Math.max(600, Math.min(8000, finalCal)));
     setGoalDateRaw(dateStringFromToday(days));
   }, [currentKg, targetKg, activityLevel]);
   const setGoalDate = useCallback((date: string | null) => {

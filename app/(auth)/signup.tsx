@@ -97,7 +97,14 @@ const Signup = () => {
               {isLoading ? "Signing Up..." : "Sign Up"}
             </Button>
             {error && (
-              <Text className="text-pink text-center font-nunito-600 mt-4">{error}</Text>
+              <View className="mt-4 items-center">
+                <Text className="text-pink text-center font-nunito-600">{error}</Text>
+                {error.toLowerCase().includes("username") && (
+                  <TouchableOpacity onPress={() => router.push("/(onboarding)/(slides)/user-information" as never)} className="mt-2">
+                    <Text className="text-yellow font-nunito-700 underline">Change Username</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             )}
           </Animated.View>
           <Animated.View
