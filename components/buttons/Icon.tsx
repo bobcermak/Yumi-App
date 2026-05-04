@@ -5,19 +5,23 @@ import * as Haptics from "expo-haptics";
 type IconProps = {
     onPress: () => void,
     className?: string,
+    shadowColor?: string,
     children: React.ReactNode
 }
-const Icon: FC<IconProps> = ({ onPress, className, children }) => {
-    const defaultClassName = "w-10 h-10 bg-yellow rounded-full items-center justify-center";
+const Icon: FC<IconProps> = ({ onPress, className, shadowColor = "#C5E384", children }) => {
+    const hasBgColor = className?.includes('bg-');
+    const hasWidth = className?.includes('w-[') || className?.includes('w-');
+    const hasHeight = className?.includes('h-[') || className?.includes('h-');
+    const finalClassName = `${hasWidth ? '' : 'w-10'} ${hasHeight ? '' : 'h-10'} ${hasBgColor ? '' : 'bg-yellow'} rounded-full items-center justify-center ${className || ''}`;
     //Functions
     const handlePress = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress();
     };
     return (
-        <TouchableOpacity onPress={handlePress} className={`${defaultClassName} ${className}`} 
+        <TouchableOpacity onPress={handlePress} className={finalClassName.trim()} 
         style={{
-            shadowColor: "#C5E384",
+            shadowColor: shadowColor,
             shadowOffset: { width: 0, height: 1 },
             shadowOpacity: 0.25,
             shadowRadius: 4,

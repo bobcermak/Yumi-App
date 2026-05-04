@@ -15,3 +15,5 @@ export { default as Checkbox } from "./inputs/Checkbox";
 export { default as LoginIconButton } from "./buttons/LoginIconButton";
 export { default as AnimatedBackground } from "./animations/AnimatedBackground";
 export { default as DashboardSheet } from "./navigation/DashboardSheet";
+export { default as MealCard } from "./navigation/meals/MealCard";
+export { default as MealIngredient } from "./navigation/meals/MealIngredient";
