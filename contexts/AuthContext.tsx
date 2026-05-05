@@ -15,6 +15,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   //Hooks
   const [isReady, setIsReady] = useState<boolean>(false);
   const [session, setSession] = useState<Session | null>(null);
+  const [userProfile, setUserProfile] = useState<Profile | null>(null);
   const [hasOnboarded, setHasOnboarded] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [email, setEmail] = useState<string>("");
@@ -34,10 +35,12 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
             console.warn("[Auth] Profile not found for session, signing out...");
             await supabase.auth.signOut();
             setSession(null);
+            setUserProfile(null);
             await AsyncStorage.removeItem("v1_onboarding_done");
             setHasOnboarded(false);
           } else {
             setSession(session);
+            setUserProfile(profile);
             const onboarded = await AsyncStorage.getItem("v1_onboarding_done");
             setHasOnboarded(onboarded === "true");
           }
@@ -56,8 +59,16 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
       }
     };
     loadState();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, authSession) => {
-      if (mounted) setSession(authSession);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, authSession) => {
+      if (mounted) {
+        setSession(authSession);
+        if (authSession) {
+          const { data: profile } = await getProfile(authSession.user.id);
+          setUserProfile(profile);
+        } else {
+          setUserProfile(null);
+        }
+      }
     });
     return () => {
       mounted = false;
@@ -220,6 +231,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   */
   const value = {
     session,
+    userProfile,
     isReady,
     isLoading,
     hasOnboarded,

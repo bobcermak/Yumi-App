@@ -2,6 +2,7 @@ import { Session } from "@supabase/supabase-js";
 
 export type AuthContextType = {
     session: Session | null;
+    userProfile: Profile | null;
     isReady: boolean;
     isLoading: boolean;
     hasOnboarded: boolean;

@@ -4,7 +4,7 @@ import { Navigation } from "@/components";
 const _Layout = () => {
   return (
     <Tabs
-      tabBar={(props) => <Navigation {...props} />}
+      tabBar={(props) => <Navigation {...props}/>}
       screenOptions={{
         headerShown: false,
       }}

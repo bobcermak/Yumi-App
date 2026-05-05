@@ -23,7 +23,64 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
     return "Dinner";
   }, []);
   const [expandedMeal, setExpandedMeal] = useState<string | null>(currentMeal);
-
+  const [meals, setMeals] = useState<{title: string, icon: React.ReactNode, ingredients: {id: string | number, amount?: string, title: string, baseCal?: number, cal: number}[]}[]>([
+    {
+      title: "Breakfast",
+      icon: <EggCrack size={20} color="#84C754" weight="regular" />,
+      ingredients: []
+    },
+    {
+      title: "Morning Snack",
+      icon: <Cookie size={20} color="#84C754" weight="regular" />,
+      ingredients: [
+        { id: 1, title: 'Cookie', cal: 100 },
+        { id: 2, amount: '2x', title: 'Avocado', baseCal: 60.5, cal: 121 }
+      ]
+    },
+    {
+      title: "Lunch",
+      icon: <CookingPot size={20} color="#84C754" weight="regular" />,
+      ingredients: []
+    },
+    {
+      title: "Afternoon Snack",
+      icon: <Orange size={20} color="#84C754" weight="regular" />,
+      ingredients: []
+    },
+    {
+      title: "Dinner",
+      icon: <Pizza size={20} color="#84C754" weight="regular" />,
+      ingredients: [
+        { id: 1, title: 'Cookie', cal: 100 },
+        { id: 2, amount: '2x', title: 'Avocado', baseCal: 60.5, cal: 121 }
+      ]
+    }
+  ]);
+  //Functions
+  const updateIngredientCal = (mealTitle: string, ingredientId: string | number, newCal: number) => {
+    setMeals(prevMeals => prevMeals.map(meal => {
+      if (meal.title === mealTitle) {
+        return {
+          ...meal,
+          ingredients: meal.ingredients.map(ing => 
+            ing.id === ingredientId ? { ...ing, cal: newCal } : ing
+          )
+        };
+      }
+      return meal;
+    }));
+  };
+  const deleteIngredient = (mealTitle: string, ingredientId: string | number) => {
+    setMeals(prevMeals => prevMeals.map(meal => {
+      if (meal.title === mealTitle) {
+        return {
+          ...meal,
+          ingredients: meal.ingredients.filter(ing => ing.id !== ingredientId)
+        };
+      }
+      return meal;
+    }));
+  };
   useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
       setKeyboardVisible(true);
@@ -80,54 +137,23 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
             </Icon>
           </View>
           <View className="mt-1 gap-4 pb-10">
-            <MealCard
-              icon={<EggCrack size={20} color="#84C754" weight="regular" />}
-              title="Breakfast"
-              allCal={0}
-              isDayTime={currentMeal === "Breakfast"}
-              expanded={expandedMeal === "Breakfast"}
-              onToggle={() => setExpandedMeal(expandedMeal === "Breakfast" ? null : "Breakfast")}
-            />
-            <MealCard
-              icon={<Cookie size={20} color="#84C754" weight="regular" />}
-              title="Morning Snack"
-              allCal={221}
-              isDayTime={currentMeal === "Morning Snack"}
-              expanded={expandedMeal === "Morning Snack"}
-              onToggle={() => setExpandedMeal(expandedMeal === "Morning Snack" ? null : "Morning Snack")}
-              ingredients={[
-                { id: 1, title: 'Cookie', cal: 100 },
-                { id: 2, amount: '2x', title: 'Avocado', baseCal: 60.5, cal: 121 }
-              ]}
-            />
-            <MealCard
-              icon={<CookingPot size={20} color="#84C754" weight="regular" />}
-              title="Lunch"
-              allCal={0}
-              isDayTime={currentMeal === "Lunch"}
-              expanded={expandedMeal === "Lunch"}
-              onToggle={() => setExpandedMeal(expandedMeal === "Lunch" ? null : "Lunch")}
-            />
-            <MealCard
-              icon={<Orange size={20} color="#84C754" weight="regular" />}
-              title="Afternoon Snack"
-              allCal={0}
-              isDayTime={currentMeal === "Afternoon Snack"}
-              expanded={expandedMeal === "Afternoon Snack"}
-              onToggle={() => setExpandedMeal(expandedMeal === "Afternoon Snack" ? null : "Afternoon Snack")}
-            />
-            <MealCard
-              icon={<Pizza size={20} color="#84C754" weight="regular" />}
-              title="Dinner"
-              allCal={221}
-              isDayTime={currentMeal === "Dinner"}
-              expanded={expandedMeal === "Dinner"}
-              onToggle={() => setExpandedMeal(expandedMeal === "Dinner" ? null : "Dinner")}
-              ingredients={[
-                { id: 1, title: 'Cookie', cal: 100 },
-                { id: 2, amount: '2x', title: 'Avocado', baseCal: 60.5, cal: 121 }
-              ]}
-            />
+            {meals.map((meal) => {
+              const totalCal = meal.ingredients.reduce((sum, ing) => sum + (ing.cal || 0), 0);
+              return (
+                <MealCard
+                  key={meal.title}
+                  icon={meal.icon}
+                  title={meal.title}
+                  allCal={totalCal}
+                  isDayTime={currentMeal === meal.title}
+                  expanded={expandedMeal === meal.title}
+                  onToggle={() => setExpandedMeal(expandedMeal === meal.title ? null : meal.title)}
+                  ingredients={meal.ingredients}
+                  onIngredientEdit={(id, newCal) => updateIngredientCal(meal.title, id, newCal)}
+                  onIngredientDelete={(id) => deleteIngredient(meal.title, id)}
+                />
+              );
+            })}
           </View>
         </View>
       </BottomSheetScrollView>

@@ -17,3 +17,5 @@ export { default as AnimatedBackground } from "./animations/AnimatedBackground";
 export { default as DashboardSheet } from "./navigation/DashboardSheet";
 export { default as MealCard } from "./navigation/meals/MealCard";
 export { default as MealIngredient } from "./navigation/meals/MealIngredient";
+export { default as HomeHeader } from "./headers/HomeHeader";
+export { default as ProfilePicture } from "./headers/ProfilePicture";

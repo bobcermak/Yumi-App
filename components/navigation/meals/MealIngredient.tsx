@@ -1,6 +1,6 @@
 import * as Haptics from "expo-haptics";
 import { PencilSimple, Trash, Check } from "phosphor-react-native";
-import React, { FC, useState, useMemo } from "react";
+import { type FC, useState, useMemo, useEffect } from "react";
 import { Text, TouchableOpacity, View, TextInput } from "react-native";
 
 export type MealIngredientProps = {
@@ -9,7 +9,7 @@ export type MealIngredientProps = {
     baseCal?: number;
     amount?: string;
     onDelete?: () => void;
-    onEdit?: () => void;
+    onEdit?: (newCal: number) => void;
 }
 const MealIngredient: FC<MealIngredientProps> = ({ title, cal, baseCal, amount, onDelete, onEdit }) => {
     //Hooks
@@ -32,14 +32,20 @@ const MealIngredient: FC<MealIngredientProps> = ({ title, cal, baseCal, amount, 
     const handleEditToggle = () => {
         Haptics.selectionAsync();
         if (isEditing) {
+            const newCal = Number(editedCal) || 0;
             if (editedCal.trim() === '') {
                 setEditedCal(String(cal));
+            } else if (newCal !== cal) {
+                onEdit?.(newCal);
             }
             setIsEditing(false);
         } else {
             setIsEditing(true);
         }
     };
+    useEffect(() => {
+        setEditedCal(String(cal));
+    }, [cal]);
     return (
         <View className="flex-row items-center justify-between py-3">
             <View className="flex-row items-center gap-2 flex-1 mr-4">
@@ -75,9 +81,9 @@ const MealIngredient: FC<MealIngredientProps> = ({ title, cal, baseCal, amount, 
                 </View>
                 <TouchableOpacity onPress={handleEditToggle} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                     {isEditing ? (
-                        <Check size={16} color="#84C754" weight="bold" />
+                        <Check size={16} color="#84C754" weight="bold"/>
                     ) : (
-                        <PencilSimple size={16} color="#FFFFFF80" weight="regular" />
+                        <PencilSimple size={16} color="#FFFFFF80" weight="regular"/>
                     )}
                 </TouchableOpacity>
             </View>

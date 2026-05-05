@@ -1,6 +1,6 @@
 import { Icon, MealIngredient } from "@/components";
 import { CaretDown, Plus } from "phosphor-react-native";
-import { FC, useState, useEffect } from "react";
+import { type FC, useState, useEffect } from "react";
 import { Pressable, Text, View } from "react-native";
 import Animated, { FadeIn, Layout, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { MealIngredientProps } from "./MealIngredient";
@@ -14,9 +14,11 @@ type MealCardProps = {
     onPress?: () => void,
     ingredients?: IngredientData[],
     expanded?: boolean,
-    onToggle?: () => void
+    onToggle?: () => void,
+    onIngredientEdit?: (id: string | number, newCal: number) => void,
+    onIngredientDelete?: (id: string | number) => void
 }
-const MealCard: FC<MealCardProps> = ({ icon, title, allCal, isDayTime, onPress, ingredients, expanded, onToggle }) => {
+const MealCard: FC<MealCardProps> = ({ icon, title, allCal, isDayTime, onPress, ingredients, expanded, onToggle, onIngredientEdit, onIngredientDelete }) => {
     //Hooks
     const hasIngredients = ingredients && ingredients.length > 0;
     const [localExpanded, setLocalExpanded] = useState<boolean>(false);
@@ -78,8 +80,8 @@ const MealCard: FC<MealCardProps> = ({ icon, title, allCal, isDayTime, onPress, 
                                 cal={ingredient.cal}
                                 baseCal={ingredient.baseCal}
                                 amount={ingredient.amount}
-                                onDelete={() => console.log(`Delete ${ingredient.id}`)}
-                                onEdit={() => console.log(`Edit ${ingredient.id}`)}
+                                onDelete={() => onIngredientDelete?.(ingredient.id)}
+                                onEdit={(newCal) => onIngredientEdit?.(ingredient.id, newCal)}
                             />
                         ))}
                     </Animated.View>
