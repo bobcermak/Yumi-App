@@ -3,7 +3,6 @@ import { ProfilePicture, Icon } from "@/components";
 import { type FC } from "react";
 import { CalendarDots, Bell } from "phosphor-react-native";
 import { useRouter } from "expo-router";
-import * as Haptics from "expo-haptics";
 
 type HomeHeaderProps = {
   firstName: string,
@@ -17,7 +16,6 @@ const HomeHeader: FC<HomeHeaderProps> = ({ firstName, avatarUrl, rating, isPremi
   const name = firstName || "Friend";
   const router = useRouter();
   const hasDiacritics = /[áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]/.test(name);
-
   //Functions
   const getStreakMessage = () => {
     if (streak === 0) return "Start your journey!";
@@ -27,23 +25,26 @@ const HomeHeader: FC<HomeHeaderProps> = ({ firstName, avatarUrl, rating, isPremi
     return `${streak} ${dayText}! Unstoppable!`;
   };
   const handleProfilePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push("/(tabs)/profile");
   };
   return (
     <View className="flex-row items-center justify-between px-2 py-3 w-[380px] self-center">
-      <View className="flex-row items-center gap-3">
+      <View className="flex-row items-center gap-3 flex-1 mr-4">
         <TouchableOpacity onPress={handleProfilePress} activeOpacity={0.25}>
           <ProfilePicture uri={avatarUrl} rating={rating} isPremium={isPremium}/>
         </TouchableOpacity>
-        <View>
-          <Text className="text-white/50 base-text font-nunito-800">
+        <View className="flex-1">
+          <Text className="text-white/50 base-text font-nunito-800" numberOfLines={1}>
             {getStreakMessage()}
           </Text>
-          <View className={`flex-row items-center ${hasDiacritics ? '-mt-0.5' : '-mt-2'}`}>
-            <Text className="text-white text-[2rem] font-nunito-800">Hey, </Text>
-            <Text className="text-pink text-[2rem] font-nunito-800">{name}</Text>
-          </View>
+          <Text 
+            className={`font-nunito-800 ${hasDiacritics ? '-mt-1' : '-mt-2.5'}`} 
+            numberOfLines={1} 
+            ellipsizeMode="tail"
+          >
+            <Text className="text-white text-[2rem]">Hey, </Text>
+            <Text className="text-pink text-[2rem]">{name}</Text>
+          </Text>
         </View>
       </View>
       <View className="flex-row items-center gap-2">

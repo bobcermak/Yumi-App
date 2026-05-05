@@ -9,7 +9,7 @@ const ActivityLevel = () => {
     const { activityLevel, setActivityLevel, handleContinue } = useOnboarding();
 
     return (
-        <View className="w-[360px] self-center h-full">
+        <View className="w-[362px] self-center h-full">
             <ScrollView
                 contentContainerClassName="items-center pb-52 pt-8"
                 showsVerticalScrollIndicator={false}

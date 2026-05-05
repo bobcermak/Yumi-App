@@ -1,6 +1,5 @@
 import { TouchableOpacity } from "react-native";
 import { type FC } from "react";
-import * as Haptics from "expo-haptics";
 
 type IconProps = {
     onPress: () => void,
@@ -15,7 +14,6 @@ const Icon: FC<IconProps> = ({ onPress, className, shadowColor = "#C5E384", chil
     const finalClassName = `${hasWidth ? '' : 'w-10'} ${hasHeight ? '' : 'h-10'} ${hasBgColor ? '' : 'bg-yellow'} rounded-full items-center justify-center ${className || ''}`;
     //Functions
     const handlePress = () => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress();
     };
     return (

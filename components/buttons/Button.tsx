@@ -9,8 +9,8 @@ type ButtonProps = TouchableOpacityProps & {
     children: ReactNode,
 };
 const Button: FC<ButtonProps> = ({ icon, children, className, textClassName, disabled, onPress, ...props }) => {
-    const defaultButtonStyles = "bg-yellow px-4 py-3 rounded-[10px] mx-auto flex-row justify-center items-center shadow-xl";
-    const defaultTextStyles = "text-base font-nunito-800 text-dark text-center w-full";
+    const defaultButtonStyles = "bg-yellow px-4 py-3 rounded-[10px] flex-row justify-center items-center shadow-xl";
+    const defaultTextStyles = "text-base font-nunito-800 text-dark text-center";
     //Functions
     const handlePress = (e: GestureResponderEvent) => {
         if (!disabled) {

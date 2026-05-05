@@ -55,7 +55,7 @@ const Signup = () => {
       className="flex-1"
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View className="w-[360px] mt-6 mx-auto flex-1 justify-center">
+        <View className="w-[362px] mt-6 mx-auto flex-1 justify-center">
           <Animated.View
             entering={FadeInDown.delay(200).duration(250)}
             className="mb-10"

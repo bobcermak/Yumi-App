@@ -19,3 +19,8 @@ export { default as MealCard } from "./navigation/meals/MealCard";
 export { default as MealIngredient } from "./navigation/meals/MealIngredient";
 export { default as HomeHeader } from "./headers/HomeHeader";
 export { default as ProfilePicture } from "./headers/ProfilePicture";
+export { default as SearchInput } from "./inputs/SearchInput";
+export { default as JourneyCalendar } from "./calendar/JourneyCalendar";
+export { default as DailyOverviewCard } from "./dashboard/DailyOverviewCard";
+export { default as CircularProgress } from "./dashboard/CircularProgress";
+export { default as MacroColumn } from "./dashboard/MacroColumn";

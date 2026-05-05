@@ -84,13 +84,9 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
   useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
       setKeyboardVisible(true);
-      setTimeout(() => {
-        internalRef.current?.snapToIndex(6);
-      }, 50);
     });
     const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
       setKeyboardVisible(false);
-      internalRef.current?.snapToIndex(5);
     });
     return () => {
       showSubscription.remove();

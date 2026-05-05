@@ -1,11 +1,11 @@
-import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { Plus } from 'phosphor-react-native';
+import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import { Plus } from "phosphor-react-native";
 import { type FC, useEffect, useRef, useState } from "react";
-import { Animated, TouchableOpacity, View, Image } from 'react-native';
-import * as Haptics from 'expo-haptics';
-import AnimatedTabIcon from './AnimatedTabIcon';
-import BottomSheet from '@gorhom/bottom-sheet';
-import { DashboardSheet } from '@/components';
+import { Animated, TouchableOpacity, View, Image } from "react-native";
+import * as Haptics from "expo-haptics";
+import AnimatedTabIcon from "./AnimatedTabIcon";
+import BottomSheet from "@gorhom/bottom-sheet";
+import { DashboardSheet } from "@/components";
 
 const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
   //Hooks
@@ -53,7 +53,7 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
   }, [state.index, tabBarWidth]);
   return (
     <View className="absolute top-0 left-0 right-0 bottom-0" pointerEvents="box-none">
-      <Image source={require('../../assets/images/bottom-shadow.png')} resizeMode="stretch" className="absolute bottom-0 left-0 right-0 w-full h-[280px] pointer-events-none"/>
+      <Image source={require('../../assets/images/bottom-shadow.png')} resizeMode="stretch" className="absolute bottom-0 left-0 right-0 w-full h-[120px] pointer-events-none"/>
       <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 48 }} pointerEvents="box-none">
         <DashboardSheet ref={bottomSheetRef}/>
       </View>

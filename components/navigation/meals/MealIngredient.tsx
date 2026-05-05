@@ -1,4 +1,3 @@
-import * as Haptics from "expo-haptics";
 import { PencilSimple, Trash, Check } from "phosphor-react-native";
 import { type FC, useState, useMemo, useEffect } from "react";
 import { Text, TouchableOpacity, View, TextInput } from "react-native";
@@ -26,11 +25,9 @@ const MealIngredient: FC<MealIngredientProps> = ({ title, cal, baseCal, amount, 
 
     //Functions
     const handleDelete = () => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         onDelete?.();
     };
     const handleEditToggle = () => {
-        Haptics.selectionAsync();
         if (isEditing) {
             const newCal = Number(editedCal) || 0;
             if (editedCal.trim() === '') {

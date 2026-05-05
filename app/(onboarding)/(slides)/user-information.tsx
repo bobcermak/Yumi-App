@@ -65,7 +65,7 @@ const UserInformation = () => {
                     contentContainerClassName="flex-grow items-center justify-center pb-16 pt-8 gap-12"
                     keyboardShouldPersistTaps="handled"
                 >
-                <View className="w-[360px] gap-12 self-center">
+                <View className="w-[362px] gap-12 self-center">
                     <Animated.View 
                         entering={FadeInDown.delay(200).duration(250)}
                         className="items-center"

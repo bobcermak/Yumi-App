@@ -1,12 +1,12 @@
-import { View, Text, ScrollView } from "react-native";
-import * as Haptics from "expo-haptics";
-import { useOnboarding } from "@/lib/hooks/useOnboarding";
-import { getTodayString } from "@/lib/helpers/dateHelpers";
-import { Calendar } from "react-native-calendars";
 import { Button, CustomSlider, SegmentedControl } from "@/components";
-import { useState } from "react";
-import Animated, { FadeInDown, FadeInUp, FadeInLeft, FadeInRight, FadeIn, useSharedValue, useAnimatedStyle, withSequence, withTiming, interpolateColor, withDelay } from "react-native-reanimated";
+import { getTodayString } from "@/lib/helpers/dateHelpers";
+import { useOnboarding } from "@/lib/hooks/useOnboarding";
+import * as Haptics from "expo-haptics";
 import { CaretLeft, CaretRight } from "phosphor-react-native";
+import { useState } from "react";
+import { ScrollView, Text, View } from "react-native";
+import { Calendar } from "react-native-calendars";
+import Animated, { FadeIn, FadeInDown, FadeInLeft, FadeInRight, FadeInUp, interpolateColor, useAnimatedStyle, useSharedValue, withDelay, withSequence, withTiming } from "react-native-reanimated";
 
 const CalculateWeight = () => {
     //Context
@@ -61,13 +61,13 @@ const CalculateWeight = () => {
         }
     };
     return (
-        <View className="w-[360px] self-center h-full">
+        <View className="w-[362px] self-center h-full">
             <ScrollView
                 scrollEnabled={scrollEnabled}
                 contentContainerClassName="items-center pb-40 pt-8"
                 showsVerticalScrollIndicator={false}
             >
-                <Animated.View 
+                <Animated.View
                     entering={FadeInDown.delay(200).duration(250)}
                     className="items-center mb-12"
                 >
@@ -117,7 +117,7 @@ const CalculateWeight = () => {
                             onSlidingComplete={() => setScrollEnabled(true)}
                         />
                     </Animated.View>
-                    <Animated.View 
+                    <Animated.View
                         entering={FadeInUp.delay(600).duration(250)}
                         className="gap-4 w-full"
                     >
@@ -128,7 +128,7 @@ const CalculateWeight = () => {
                                 current={goalDate || today}
                                 minDate={today}
                                 onDayPress={handleDateSelect}
-                                renderArrow={(direction) => direction === 'left' ? <CaretLeft color="#C5E384" size={24} weight="bold"/> : <CaretRight color="#C5E384" size={24} weight="bold"/>}
+                                renderArrow={(direction) => direction === 'left' ? <CaretLeft color="#C5E384" size={24} weight="bold" /> : <CaretRight color="#C5E384" size={24} weight="bold" />}
                                 markedDates={{
                                     [today]: {
                                         customStyles: {
@@ -176,7 +176,7 @@ const CalculateWeight = () => {
                     </Animated.View>
                 </View>
             </ScrollView>
-            <Animated.View 
+            <Animated.View
                 entering={FadeInUp.delay(700).duration(250)}
                 className="gap-4 w-full absolute bottom-16 left-0 right-0"
             >

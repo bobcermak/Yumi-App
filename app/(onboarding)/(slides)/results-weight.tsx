@@ -1,13 +1,13 @@
-import { View, Text, TextInput, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform } from "react-native";
-import * as Haptics from "expo-haptics";
-import { useOnboarding } from "@/lib/hooks/useOnboarding";
 import { Button } from "@/components";
-import { Calendar } from "react-native-calendars";
-import { PencilSimple, CaretLeft, CaretRight } from "phosphor-react-native";
-import { useState, useEffect, useMemo } from "react";
-import Animated, { FadeInDown, FadeInUp, ZoomIn, useSharedValue, useAnimatedStyle, withSequence, withTiming, interpolateColor, withDelay } from "react-native-reanimated";
-import { daysUntil } from "@/lib/helpers/onBoardingHelpers";
 import { getTodayString } from "@/lib/helpers/dateHelpers";
+import { daysUntil } from "@/lib/helpers/onBoardingHelpers";
+import { useOnboarding } from "@/lib/hooks/useOnboarding";
+import * as Haptics from "expo-haptics";
+import { CaretLeft, CaretRight, PencilSimple } from "phosphor-react-native";
+import { useEffect, useMemo, useState } from "react";
+import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Calendar } from "react-native-calendars";
+import Animated, { FadeInDown, FadeInUp, ZoomIn, interpolateColor, useAnimatedStyle, useSharedValue, withDelay, withSequence, withTiming } from "react-native-reanimated";
 
 const ResultsWeight = () => {
     //Context
@@ -85,7 +85,7 @@ const ResultsWeight = () => {
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : undefined}
-            className="flex-1 w-[360px] self-center h-full"
+            className="flex-1 w-[362px] self-center h-full"
         >
             <ScrollView
                 contentContainerClassName="items-center pb-40 pt-8"
@@ -136,14 +136,14 @@ const ResultsWeight = () => {
                                 }}
                                 className="items-center"
                             >
-                                <Text 
+                                <Text
                                     className={`${textColorClass} text-8xl font-nunito-800`}
                                     style={{ lineHeight: 96, height: 125 }}
                                 >
                                     {dailyCalories}
                                 </Text>
                                 <View className="opacity-50 absolute -right-8 top-[37.5%]">
-                                    <PencilSimple size={24} color="#ffffff" weight="regular"/>
+                                    <PencilSimple size={24} color="#ffffff" weight="regular" />
                                 </View>
                             </TouchableOpacity>
                         )}
@@ -186,7 +186,7 @@ const ResultsWeight = () => {
                             current={goalDate || todayStr}
                             minDate={todayStr}
                             onDayPress={handleDateSelect}
-                            renderArrow={(direction) => direction === 'left' ? <CaretLeft color="#C5E384" size={24} weight="bold"/> : <CaretRight color="#C5E384" size={24} weight="bold"/>}
+                            renderArrow={(direction) => direction === 'left' ? <CaretLeft color="#C5E384" size={24} weight="bold" /> : <CaretRight color="#C5E384" size={24} weight="bold" />}
                             markedDates={{
                                 [todayStr]: {
                                     customStyles: {
@@ -196,13 +196,13 @@ const ResultsWeight = () => {
                                 },
                                 ...(goalDate && goalDate !== todayStr
                                     ? {
-                                          [goalDate]: {
-                                              customStyles: {
-                                                  container: { backgroundColor: "#CA877E", borderRadius: 100 },
-                                                  text: { color: "#000", fontFamily: "Nunito-700" },
-                                              },
-                                          },
-                                      }
+                                        [goalDate]: {
+                                            customStyles: {
+                                                container: { backgroundColor: "#CA877E", borderRadius: 100 },
+                                                text: { color: "#000", fontFamily: "Nunito-700" },
+                                            },
+                                        },
+                                    }
                                     : {}),
                             }}
                             markingType="custom"

@@ -1,7 +1,7 @@
+import { Tick } from "@/components";
 import * as Haptics from "expo-haptics";
 import React, { useEffect, useRef, useState, type FC } from "react";
-import { PanResponder, Text, View, Animated } from "react-native";
-import { Tick } from "@/components"
+import { Animated, PanResponder, Text, View } from "react-native";
 
 type CustomSliderProps = {
     value: number,
@@ -16,7 +16,7 @@ type CustomSliderProps = {
 }
 const CustomSlider: FC<CustomSliderProps> = ({ value, minimumValue, maximumValue, step = 1, onValueChange, trackColor = "#C5E384", unit, onSlidingStart, onSlidingComplete }) => {
     //Constants 
-    const SLIDER_WIDTH = 360;
+    const SLIDER_WIDTH = 362;
     const PIXELS_PER_UNIT = 10;
     //Hooks
     const [localValue, setLocalValue] = useState(value);
@@ -64,7 +64,7 @@ const CustomSlider: FC<CustomSliderProps> = ({ value, minimumValue, maximumValue
             const rawVal = minRef.current + (Math.abs(boundedScroll) / PIXELS_PER_UNIT);
             const stepped = Math.round(rawVal / stepRef.current) * stepRef.current;
             const newVal = Math.max(minRef.current, Math.min(maxRef.current, stepped));
-            
+
             if (newVal !== localValueRef.current) {
                 setLocalValue(newVal);
                 Haptics.selectionAsync();
@@ -86,7 +86,7 @@ const CustomSlider: FC<CustomSliderProps> = ({ value, minimumValue, maximumValue
         }
     })).current;
     return (
-        <View 
+        <View
             className="w-full items-center"
             {...panResponder.panHandlers}
         >
@@ -119,13 +119,13 @@ const CustomSlider: FC<CustomSliderProps> = ({ value, minimumValue, maximumValue
                         const isMinor = val % 5 === 0 && !isMajor;
                         const isSelected = val === localValue;
                         return (
-                            <Tick 
-                                key={i} 
-                                val={val} 
-                                isSelected={isSelected} 
-                                isMajor={isMajor} 
-                                isMinor={isMinor} 
-                                PIXELS_PER_UNIT={PIXELS_PER_UNIT} 
+                            <Tick
+                                key={i}
+                                val={val}
+                                isSelected={isSelected}
+                                isMajor={isMajor}
+                                isMinor={isMinor}
+                                PIXELS_PER_UNIT={PIXELS_PER_UNIT}
                             />
                         );
                     })}

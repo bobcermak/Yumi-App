@@ -49,7 +49,7 @@ const Login = () => {
         <ArrowLeft size={20} color="#1D1D1D"/>
       </Icon>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View className="w-[360px] mt-6 mx-auto flex-1 justify-center">
+        <View className="w-[362px] mt-6 mx-auto flex-1 justify-center">
           <Animated.View
             entering={FadeInDown.delay(200).duration(250)}
             className="mb-10"
