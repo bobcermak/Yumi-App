@@ -1,6 +1,7 @@
 import supabase from "../client";
+import { ProfileInsert, ProgressPhotoInsert, ProfileUpdate } from "@/types/database/dbModels";
 
-// GET
+//GET
 export const checkUsernameIfExists = async (username: string): Promise<boolean> => {
   const { data } = await supabase
     .from("profiles")
@@ -32,5 +33,19 @@ export const addProgressPhotos = async (userId: string, photos: { image_url: str
   const { error } = await supabase
     .from("progress_photos")
     .insert(records);
+  return { error };
+};
+//UPDATE
+export const updateCalorieLimitAndTargetDate = async (userId: string, newMax: number, newTargetDate?: string) => {
+  const updates: ProfileUpdate = { 
+    daily_calorie_limit: newMax 
+  };
+  if (newTargetDate) {
+    updates.target_date = newTargetDate;
+  }
+  const { error } = await supabase
+    .from('profiles')
+    .update(updates)
+    .eq('id', userId);
   return { error };
 };

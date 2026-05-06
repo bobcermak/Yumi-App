@@ -1,8 +1,10 @@
 import { Session } from "@supabase/supabase-js";
+import { Profile } from "./database/dbModels";
 
 export type AuthContextType = {
     session: Session | null;
     userProfile: Profile | null;
+    refreshProfile: () => Promise<void>;
     isReady: boolean;
     isLoading: boolean;
     hasOnboarded: boolean;

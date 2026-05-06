@@ -1,7 +1,6 @@
 import { useEffect, type FC } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from "react-native-reanimated";
-import { PencilSimple } from "phosphor-react-native";
 
 type MacroColumnProps = {
     label: string,
@@ -9,9 +8,8 @@ type MacroColumnProps = {
     max: number,
     color: string,
     icon: React.ReactNode,
-    onEdit?: () => void
 };
-const MacroColumn: FC<MacroColumnProps> = ({ label, current, max, color, icon, onEdit }) => {
+const MacroColumn: FC<MacroColumnProps> = ({ label, current, max, color, icon }) => {
     const percentage = max > 0 ? Math.min(current / max, 1) : 0;
     const progress = useSharedValue(0);
 
@@ -39,11 +37,6 @@ const MacroColumn: FC<MacroColumnProps> = ({ label, current, max, color, icon, o
                 <Text className="text-white font-nunito-700 text-sm">
                     {current} <Text className="text-white/50 font-nunito-700">/ {max} g</Text>
                 </Text>
-                {onEdit && (
-                    <TouchableOpacity onPress={onEdit} activeOpacity={0.25} className="ml-0.5">
-                        <PencilSimple size={14} color="#FFFFFF50" weight="regular"/>
-                    </TouchableOpacity>
-                )}
             </View>
         </View>
     );

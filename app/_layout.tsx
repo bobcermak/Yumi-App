@@ -30,7 +30,7 @@ const RootLayout = () => {
           {(auth) => {
             if (!auth?.isReady) {
               return (
-                <View className="flex-1 bg-[#121212] items-center justify-center">
+                <View className="flex-1 bg-black items-center justify-center">
                   <ActivityIndicator size="large" color="#FFFFFF"/>
                 </View>
               );

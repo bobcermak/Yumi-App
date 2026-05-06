@@ -16,7 +16,8 @@ type CircularProgressProps = {
 const CircularProgress: FC<CircularProgressProps> = ({ value, max, size = 140, strokeWidth = 12, color = "#C5E384", trackColor = "#FFFFFF20" }) => {
     const radius = (size - strokeWidth) / 2;
     const circumference = radius * 2 * Math.PI;
-    const percentage = max > 0 ? Math.min(value / max, 1) : 0;
+    const visualPercentage = max > 0 ? Math.min(value / max, 1) : 0;
+    const actualPercentage = max > 0 ? value / max : 0;
     const progress = useSharedValue(0);
 
     const animatedProps = useAnimatedProps(() => {
@@ -25,13 +26,13 @@ const CircularProgress: FC<CircularProgressProps> = ({ value, max, size = 140, s
             strokeDashoffset,
         };
     });
-    const displayPercentage = Math.round(percentage * 100);
+    const displayPercentage = Math.round(actualPercentage * 100);
     useEffect(() => {
-        progress.value = withTiming(percentage, {
+        progress.value = withTiming(visualPercentage, {
             duration: 1500,
             easing: Easing.bezier(0.25, 0.1, 0.25, 1),
         });
-    }, [percentage]);
+    }, [visualPercentage]);
     return (
         <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
             <Svg width={size} height={size} style={{ transform: [{ rotate: "-90deg" }] }}>
@@ -58,11 +59,18 @@ const CircularProgress: FC<CircularProgressProps> = ({ value, max, size = 140, s
             <View style={{ position: "absolute", alignItems: "center", justifyContent: "center" }}>
                 <View 
                     className="w-12 h-12 rounded-full items-center justify-center mb-1"
-                    style={{ backgroundColor: `${color}50` }}
+                    style={{
+                        backgroundColor: `${color}25`,
+                        shadowColor: color,
+                        shadowOffset: { width: 0, height: 0 },
+                        shadowOpacity: 0.5,
+                        shadowRadius: 12,
+                        elevation: 10,
+                    }}
                 >
                     <Fire size={24} color={color} weight="fill"/>
                 </View>
-                <Text className={`text-sm opacity-50 font-nunito-600 text-[${color}]`}>
+                <Text className={`text-sm opacity-50 font-nunito-600`} style={{ color: color }}>
                     {displayPercentage}%
                 </Text>
             </View>

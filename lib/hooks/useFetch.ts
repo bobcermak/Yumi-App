@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
-const useFetch = <T>(fetchFunction: () => Promise<T>, autoFetch: boolean = false) => {
+export const useFetch = <T>(fetchFunction: () => Promise<T>, autoFetch: boolean = false) => {
     //Hooks
     const [data, setData] = useState<T | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
@@ -46,4 +46,3 @@ const useFetch = <T>(fetchFunction: () => Promise<T>, autoFetch: boolean = false
 
     return { data, loading, error, refetch: fetchData, reset: resetData };
 }
-export default useFetch;

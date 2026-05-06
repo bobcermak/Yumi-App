@@ -1,5 +1,5 @@
 import { caloriesFromDays, computeTDEE, computeTotalKcal, dateStringFromToday, daysFromCalories, daysUntil, generateSuggestions, toKg } from "@/lib/helpers/onBoardingHelpers";
-import useFetch from "@/lib/hooks/useFetch";
+import { useFetch } from "@/lib/hooks/useFetch";
 import { checkUsernameIfExists } from "@/lib/services/supabase/queries/setupUserAccount";
 import { OnboardingContextType } from "@/types/onboardingContextType";
 import { usePathname, useRouter } from "expo-router";

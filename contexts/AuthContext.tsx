@@ -2,15 +2,17 @@ import { completeOnboarding } from "@/lib/helpers/authHelpers";
 import supabase from "@/lib/services/supabase/client";
 import { getProfile, checkUsernameIfExists } from "@/lib/services/supabase/queries/setupUserAccount";
 import { AuthContextType } from "@/types/authContextType";
+import { Profile } from "@/types/database/dbModels";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Session } from "@supabase/supabase-js";
 import { useRouter, useSegments } from "expo-router";
 import React, { createContext, useEffect, useState, type FC } from "react";
 
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
 type AuthProviderProps = {
   children: React.ReactNode
 }
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   //Hooks
   const [isReady, setIsReady] = useState<boolean>(false);
@@ -229,9 +231,16 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     4. V app.json přidej "expo-apple-authentication" do pluginů.
     =================================================================================
   */
+  const refreshProfile = async () => {
+    if (session?.user.id) {
+      const { data: profile } = await getProfile(session.user.id);
+      if (profile) setUserProfile(profile);
+    }
+  };
   const value = {
     session,
     userProfile,
+    refreshProfile,
     isReady,
     isLoading,
     hasOnboarded,

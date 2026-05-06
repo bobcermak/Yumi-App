@@ -24,3 +24,4 @@ export { default as JourneyCalendar } from "./calendar/JourneyCalendar";
 export { default as DailyOverviewCard } from "./dashboard/DailyOverviewCard";
 export { default as CircularProgress } from "./dashboard/CircularProgress";
 export { default as MacroColumn } from "./dashboard/MacroColumn";
+export { default as Toast } from "./common/Toast";

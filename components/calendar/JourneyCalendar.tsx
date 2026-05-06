@@ -8,11 +8,13 @@ import CalendarDay from "./CalendarDay";
 
 type JourneyCalendarProps = {
     activeDates?: string[];
+    targetDate?: string | null;
 };
-const JourneyCalendar: FC<JourneyCalendarProps> = ({ activeDates = [] }) => {
+const JourneyCalendar: FC<JourneyCalendarProps> = ({ activeDates = [], targetDate }) => {
     //Hooks
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
     const today = new Date();
+    const targetDateObj = targetDate ? new Date(targetDate) : null;
 
     //Animations
     const translateX = useSharedValue(0);
@@ -85,6 +87,7 @@ const JourneyCalendar: FC<JourneyCalendarProps> = ({ activeDates = [] }) => {
                                 date={date}
                                 isToday={isSameDay(date, today)}
                                 isActive={activeDates.some(d => isSameDay(new Date(d), date))}
+                                isTargetDay={targetDateObj ? isSameDay(date, targetDateObj) : false}
                             />
                         ))}
                     </Animated.View>
