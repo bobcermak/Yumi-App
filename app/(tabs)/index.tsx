@@ -9,7 +9,7 @@ import { CalendarDots, CaretLeft, CaretRight } from "phosphor-react-native";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { ScrollView, Text, TouchableOpacity, View, RefreshControl } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSequence, withTiming, FadeInDown } from "react-native-reanimated";
+import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const IndexContent = () => {
