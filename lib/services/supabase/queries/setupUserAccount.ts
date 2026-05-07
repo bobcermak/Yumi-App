@@ -1,5 +1,6 @@
 import supabase from "../client";
-import { ProfileInsert, ProgressPhotoInsert, ProfileUpdate } from "@/types/database/dbModels";
+import { Profile, ProfileInsert, ProgressPhotoInsert, ProfileUpdate } from "@/types/database/dbModels";
+import { PostgrestError } from "@supabase/supabase-js";
 
 //GET
 export const checkUsernameIfExists = async (username: string): Promise<boolean> => {
@@ -10,21 +11,22 @@ export const checkUsernameIfExists = async (username: string): Promise<boolean> 
     .limit(1);
   return !!data && data.length > 0;
 }
-export const getProfile = async (id: string) => {
-  return await supabase
+export const getProfile = async (id: string): Promise<{ data: Profile | null, error: PostgrestError | null }> => {
+  const { data, error } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", id)
-    .single();
+    .maybeSingle();
+  return { data, error };
 };
 //POST
-export const createProfile = async (profile: ProfileInsert) => {
+export const createProfile = async (profile: ProfileInsert): Promise<{ error: PostgrestError | null }> => {
   const { error } = await supabase
     .from("profiles")
     .upsert(profile);
   return { error };
 };
-export const addProgressPhotos = async (userId: string, photos: { image_url: string, weight: number }[]) => {
+export const addProgressPhotos = async (userId: string, photos: { image_url: string, weight: number }[]): Promise<{ error: PostgrestError | null }> => {
   const records: ProgressPhotoInsert[] = photos.map((p) => ({
     user_id: userId,
     image_url: p.image_url,
@@ -36,16 +38,14 @@ export const addProgressPhotos = async (userId: string, photos: { image_url: str
   return { error };
 };
 //UPDATE
-export const updateCalorieLimitAndTargetDate = async (userId: string, newMax: number, newTargetDate?: string) => {
+export const updateCalorieLimitAndTargetDate = async (userId: string, newMax: number, newTargetDate?: string): Promise<{ error: PostgrestError | null }> => {
   const updates: ProfileUpdate = { 
-    daily_calorie_limit: newMax 
+    daily_calorie_limit: newMax,
+    target_date: newTargetDate
   };
-  if (newTargetDate) {
-    updates.target_date = newTargetDate;
-  }
   const { error } = await supabase
-    .from('profiles')
+    .from("profiles")
     .update(updates)
-    .eq('id', userId);
+    .eq("id", userId);
   return { error };
 };

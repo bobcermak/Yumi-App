@@ -96,7 +96,7 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
   return (
     <BottomSheet
       ref={internalRef}
-      index={3}
+      index={1}
       snapPoints={snapPoints}
       detached={false}
       bottomInset={0}

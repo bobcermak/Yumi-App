@@ -1,6 +1,6 @@
-import { useState, useMemo, type FC } from "react";
+import { useState, useMemo, useEffect, type FC } from "react";
 import { View } from "react-native";
-import { startOfWeek, addDays, isSameDay, subWeeks, addWeeks } from "date-fns";
+import { startOfWeek, addDays, isSameDay, subWeeks, addWeeks, startOfDay } from "date-fns";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, runOnJS, withTiming } from "react-native-reanimated";
 import CalendarHeader from "./CalendarHeader";
@@ -9,13 +9,26 @@ import CalendarDay from "./CalendarDay";
 type JourneyCalendarProps = {
     activeDates?: string[];
     targetDate?: string | null;
+    selectedDate?: Date;
+    onSelectDate?: (date: Date) => void;
 };
-const JourneyCalendar: FC<JourneyCalendarProps> = ({ activeDates = [], targetDate }) => {
+const JourneyCalendar: FC<JourneyCalendarProps> = ({ activeDates = [], targetDate, selectedDate, onSelectDate }) => {
     //Hooks
-    const [currentDate, setCurrentDate] = useState<Date>(new Date());
+    const [currentDate, setCurrentDate] = useState<Date>(selectedDate || new Date());
+    const [internalSelectedDate, setInternalSelectedDate] = useState<Date | undefined>(selectedDate);
     const today = new Date();
     const targetDateObj = targetDate ? new Date(targetDate) : null;
 
+    useEffect(() => {
+        if (selectedDate) {
+            setInternalSelectedDate(selectedDate);
+            const currentWeekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+            const newWeekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
+            if (!isSameDay(currentWeekStart, newWeekStart)) {
+                setCurrentDate(selectedDate);
+            }
+        }
+    }, [selectedDate]);
     //Animations
     const translateX = useSharedValue(0);
     const opacity = useSharedValue(1);
@@ -88,6 +101,11 @@ const JourneyCalendar: FC<JourneyCalendarProps> = ({ activeDates = [], targetDat
                                 isToday={isSameDay(date, today)}
                                 isActive={activeDates.some(d => isSameDay(new Date(d), date))}
                                 isTargetDay={targetDateObj ? isSameDay(date, targetDateObj) : false}
+                                isSelected={internalSelectedDate ? isSameDay(date, internalSelectedDate) : false}
+                                onPress={(d) => {
+                                    setInternalSelectedDate(d);
+                                    onSelectDate?.(d);
+                                }}
                             />
                         ))}
                     </Animated.View>

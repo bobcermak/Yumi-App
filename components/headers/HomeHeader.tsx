@@ -9,9 +9,10 @@ type HomeHeaderProps = {
   avatarUrl?: string | null,
   rating?: number | null,
   isPremium?: boolean | null,
-  streakCount?: number | null
+  streakCount?: number | null,
+  onCalendarPress: () => void
 }
-const HomeHeader: FC<HomeHeaderProps> = ({ firstName, avatarUrl, rating, isPremium, streakCount }) => {
+const HomeHeader: FC<HomeHeaderProps> = ({ firstName, avatarUrl, rating, isPremium, streakCount, onCalendarPress }) => {
   const streak = streakCount || 0;
   const name = firstName || "Friend";
   const router = useRouter();
@@ -48,7 +49,7 @@ const HomeHeader: FC<HomeHeaderProps> = ({ firstName, avatarUrl, rating, isPremi
         </View>
       </View>
       <View className="flex-row items-center gap-2">
-        <Icon onPress={() => {}} className="bg-dark w-12 h-12" shadowColor="#000000">
+        <Icon onPress={onCalendarPress} className="bg-dark w-12 h-12" shadowColor="#000000">
             <CalendarDots size={24} color="white" weight="regular"/>
         </Icon>
         <Icon onPress={() => {}} className="relative bg-dark w-12 h-12" shadowColor="#000000">

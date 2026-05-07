@@ -1,10 +1,12 @@
 import { useEffect, type FC } from "react";
-import { View, Text } from "react-native";
+import { View, TextInput } from "react-native";
 import Svg, { Circle } from "react-native-svg";
-import Animated, { useSharedValue, useAnimatedProps, withTiming, Easing } from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedProps, withTiming, Easing, useDerivedValue, withDelay } from "react-native-reanimated";
 import { Fire } from "phosphor-react-native";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
+
 type CircularProgressProps = {
     value: number;
     max: number;
@@ -17,22 +19,25 @@ const CircularProgress: FC<CircularProgressProps> = ({ value, max, size = 140, s
     const radius = (size - strokeWidth) / 2;
     const circumference = radius * 2 * Math.PI;
     const visualPercentage = max > 0 ? Math.min(value / max, 1) : 0;
-    const actualPercentage = max > 0 ? value / max : 0;
     const progress = useSharedValue(0);
-
     const animatedProps = useAnimatedProps(() => {
         const strokeDashoffset = circumference - progress.value * circumference;
         return {
             strokeDashoffset,
         };
     });
-    const displayPercentage = Math.round(actualPercentage * 100);
+    const animatedTextProps = useAnimatedProps(() => {
+        return {
+            text: `${Math.round(progress.value * 100)}%`,
+        } as any;
+    });
     useEffect(() => {
-        progress.value = withTiming(visualPercentage, {
+        progress.value = 0;
+        progress.value = withDelay(500, withTiming(visualPercentage, {
             duration: 1500,
             easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-        });
-    }, [visualPercentage]);
+        }));
+    }, [value, max, visualPercentage]);
     return (
         <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
             <Svg width={size} height={size} style={{ transform: [{ rotate: "-90deg" }] }}>
@@ -60,7 +65,7 @@ const CircularProgress: FC<CircularProgressProps> = ({ value, max, size = 140, s
                 <View 
                     className="w-12 h-12 rounded-full items-center justify-center mb-1"
                     style={{
-                        backgroundColor: `${color}25`,
+                        backgroundColor: `${color}50`,
                         shadowColor: color,
                         shadowOffset: { width: 0, height: 0 },
                         shadowOpacity: 0.5,
@@ -70,9 +75,14 @@ const CircularProgress: FC<CircularProgressProps> = ({ value, max, size = 140, s
                 >
                     <Fire size={24} color={color} weight="fill"/>
                 </View>
-                <Text className={`text-sm opacity-50 font-nunito-600`} style={{ color: color }}>
-                    {displayPercentage}%
-                </Text>
+                <AnimatedTextInput
+                    underlineColorAndroid="transparent"
+                    editable={false}
+                    value={`${Math.round(visualPercentage * 100)}%`}
+                    animatedProps={animatedTextProps}
+                    className="text-sm opacity-50 font-nunito-600 text-center"
+                    style={{ color: color, padding: 0 }}
+                />
             </View>
         </View>
     );

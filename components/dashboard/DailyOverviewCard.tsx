@@ -2,11 +2,13 @@ import { format } from "date-fns";
 import { Avocado, Fish, Hamburger, PencilSimple } from "phosphor-react-native";
 import { memo, useEffect, useState, type FC } from "react";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, withSequence } from "react-native-reanimated";
 import CircularProgress from "./CircularProgress";
 import MacroColumn from "./MacroColumn";
 
 const MemoizedCircularProgress = memo(CircularProgress);
 const MemoizedMacroColumn = memo(MacroColumn);
+
 type DailyOverviewCardProps = {
     date: Date;
     calories: { current: number; max: number };
@@ -22,6 +24,18 @@ const DailyOverviewCard: FC<DailyOverviewCardProps> = ({ date, calories, macros,
     const [isEditingCalories, setIsEditingCalories] = useState<boolean>(false);
     const [editCalMax, setEditCalMax] = useState<string>(calories.max.toString());
 
+    const animValues = [useSharedValue(0), useSharedValue(0), useSharedValue(0), useSharedValue(0), useSharedValue(0), useSharedValue(0)];
+
+    useEffect(() => {
+        animValues.forEach((val, i) => {
+            val.value = 0;
+            val.value = withDelay(i * 100, withTiming(1, { duration: 400 }));
+        });
+    }, [date]);
+    const createStyle = (index: number) => useAnimatedStyle(() => ({
+        opacity: animValues[index].value,
+        transform: [{ translateY: (1 - animValues[index].value) * 10 }]
+    }));
     //Functions
     const handleSaveCalories = () => {
         setIsEditingCalories(false);
@@ -36,11 +50,9 @@ const DailyOverviewCard: FC<DailyOverviewCardProps> = ({ date, calories, macros,
             setEditCalMax(calories.max.toString());
         }
     };
-
     useEffect(() => {
         setEditCalMax(calories.max.toString());
     }, [calories.max]);
-
     return (
         <View
             className="bg-dark rounded-[20px] px-5 py-10 mt-4 w-[362px] self-center border border-white/10"
@@ -52,13 +64,13 @@ const DailyOverviewCard: FC<DailyOverviewCardProps> = ({ date, calories, macros,
                 elevation: 5
             }}
         >
-            <Text className="text-white text-xl font-nunito-700">
+            <Animated.Text style={createStyle(0)} className="text-white text-xl font-nunito-700 -mb-2">
                 <Text className="text-yellow">{format(date, "dd")} </Text>
                 {format(date, "MMMM, EEEE")}
-            </Text>
+            </Animated.Text>
             <View className="flex-row justify-between items-center">
-                <View>
-                    <Text className="text-white text-[61px] font-nunito-700 pt-2" style={{ lineHeight: 61 }}>
+                <Animated.View style={createStyle(1)}>
+                    <Text className="text-white text-[61px] font-nunito-700 pt-2">
                         {calories.current}
                     </Text>
                     <TouchableOpacity
@@ -93,7 +105,6 @@ const DailyOverviewCard: FC<DailyOverviewCardProps> = ({ date, calories, macros,
                                 </Text>
                             )}
                         </View>
-
                         {onUpdateCaloriesMax && (
                             <PencilSimple
                                 size={18}
@@ -103,34 +114,42 @@ const DailyOverviewCard: FC<DailyOverviewCardProps> = ({ date, calories, macros,
                             />
                         )}
                     </TouchableOpacity>
-                </View>
-                <MemoizedCircularProgress value={calories.current} max={calories.max} />
+                </Animated.View>
+                <Animated.View style={createStyle(1)}>
+                    <MemoizedCircularProgress key={date.toISOString()} value={calories.current} max={calories.max} />
+                </Animated.View>
             </View>
-            <Text className="text-white/80 text-xl font-nunito-600">
+            <Animated.Text style={createStyle(2)} className="text-white/80 text-xl font-nunito-600 mt-2">
                 Macronutrients
-            </Text>
+            </Animated.Text>
             <View className="flex-row justify-between gap-6 mt-2">
-                <MemoizedMacroColumn
-                    label="Carbs"
-                    current={macros.carbs.current}
-                    max={macros.carbs.max}
-                    color="#E53E3E"
-                    icon={<Hamburger size={20} color="#E53E3E" weight="regular" />}
-                />
-                <MemoizedMacroColumn
-                    label="Fats"
-                    current={macros.fats.current}
-                    max={macros.fats.max}
-                    color="#E59039"
-                    icon={<Avocado size={20} color="#ED8936" weight="regular" />}
-                />
-                <MemoizedMacroColumn
-                    label="Protein"
-                    current={macros.protein.current}
-                    max={macros.protein.max}
-                    color="#3B82F6"
-                    icon={<Fish size={20} color="#3182CE" weight="regular" />}
-                />
+                <Animated.View style={createStyle(3)} className="flex-1">
+                    <MemoizedMacroColumn
+                        label="Carbs"
+                        current={macros.carbs.current}
+                        max={macros.carbs.max}
+                        color="#E53E3E"
+                        icon={<Hamburger size={20} color="#E53E3E" weight="regular" />}
+                    />
+                </Animated.View>
+                <Animated.View style={createStyle(4)} className="flex-1">
+                    <MemoizedMacroColumn
+                        label="Fats"
+                        current={macros.fats.current}
+                        max={macros.fats.max}
+                        color="#E59039"
+                        icon={<Avocado size={20} color="#ED8936" weight="regular" />}
+                    />
+                </Animated.View>
+                <Animated.View style={createStyle(5)} className="flex-1">
+                    <MemoizedMacroColumn
+                        label="Protein"
+                        current={macros.protein.current}
+                        max={macros.protein.max}
+                        color="#3B82F6"
+                        icon={<Fish size={20} color="#3182CE" weight="regular" />}
+                    />
+                </Animated.View>
             </View>
         </View>
     );

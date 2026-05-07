@@ -44,3 +44,7 @@ export type ProgressPhotoInsert = TablesInsert<"progress_photos">;
 
 export type UserFavorite = Tables<"user_favorites">;
 export type UserFavoriteInsert = TablesInsert<"user_favorites">;
+
+export type DailyLog = Tables<"daily_logs">;
+export type DailyLogInsert = TablesInsert<"daily_logs">;
+export type DailyLogUpdate = TablesUpdate<"daily_logs">;

@@ -15,7 +15,14 @@ export type IndexContextProps = {
     toast: ToastType | null;
     showToast: (message: string, dateStr?: string) => void;
     overviewData: OverviewData;
+    dashboardDate: Date;
     handleUpdateCaloriesMax: (newMax: number) => Promise<void>;
     activeDates: string[];
     targetDate?: string | null;
+    setSelectedDate: (date: Date) => void;
+    goToPrevDay: () => void;
+    goToNextDay: () => void;
+    goToToday: () => void;
+    refreshData: () => Promise<void>;
+    isDataLoading: boolean;
 };
