@@ -21,6 +21,7 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
     const [dashboardDate, setDashboardDate] = useState<Date>(startOfDay(new Date()));
     const [isDataLoading, setIsDataLoading] = useState<boolean>(false);
     const [targetDate, setTargetDate] = useState<string | null | undefined>(userProfile?.target_date);
+    const [refreshKey, setRefreshKey] = useState<number>(0);
     const [overviewData, setOverviewData] = useState<OverviewData>({
         date: new Date(),
         calories: { current: 0, max: defaultCalLimit },
@@ -53,8 +54,8 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
         }));
     }, []);
     const fetchMonthActiveDates = useCallback(async (userId: string, date: Date) => {
-        const start = format(startOfMonth(date), "yyyy-MM-dd");
-        const end = format(endOfMonth(date), "yyyy-MM-dd");
+        const start = format(startOfMonth(subDays(startOfMonth(date), 1)), "yyyy-MM-dd");
+        const end = format(endOfMonth(addDays(endOfMonth(date), 1)), "yyyy-MM-dd");
         const { data } = await getActiveDates(userId, start, end);
         if (data) {
             setActiveDates(data.map(d => d.date));
@@ -117,6 +118,8 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
     }, [userProfile?.daily_calorie_limit, userProfile?.target_date]);
     const setSelectedDate = useCallback(async (date: Date) => {
         if (isSameDay(date, overviewData.date)) return;
+        const oldMonth = overviewData.date.getMonth();
+        const oldYear = overviewData.date.getFullYear();
         setOverviewData(prev => ({ ...prev, date }));
         const dateDay = startOfDay(date);
         const todayDay = startOfDay(new Date());
@@ -136,8 +139,7 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
                     protein: { ...prev.macros.protein, current: data?.protein_current || 0 },
                 }
             }));
-
-            if (date.getMonth() !== overviewData.date.getMonth()) {
+            if (date.getMonth() !== oldMonth || date.getFullYear() !== oldYear) {
                 await fetchMonthActiveDates(userProfile.id, dateDay);
             }
             setIsDataLoading(false);
@@ -159,7 +161,11 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
             const today = new Date();
             const dateStr = format(today, "yyyy-MM-dd");
             const { data } = await getDailyLog(userProfile.id, dateStr);
+            await refreshProfile();
             const limit = userProfile.daily_calorie_limit || defaultCalLimit;
+            const hasDateChanged = !isSameDay(today, overviewData.date);
+            const hasDataChanged = (data?.calories_current || 0) !== overviewData.calories.current;
+            if (hasDateChanged || hasDataChanged) setRefreshKey(prev => prev + 1);
             setOverviewData({
                 date: today,
                 calories: { current: data?.calories_current || 0, max: limit },
@@ -171,8 +177,10 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
             });
             setDashboardDate(startOfDay(today));
             await fetchMonthActiveDates(userProfile.id, today);
+            return hasDateChanged || hasDataChanged;
         }
-    }, [userProfile, fetchMonthActiveDates]);
+        return false;
+    }, [userProfile, fetchMonthActiveDates, refreshProfile, overviewData.date, overviewData.calories.current]);
     const contextValue = useMemo(() => ({
         toast, 
         showToast, 
@@ -186,8 +194,9 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
         goToNextDay,
         goToToday,
         refreshData,
+        refreshKey,
         isDataLoading
-    }), [toast, showToast, overviewData, dashboardDate, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, goToToday, refreshData, isDataLoading]);
+    }), [toast, showToast, overviewData, dashboardDate, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, goToToday, refreshData, refreshKey, isDataLoading]);
     return (
         <IndexContext.Provider value={contextValue}>
             {children}

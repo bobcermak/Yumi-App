@@ -15,7 +15,11 @@ type DailyPulseCardProps = {
     protein: MacroData;
 };
 const DailyPulseCard: FC<DailyPulseCardProps> = ({ streak, carbs, fats, protein }) => {
-    const isOverLimit = carbs.current > carbs.max || fats.current > fats.max || protein.current > protein.max;
+    const isOverFats = fats.current > (fats.max * 1.1);
+    const isOverCarbs = carbs.current > (carbs.max * 1.1);
+    const isWayTooMuchFat = fats.current > (protein.current * 1.5) && fats.current > 35;
+    const isWayTooMuchCarb = carbs.current > (protein.current * 4) && carbs.current > 150;
+    const isSad = isOverFats || isOverCarbs || isWayTooMuchFat || isWayTooMuchCarb;
     const floatAnim = useSharedValue(0);
     const floatingStyle = useAnimatedStyle(() => ({
         transform: [
@@ -34,9 +38,9 @@ const DailyPulseCard: FC<DailyPulseCardProps> = ({ streak, carbs, fats, protein 
         );
     }, []);
     return (
-        <View className={`w-full rounded-[15px] overflow-hidden items-center justify-center h-[200px] p-6 ${isOverLimit ? 'bg-pink/80' : 'bg-darkYellow'}`}>
+        <View className={`w-full rounded-[15px] overflow-hidden items-center justify-center h-[200px] p-6 ${isSad ? 'bg-pink/80' : 'bg-darkYellow'}`}>
             <Animated.View style={floatingStyle} className="z-0 items-center justify-center">
-                <Image source={isOverLimit
+                <Image source={isSad
                     ? require("@/assets/images/sad-yumi.png")
                     : require("@/assets/images/happy-yumi.png")}
                     className="w-[120px] h-[120px]"
@@ -45,19 +49,19 @@ const DailyPulseCard: FC<DailyPulseCardProps> = ({ streak, carbs, fats, protein 
             </Animated.View>
             <PulseBadge className="top-10 left-16" rotation="-25deg">
                 <Text className="text-white text-base font-nunito-700">{streak}</Text>
-                <Fire size={20} color={isOverLimit ? "#CA877E" : "#C5E384"} weight="fill"/>
+                <Fire size={20} color={isSad ? "#CA877E" : "#C5E384"} weight="fill"/>
             </PulseBadge>
             <PulseBadge className="top-10 right-8" rotation="20deg">
                 <Text className="text-white text-base font-nunito-700">{fats.current}/<Text className="text-white/80">{fats.max}g</Text></Text>
-                <Text className={`text-base font-nunito-700 ${isOverLimit ? "text-pink" : "text-yellow"}`}>Fats</Text>
+                <Text className={`text-base font-nunito-700 ${isSad ? "text-pink" : "text-yellow"}`}>Fats</Text>
             </PulseBadge>
             <PulseBadge className="bottom-10 left-4" rotation="25deg">
                 <Text className="text-white text-base font-nunito-700">{protein.current}/<Text className="text-white/80">{protein.max}g</Text></Text>
-                <Text className={`text-base font-nunito-700 ${isOverLimit ? "text-pink" : "text-yellow"}`}>Protein</Text>
+                <Text className={`text-base font-nunito-700 ${isSad ? "text-pink" : "text-yellow"}`}>Protein</Text>
             </PulseBadge>
             <PulseBadge className="bottom-6 right-6" rotation="-10deg">
                 <Text className="text-white text-base font-nunito-700">{carbs.current}/<Text className="text-white/80">{carbs.max}g</Text></Text>
-                <Text className={`text-base font-nunito-700 ${isOverLimit ? "text-pink" : "text-yellow"}`}>Carbs</Text>
+                <Text className={`text-base font-nunito-700 ${isSad ? "text-pink" : "text-yellow"}`}>Carbs</Text>
             </PulseBadge>
         </View>
     );

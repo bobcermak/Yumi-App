@@ -1,5 +1,5 @@
 import { useEffect, type FC } from "react";
-import { View, TextInput } from "react-native";
+import { View, TextInput, type TextInputProps } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 import Animated, { useSharedValue, useAnimatedProps, withTiming, Easing, useDerivedValue, withDelay } from "react-native-reanimated";
 import { Fire } from "phosphor-react-native";
@@ -29,14 +29,13 @@ const CircularProgress: FC<CircularProgressProps> = ({ value, max, size = 140, s
     const animatedTextProps = useAnimatedProps(() => {
         return {
             text: `${Math.round(progress.value * 100)}%`,
-        } as any;
+        } as unknown as TextInputProps;
     });
     useEffect(() => {
-        progress.value = 0;
-        progress.value = withDelay(500, withTiming(visualPercentage, {
+        progress.value = withTiming(visualPercentage, {
             duration: 1500,
             easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-        }));
+        });
     }, [value, max, visualPercentage]);
     return (
         <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>

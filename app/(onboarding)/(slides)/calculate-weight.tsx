@@ -5,7 +5,7 @@ import * as Haptics from "expo-haptics";
 import { CaretLeft, CaretRight } from "phosphor-react-native";
 import { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
-import { Calendar } from "react-native-calendars";
+import { Calendar, type DateData } from "react-native-calendars";
 import Animated, { FadeIn, FadeInDown, FadeInLeft, FadeInRight, FadeInUp, interpolateColor, useAnimatedStyle, useSharedValue, withDelay, withSequence, withTiming } from "react-native-reanimated";
 
 const CalculateWeight = () => {
@@ -20,8 +20,8 @@ const CalculateWeight = () => {
     const warningOpacity = useSharedValue(0);
 
     //Calculations
-    const minWeight = weightUnit === 'kg' ? 15 : 33;
-    const maxWeight = weightUnit === 'kg' ? 200 : 440;
+    const minWeight = weightUnit === 'KG' ? 15 : 33;
+    const maxWeight = weightUnit === 'KG' ? 200 : 440;
     const today = getTodayString();
     const triggerWarning = () => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -53,7 +53,7 @@ const CalculateWeight = () => {
     const textStyle = useAnimatedStyle(() => {
         return { opacity: warningOpacity.value };
     });
-    const handleDateSelect = (day: any) => {
+    const handleDateSelect = (day: DateData) => {
         const wasClamped = setGoalDate(day.dateString);
         if (wasClamped) {
             triggerWarning();
@@ -83,7 +83,7 @@ const CalculateWeight = () => {
                 <View className="w-full gap-12">
                     <Animated.View entering={FadeIn.delay(300).duration(250)}>
                         <SegmentedControl
-                            options={['kg', 'lb']}
+                            options={['KG', 'LB']}
                             selectedValue={weightUnit}
                             onValueChange={toggleWeightUnit}
                             width={200}

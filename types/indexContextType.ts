@@ -23,6 +23,7 @@ export type IndexContextProps = {
     goToPrevDay: () => void;
     goToNextDay: () => void;
     goToToday: () => void;
-    refreshData: () => Promise<void>;
+    refreshData: () => Promise<boolean>;
+    refreshKey: number;
     isDataLoading: boolean;
 };

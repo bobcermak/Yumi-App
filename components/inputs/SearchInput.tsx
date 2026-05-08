@@ -90,7 +90,7 @@ const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search For Food", sh
     </View>
   );
   return (
-    <View className={`w-full ${className}`}>
+    <View className={`${className || 'w-full'}`}>
       {isInput ? (
         Content
       ) : (

@@ -6,9 +6,10 @@ type SegmentedControlProps<T extends string> = {
     options: readonly T[] | T[],
     selectedValue: T,
     onValueChange: (value: T) => void,
-    width?: number
+    width?: number,
+    className?: string
 };
-const SegmentedControl = <T extends string>({ options, selectedValue, onValueChange, width = 320 }: SegmentedControlProps<T>) => {
+const SegmentedControl = <T extends string>({ options, selectedValue, onValueChange, width = 320, className = "" }: SegmentedControlProps<T>) => {
     //Constants
     const PADDING = 6;
     const INNER_WIDTH = width - PADDING * 2;
@@ -30,7 +31,7 @@ const SegmentedControl = <T extends string>({ options, selectedValue, onValueCha
     return (
         <View 
             style={{ width }} 
-            className="flex-row items-center h-[60px] rounded-full relative p-[6px] self-center border border-white/5 bg-dark"
+            className={`flex-row items-center h-[60px] rounded-full relative p-[6px] border border-white/5 bg-dark ${className}`}
         >
             <Animated.View
                 style={[
@@ -62,7 +63,7 @@ const SegmentedControl = <T extends string>({ options, selectedValue, onValueCha
                         <Text 
                             className={`text-base font-nunito-700 ${isActive ? 'text-dark' : 'text-white'}`}
                         >
-                            {option.toUpperCase()}
+                            {option}
                         </Text>
                     </TouchableOpacity>
                 );

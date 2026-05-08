@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, type FC } from "react";
 import { View } from "react-native";
-import { startOfWeek, addDays, isSameDay, subWeeks, addWeeks, startOfDay } from "date-fns";
+import { startOfWeek, addDays, isSameDay, subWeeks, addWeeks, format } from "date-fns";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, runOnJS, withTiming } from "react-native-reanimated";
 import CalendarHeader from "./CalendarHeader";
@@ -91,7 +91,7 @@ const JourneyCalendar: FC<JourneyCalendarProps> = ({ activeDates = [], targetDat
                 onPrev={() => animateWeekChange('prev')} 
                 onNext={() => animateWeekChange('next')} 
             />
-            <View style={{ overflow: 'hidden' }}>
+            <View className="overflow-hidden h-[78px] justify-center">
                 <GestureDetector gesture={panGesture}>
                     <Animated.View style={animatedStyle} className="flex-row justify-between items-center">
                         {weekDays.map((date, index) => (
@@ -99,7 +99,7 @@ const JourneyCalendar: FC<JourneyCalendarProps> = ({ activeDates = [], targetDat
                                 key={index}
                                 date={date}
                                 isToday={isSameDay(date, today)}
-                                isActive={activeDates.some(d => isSameDay(new Date(d), date))}
+                                isActive={activeDates.includes(format(date, "yyyy-MM-dd"))}
                                 isTargetDay={targetDateObj ? isSameDay(date, targetDateObj) : false}
                                 isSelected={internalSelectedDate ? isSameDay(date, internalSelectedDate) : false}
                                 onPress={(d) => {

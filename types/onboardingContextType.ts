@@ -15,9 +15,9 @@ export type OnboardingContextType = {
     setCurrentWeight: (weight: number) => void;
     targetWeight: number;
     setTargetWeight: (weight: number) => void;
-    weightUnit: 'kg' | 'lb';
-    setWeightUnit: (unit: 'kg' | 'lb') => void;
-    toggleWeightUnit: (unit: 'kg' | 'lb') => void;
+    weightUnit: 'KG' | 'LB';
+    setWeightUnit: (unit: 'KG' | 'LB') => void;
+    toggleWeightUnit: (unit: 'KG' | 'LB') => void;
     activityLevel: number;
     setActivityLevel: (level: number) => void;
     dailyCalories: number;

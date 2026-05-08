@@ -2,7 +2,7 @@ import { caloriesFromDays, computeTDEE, computeTotalKcal, dateStringFromToday, d
 import { useFetch } from "@/lib/hooks/useFetch";
 import { checkUsernameIfExists } from "@/lib/services/supabase/queries/setupUserAccount";
 import { OnboardingContextType } from "@/types/onboardingContextType";
-import { usePathname, useRouter } from "expo-router";
+import { usePathname, useRouter, type Href } from "expo-router";
 import { createContext, useCallback, useEffect, useMemo, useState, type FC, type ReactNode } from "react";
 
 const SLIDES = ["user-information", "calculate-weight", "activity-level", "results-weight", "take-photo"];
@@ -23,7 +23,7 @@ const OnboardingProvider: FC<OnboardingProviderProps> = ({ children }) => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [currentWeight, setCurrentWeight] = useState<number>(70);
   const [targetWeight, setTargetWeight] = useState<number>(65);
-  const [weightUnit, setWeightUnit] = useState<"kg" | "lb">("kg");
+  const [weightUnit, setWeightUnit] = useState<"KG" | "LB">("KG");
   const [activityLevel, setActivityLevel] = useState<number>(2);
   const [dailyCalories, setDailyCaloriesRaw] = useState<number>(2000);
   const [goalDate, setGoalDateRaw] = useState<string | null>(null);
@@ -32,8 +32,8 @@ const OnboardingProvider: FC<OnboardingProviderProps> = ({ children }) => {
   const { data: usernameTakenResult, loading: isUsernameLoading, refetch: refetchUsername, reset: resetUsernameStatus } = useFetch(fetchUsernameStatus, false);
 
   //Calculations
-  const currentKg = useMemo(() => toKg(currentWeight, weightUnit), [currentWeight, weightUnit]);
-  const targetKg = useMemo(() => toKg(targetWeight, weightUnit), [targetWeight, weightUnit]);
+  const currentKg = useMemo(() => toKg(currentWeight, weightUnit === 'KG' ? 'kg' : 'lb'), [currentWeight, weightUnit]);
+  const targetKg = useMemo(() => toKg(targetWeight, weightUnit === 'KG' ? 'kg' : 'lb'), [targetWeight, weightUnit]);
   const updateCaloriesFromDate = useCallback((date: string) => {
     const days = daysUntil(date);
     const tdee = computeTDEE(currentKg, activityLevel);
@@ -79,11 +79,11 @@ const OnboardingProvider: FC<OnboardingProviderProps> = ({ children }) => {
     if (date) return updateCaloriesFromDate(date);
     return false;
   }, [updateCaloriesFromDate]);
-  const toggleWeightUnit = useCallback((unit: 'kg' | 'lb') => {
+  const toggleWeightUnit = useCallback((unit: 'KG' | 'LB') => {
     if (unit === weightUnit) return;
-    const newMin = unit === 'kg' ? 15 : 33;
-    const newMax = unit === 'kg' ? 200 : 440;
-    if (unit === 'lb') {
+    const newMin = unit === 'KG' ? 15 : 33;
+    const newMax = unit === 'KG' ? 200 : 440;
+    if (unit === 'LB') {
       setCurrentWeight(prev => Math.max(newMin, Math.min(newMax, Math.round(prev * 2.20462))));
       setTargetWeight(prev => Math.max(newMin, Math.min(newMax, Math.round(prev * 2.20462))));
     } else {
@@ -131,7 +131,10 @@ const OnboardingProvider: FC<OnboardingProviderProps> = ({ children }) => {
   const totalSteps = SLIDES.length;
   const handleContinue = useCallback(() => {
     const next = currentIndex + 1;
-    if (next < SLIDES.length) router.push(`/(onboarding)/(slides)/${SLIDES[next]}` as any);
+    if (next < SLIDES.length) {
+      const nextPath = `/(onboarding)/(slides)/${SLIDES[next]}` as Href;
+      router.push(nextPath);
+    }
   }, [currentIndex, router]);
   const handleBack = useCallback(() => {
     if (router.canGoBack()) router.back();

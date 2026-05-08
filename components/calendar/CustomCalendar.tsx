@@ -1,29 +1,39 @@
-import { type FC } from "react";
+import { type FC, useCallback, type ComponentType } from "react";
 import { View, Text, Pressable } from "react-native";
-import { Calendar } from "react-native-calendars";
+import { Calendar, type DateData } from "react-native-calendars";
 import { format, isAfter, startOfDay, isSameDay, isBefore } from "date-fns";
 import { CaretLeft, CaretRight } from "phosphor-react-native";
 
+type DayState = "disabled" | "selected" | "today" | "";
+type DayProps = {
+    date: DateData;
+    state?: DayState;
+    marking?: object;
+    onPress?: (date: DateData) => void;
+    onLongPress?: (date: DateData) => void;
+}
+
 type CustomCalendarProps = {
-    selectedDate: Date,
-    onDateSelect: (date: Date) => void,
-    activeDates?: string[],
-    targetDate?: string | null,
-    minDate?: string | null,
-    showStreak?: boolean,
-    allowFuture?: boolean
+    selectedDate: Date;
+    onDateSelect: (date: Date) => void;
+    activeDates?: string[];
+    targetDate?: string | null;
+    minDate?: string | null;
+    showStreak?: boolean;
+    allowFuture?: boolean;
 };
-const CustomCalendar: FC<CustomCalendarProps> = ({ selectedDate, onDateSelect, activeDates = [], targetDate, minDate, showStreak = true, allowFuture = false }) => {
+const CustomCalendar: FC<CustomCalendarProps> = ({ selectedDate, onDateSelect, activeDates = [], targetDate, minDate, showStreak = true, allowFuture = false, }) => {
     const today = new Date();
     const targetDateObj = targetDate ? new Date(targetDate) : null;
     const minDateObj = minDate ? startOfDay(new Date(minDate)) : null;
+
     //Functions
-    const renderDay = ({ date, state }: any) => {
+    const renderDay = useCallback(({ date, state }: DayProps) => {
         const dayDate = new Date(date.timestamp);
         const isSelected = isSameDay(dayDate, selectedDate);
         const isTodayDay = isSameDay(dayDate, today);
         const isTarget = targetDateObj ? isSameDay(dayDate, targetDateObj) : false;
-        const isActive = activeDates.some(d => isSameDay(new Date(d), dayDate));
+        const isActive = activeDates.includes(format(dayDate, "yyyy-MM-dd"));
         const isTooEarly = minDateObj ? isBefore(startOfDay(dayDate), minDateObj) : false;
         const isTooLate = !allowFuture && isAfter(startOfDay(dayDate), startOfDay(today));
         const isDisabled = state === 'disabled' || isTooEarly || isTooLate;
@@ -42,15 +52,13 @@ const CustomCalendar: FC<CustomCalendarProps> = ({ selectedDate, onDateSelect, a
             return 'text-white';
         };
         return (
-            <Pressable 
+            <Pressable
                 onPress={() => !isDisabled && onDateSelect(dayDate)}
                 hitSlop={8}
                 className="items-center justify-center w-10 h-12"
-                style={({ pressed }) => ({
-                    opacity: pressed ? 0.6 : 1
-                })}
+                style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
             >
-                <View 
+                <View
                     className={`w-9 h-9 items-center justify-center rounded-full ${getBgClass()}`}
                     style={(isSelected || isTodayDay || isTarget) ? {
                         shadowColor: isTodayDay ? "#C5E384" : (isTarget ? "#CA877E" : "#FFFFFF"),
@@ -59,7 +67,7 @@ const CustomCalendar: FC<CustomCalendarProps> = ({ selectedDate, onDateSelect, a
                         shadowRadius: 4,
                         elevation: 3,
                         borderWidth: isSelected && !isTodayDay ? 1 : 0,
-                        borderColor: 'rgba(255,255,255,0.3)'
+                        borderColor: 'rgba(255,255,255,0.3)',
                     } : {}}
                 >
                     <Text className={`text-base font-nunito-600 ${getTextColorClass()}`}>
@@ -67,23 +75,28 @@ const CustomCalendar: FC<CustomCalendarProps> = ({ selectedDate, onDateSelect, a
                     </Text>
                 </View>
                 <View className="h-1 mt-0.5 items-center justify-center">
-                    {showStreak && isActive && !isTodayDay && !isTarget && (
-                        <View className="w-1 h-1 rounded-full bg-yellow"/>
+                    {showStreak && isActive && !isTarget && (
+                        <View className={`w-1 h-1 rounded-full ${isTodayDay ? 'bg-dark/40' : 'bg-yellow'}`} />
                     )}
                 </View>
             </Pressable>
         );
-    };
+    }, [selectedDate, onDateSelect, activeDates, targetDateObj, minDateObj, showStreak, allowFuture, today]);
     return (
         <View className="rounded-[20px] overflow-hidden bg-dark">
             <Calendar
                 current={format(selectedDate, "yyyy-MM-dd")}
                 minDate={minDate || undefined}
                 maxDate={!allowFuture ? format(today, "yyyy-MM-dd") : undefined}
-                dayComponent={renderDay}
+                //@ts-ignore
+                dayComponent={renderDay as unknown as ComponentType<DayProps>}
                 showSixWeeks={true}
                 enableSwipeMonths={true}
-                renderArrow={(direction: string) => direction === 'left' ? <CaretLeft color="#C5E384" size={24} weight="bold" /> : <CaretRight color="#C5E384" size={24} weight="bold"/>}
+                renderArrow={(direction: 'left' | 'right') =>
+                    direction === 'left'
+                        ? <CaretLeft color="#C5E384" size={24} weight="bold" />
+                        : <CaretRight color="#C5E384" size={24} weight="bold" />
+                }
                 theme={{
                     backgroundColor: "transparent",
                     calendarBackground: "transparent",

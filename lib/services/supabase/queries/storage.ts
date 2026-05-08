@@ -15,7 +15,7 @@ export const uploadImage = async (uri: string, path: string, bucket: string): Pr
       uri: finalUri,
       name: fileName,
       type: 'image/webp',
-    } as any);
+    } as unknown as Blob);
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from(cleanBucket)
       .upload(cleanPath, formData, {
@@ -31,8 +31,9 @@ export const uploadImage = async (uri: string, path: string, bucket: string): Pr
       .from(cleanBucket)
       .getPublicUrl(cleanPath);
     return data?.publicUrl || null;
-  } catch (error: any) {
-    console.error("[Storage] Critical failure in uploadImage:", error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "An unknown error occurred";
+    console.error("[Storage] Critical failure in uploadImage:", message);
     throw error;
   }
 };

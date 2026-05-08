@@ -28,3 +28,5 @@ export { default as MacroColumn } from "./dashboard/MacroColumn";
 export { default as PulseBadge } from "./dashboard/PulseBadge";
 export { default as Toast } from "./common/Toast";
 export { default as DailyPulseCard } from "./common/DailyPulseCard";
+export { default as PopularMeal } from "./meals/PopularMeal";
+export { default as PopularMealsSection } from "./meals/PopularMealsSection";

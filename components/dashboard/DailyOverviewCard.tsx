@@ -31,7 +31,7 @@ const DailyOverviewCard: FC<DailyOverviewCardProps> = ({ date, calories, macros,
             val.value = 0;
             val.value = withDelay(i * 100, withTiming(1, { duration: 400 }));
         });
-    }, [date]);
+    }, []);
     const createStyle = (index: number) => useAnimatedStyle(() => ({
         opacity: animValues[index].value,
         transform: [{ translateY: (1 - animValues[index].value) * 10 }]
@@ -116,7 +116,7 @@ const DailyOverviewCard: FC<DailyOverviewCardProps> = ({ date, calories, macros,
                     </TouchableOpacity>
                 </Animated.View>
                 <Animated.View style={createStyle(1)}>
-                    <MemoizedCircularProgress key={date.toISOString()} value={calories.current} max={calories.max} />
+                    <MemoizedCircularProgress value={calories.current} max={calories.max} />
                 </Animated.View>
             </View>
             <Animated.Text style={createStyle(2)} className="text-white/80 text-xl font-nunito-600 mt-2">

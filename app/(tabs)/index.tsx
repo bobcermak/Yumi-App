@@ -1,9 +1,9 @@
-import { Button, CalendarBottomSheet, DailyOverviewCard, HomeHeader, JourneyCalendar, SearchInput, Toast, DailyPulseCard } from "@/components";
+import { Button, CalendarBottomSheet, DailyOverviewCard, HomeHeader, JourneyCalendar, SearchInput, Toast, DailyPulseCard, Icon } from "@/components";
 import IndexProvider from "@/contexts/IndexContext";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useIndexContext } from "@/lib/hooks/useIndexContext";
 import BottomSheet from "@gorhom/bottom-sheet";
-import { format, isToday } from "date-fns";
+import { format, isToday, isBefore, isSameDay } from "date-fns";
 import { useRouter, useFocusEffect } from "expo-router";
 import { CalendarDots, CaretLeft, CaretRight } from "phosphor-react-native";
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -18,7 +18,7 @@ const IndexContent = () => {
     const journeyCalendarRef = useRef<BottomSheet>(null);
     //Contexts
     const { userProfile } = useAuth();
-    const { toast, overviewData, dashboardDate, isDataLoading, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, refreshData } = useIndexContext();
+    const { toast, overviewData, dashboardDate, isDataLoading, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, refreshData, refreshKey } = useIndexContext();
     useFocusEffect(
         useCallback(() => {
             const fetchInitialData = async () => {
@@ -30,9 +30,8 @@ const IndexContent = () => {
         }, [userProfile?.id])
     );
     //Hooks
-    const [refreshing, setRefreshing] = useState(false);
-    const fadeAnim = useSharedValue(1);
-    const pageOpacity = useSharedValue(0);
+    const [refreshing, setRefreshing] = useState<boolean>(false);
+    const pageOpacity = useSharedValue<number>(0);
     const insets = useSafeAreaInsets();
 
     const TAB_BAR_HEIGHT = 148;
@@ -55,20 +54,9 @@ const IndexContent = () => {
     useEffect(() => {
         pageOpacity.value = withTiming(1, { duration: 250 });
     }, []);
-    useEffect(() => {
-        if (isDataLoading) {
-            fadeAnim.value = withTiming(0.4, { duration: 150 });
-        } else {
-            fadeAnim.value = withTiming(1, { duration: 300 });
-        }
-    }, [isDataLoading]);
     const animatedPageStyle = useAnimatedStyle(() => ({
         opacity: pageOpacity.value,
         flex: 1
-    }));
-    const animatedCardStyle = useAnimatedStyle(() => ({
-        opacity: fadeAnim.value,
-        transform: [{ scale: 0.98 + (fadeAnim.value * 0.02) }]
     }));
     //Gestures
     const swipeGesture = Gesture.Pan()
@@ -80,20 +68,24 @@ const IndexContent = () => {
                 runOnJS(goToNextDay)();
             }
         });
+    const isNextDisabled = isToday(dashboardDate);
+    const isPrevDisabled = userProfile?.start_date 
+        ? isBefore(dashboardDate, new Date(userProfile.start_date)) || isSameDay(dashboardDate, new Date(userProfile.start_date))
+        : false;
     const todayButtonLabel = isToday(dashboardDate) ? "Today" : format(dashboardDate, "dd MMM, yyyy");
     return (
         <View className="flex-1">
             <Toast toast={toast} />
             <Animated.View style={animatedPageStyle}>
                 <ScrollView 
-                    className="mt-[88px] w-[380px] self-center" 
+                    className="flex-1 mt-[88px] w-[380px] self-center" 
                     showsVerticalScrollIndicator={false} 
                     contentContainerStyle={{ paddingBottom: TAB_BAR_HEIGHT + insets.bottom }}
                     refreshControl={
                         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#C5E384"/>
                     }
                 >
-                    <Animated.View entering={FadeInDown.duration(250).delay(100)} className="gap-4">
+                    <Animated.View key={`header-${refreshKey}`} entering={FadeInDown.duration(250).delay(100)} className="gap-4">
                         <HomeHeader
                             firstName={userProfile?.full_name?.split(" ")[0] || userProfile?.username || "Friend"}
                             avatarUrl={userProfile?.avatar_url}
@@ -107,25 +99,25 @@ const IndexContent = () => {
                             onSearchPress={() => router.push("/(tabs)/search?focus=true")}
                         />
                     </Animated.View>
-                <View className="w-[362px] self-center mt-8">
-                    <View className="flex-row justify-between items-end">
-                        <Text className="title">My Journey</Text>
-                        <TouchableOpacity
-                            onPress={() => journeyCalendarRef.current?.snapToIndex(0)}
-                            className="pl-4 pt-2"
-                            activeOpacity={0.25}
-                        >
-                            <CalendarDots size={24} color="#FFFFFF80" weight="regular" />
-                        </TouchableOpacity>
-                    </View>
-                    <JourneyCalendar
-                        activeDates={activeDates}
-                        targetDate={targetDate}
-                        selectedDate={overviewData.date}
-                        onSelectDate={setSelectedDate}
-                    />
-                </View>
-                    <Animated.View entering={FadeInDown.duration(250).delay(200)} className="w-[362px] self-center mt-8">
+                    <Animated.View key={`journey-section-${refreshKey}`} entering={FadeInDown.duration(250).delay(150)} className="w-[362px] self-center mt-8">
+                        <View className="flex-row justify-between items-end">
+                            <Text className="title">My Journey</Text>
+                            <TouchableOpacity
+                                onPress={() => journeyCalendarRef.current?.snapToIndex(0)}
+                                className="pl-4 pt-2"
+                                activeOpacity={0.25}
+                            >
+                                <CalendarDots size={24} color="#FFFFFF80" weight="regular" />
+                            </TouchableOpacity>
+                        </View>
+                        <JourneyCalendar
+                            activeDates={activeDates}
+                            targetDate={targetDate}
+                            selectedDate={overviewData.date}
+                            onSelectDate={setSelectedDate}
+                        />
+                    </Animated.View>
+                    <Animated.View key={`overview-${refreshKey}`} entering={FadeInDown.duration(250).delay(250)} className="w-[362px] self-center mt-8">
                         <View className="flex-row justify-between items-end">
                             <Button
                                 onPress={() => todayCalendarRef.current?.snapToIndex(0)}
@@ -134,32 +126,36 @@ const IndexContent = () => {
                                 {todayButtonLabel}
                             </Button>
                             <View className="flex-row gap-2">
-                                <TouchableOpacity
+                                <Icon
                                     onPress={goToPrevDay}
-                                    className="w-10 h-10 rounded-full bg-white/20 items-center justify-center"
+                                    disabled={isPrevDisabled}
+                                    className={`bg-white/20 ${isPrevDisabled ? "opacity-20" : "opacity-100"}`}
+                                    shadowColor="transparent"
                                 >
                                     <CaretLeft size={20} color="white" weight="regular" />
-                                </TouchableOpacity>
-                                <TouchableOpacity
+                                </Icon>
+                                <Icon
                                     onPress={goToNextDay}
-                                    className="w-10 h-10 rounded-full bg-white/20 items-center justify-center"
+                                    disabled={isNextDisabled}
+                                    className={`bg-white/20 ${isNextDisabled ? "opacity-20" : "opacity-100"}`}
+                                    shadowColor="transparent"
                                 >
                                     <CaretRight size={20} color="white" weight="regular" />
-                                </TouchableOpacity>
+                                </Icon>
                             </View>
                         </View>
                         <GestureDetector gesture={swipeGesture}>
-                            <Animated.View style={animatedCardStyle}>
+                            <View>
                                 <DailyOverviewCard
                                     date={dashboardDate}
                                     calories={overviewData.calories}
                                     macros={overviewData.macros}
                                     onUpdateCaloriesMax={handleUpdateCaloriesMax}
                                 />
-                            </Animated.View>
+                            </View>
                         </GestureDetector>
                     </Animated.View>
-                    <Animated.View entering={FadeInDown.duration(250).delay(300)} className="w-[362px] self-center mt-8">
+                    <Animated.View key={`pulse-${refreshKey}`} entering={FadeInDown.duration(250).delay(350)} className="w-[362px] self-center mt-8">
                         <Text className="title mb-4">Daily Pulse</Text>
                         <DailyPulseCard 
                             streak={userProfile?.streak_count || 0}
@@ -178,7 +174,7 @@ const IndexContent = () => {
                     activeDates={activeDates}
                     targetDate={targetDate}
                     minDate={userProfile?.start_date}
-                    showStreak={false}
+                    showStreak={true}
                     allowFuture={false}
                 />
                 <CalendarBottomSheet

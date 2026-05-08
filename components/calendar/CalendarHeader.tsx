@@ -1,7 +1,8 @@
 import { format } from "date-fns";
 import { CaretLeft, CaretRight } from "phosphor-react-native";
 import { type FC } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, View } from "react-native";
+import Icon from "../buttons/Icon";
 
 type CalendarHeaderProps = {
     currentDate: Date;
@@ -15,18 +16,12 @@ const CalendarHeader: FC<CalendarHeaderProps> = ({ currentDate, onPrev, onNext }
                 {format(currentDate, "MMMM yyyy")}
             </Text>
             <View className="flex-row gap-3">
-                <TouchableOpacity
-                    onPress={onPrev}
-                    className="w-10 h-10 rounded-full bg-white/50 items-center justify-center"
-                >
-                    <CaretLeft size={20} color="white" weight="regular" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                    onPress={onNext}
-                    className="w-10 h-10 rounded-full bg-white/50 items-center justify-center"
-                >
-                    <CaretRight size={20} color="white" weight="regular" />
-                </TouchableOpacity>
+                <Icon onPress={onPrev} className="bg-white/10" shadowColor="transparent">
+                    <CaretLeft size={20} color="white" weight="regular"/>
+                </Icon>
+                <Icon onPress={onNext} className="bg-white/10" shadowColor="transparent">
+                    <CaretRight size={20} color="white" weight="regular"/>
+                </Icon>
             </View>
         </View>
     );

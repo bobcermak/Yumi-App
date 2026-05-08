@@ -10,7 +10,7 @@ type CustomSliderProps = {
     step?: number,
     onValueChange: (val: number) => void,
     trackColor?: string,
-    unit: "kg" | "lb",
+    unit: "KG" | "LB",
     onSlidingStart?: () => void,
     onSlidingComplete?: () => void
 }

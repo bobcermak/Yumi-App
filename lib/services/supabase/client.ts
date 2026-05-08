@@ -38,7 +38,7 @@ const storageAdapter = {
 };
 const supabase = createClient<Database>(supabaseUrl || "", supabaseAnonKey || "", {
   auth: {
-    storage: storageAdapter as any,
+    storage: storageAdapter,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: Platform.OS === 'web',

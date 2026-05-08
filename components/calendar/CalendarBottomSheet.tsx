@@ -23,7 +23,7 @@ const CalendarBottomSheet = forwardRef<BottomSheet, CalendarBottomSheetProps>(({
         collapse: () => setVisible(false),
         close: () => setVisible(false),
         forceClose: () => setVisible(false),
-    } as any));
+    } as unknown as BottomSheet));
     return (
         <Modal
             visible={visible}
