@@ -2,6 +2,7 @@ import { Button, CalendarBottomSheet, DailyOverviewCard, HomeHeader, JourneyCale
 import IndexProvider from "@/contexts/IndexContext";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useIndexContext } from "@/lib/hooks/useIndexContext";
+import { getEffectiveStreak } from "@/lib/services/supabase/queries/profiles";
 import BottomSheet from "@gorhom/bottom-sheet";
 import { format, isToday, isBefore, isSameDay } from "date-fns";
 import { useRouter, useFocusEffect } from "expo-router";
@@ -82,7 +83,13 @@ const IndexContent = () => {
                     showsVerticalScrollIndicator={false} 
                     contentContainerStyle={{ paddingBottom: TAB_BAR_HEIGHT + insets.bottom }}
                     refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#C5E384"/>
+                        <RefreshControl 
+                            refreshing={refreshing} 
+                            onRefresh={onRefresh} 
+                            tintColor="#C5E384"
+                            colors={["#C5E384"]}
+                            progressBackgroundColor="#1D1D1D"
+                        />
                     }
                 >
                     <Animated.View key={`header-${refreshKey}`} entering={FadeInDown.duration(250).delay(100)} className="gap-4">
@@ -92,6 +99,7 @@ const IndexContent = () => {
                             rating={userProfile?.total_rating}
                             isPremium={userProfile?.is_premium}
                             streakCount={userProfile?.streak_count}
+                            lastLogDate={userProfile?.last_log_date}
                             onCalendarPress={() => journeyCalendarRef.current?.snapToIndex(0)}
                         />
                         <SearchInput
@@ -158,7 +166,7 @@ const IndexContent = () => {
                     <Animated.View key={`pulse-${refreshKey}`} entering={FadeInDown.duration(250).delay(350)} className="w-[362px] self-center mt-8">
                         <Text className="title mb-4">Daily Pulse</Text>
                         <DailyPulseCard 
-                            streak={userProfile?.streak_count || 0}
+                            streak={getEffectiveStreak(userProfile?.streak_count, userProfile?.last_log_date)}
                             protein={overviewData.macros.protein}
                             carbs={overviewData.macros.carbs}
                             fats={overviewData.macros.fats}

@@ -91,7 +91,7 @@ const JourneyCalendar: FC<JourneyCalendarProps> = ({ activeDates = [], targetDat
                 onPrev={() => animateWeekChange('prev')} 
                 onNext={() => animateWeekChange('next')} 
             />
-            <View className="overflow-hidden h-[78px] justify-center">
+            <View className="overflow-hidden h-[88px] justify-center">
                 <GestureDetector gesture={panGesture}>
                     <Animated.View style={animatedStyle} className="flex-row justify-between items-center">
                         {weekDays.map((date, index) => (

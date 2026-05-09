@@ -18,10 +18,10 @@ type CircularProgressProps = {
 const CircularProgress: FC<CircularProgressProps> = ({ value, max, size = 140, strokeWidth = 12, color = "#C5E384", trackColor = "#FFFFFF20" }) => {
     const radius = (size - strokeWidth) / 2;
     const circumference = radius * 2 * Math.PI;
-    const visualPercentage = max > 0 ? Math.min(value / max, 1) : 0;
+    const visualPercentage = max > 0 ? value / max : 0;
     const progress = useSharedValue(0);
     const animatedProps = useAnimatedProps(() => {
-        const strokeDashoffset = circumference - progress.value * circumference;
+        const strokeDashoffset = circumference - Math.min(progress.value, 1) * circumference;
         return {
             strokeDashoffset,
         };

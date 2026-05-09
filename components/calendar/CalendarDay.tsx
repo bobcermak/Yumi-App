@@ -36,13 +36,13 @@ const CalendarDay: FC<CalendarDayProps> = ({ date, isToday, isActive, isTargetDa
         <Pressable 
             onPress={() => onPress?.(date)}
             hitSlop={12}
-            className="items-center px-1"
+            className="items-center px-1 h-[80px]"
             style={({ pressed }) => ({
                 opacity: pressed ? 0.6 : 1
             })}
         >
             <View
-                className={`items-center justify-center rounded-[12px] w-10 py-2 ${getBgClass()}`}
+                className={`items-center justify-center rounded-[12px] w-10 h-[64px] ${getBgClass()}`}
                 style={(isSelected || isToday || isTargetDay) ? {
                     shadowColor: isToday ? "#C5E384" : (isTargetDay ? "#CA877E" : "#FFFFFF"),
                     shadowOffset: { width: 0, height: 4 },
@@ -60,9 +60,9 @@ const CalendarDay: FC<CalendarDayProps> = ({ date, isToday, isActive, isTargetDa
                     {dayNumber}
                 </Text>
             </View>
-            <View className="h-1.5 mt-1 items-center justify-center">
-                {isActive && !isTargetDay && (
-                    <View className={`w-1.5 h-1.5 rounded-full ${isToday ? 'bg-dark/40' : 'bg-yellow'}`}/>
+            <View className="h-2 absolute bottom-1 items-center justify-center">
+                {isActive && !isTargetDay && !isToday && (
+                    <View className="w-1.5 h-1.5 rounded-full bg-yellow"/>
                 )}
             </View>
         </Pressable>

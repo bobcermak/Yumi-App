@@ -1,10 +1,11 @@
-import { createContext, useState, useEffect, type FC, useMemo, useCallback } from "react";
+import { dateStringFromToday, daysFromCalories } from "@/lib/helpers/onBoardingHelpers";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { format, subDays, addDays, isToday, startOfMonth, endOfMonth, startOfDay, isAfter, isBefore, isSameDay } from "date-fns";
-import { daysFromCalories, dateStringFromToday } from "@/lib/helpers/onBoardingHelpers";
+import { getActiveDates, getDailyLog } from "@/lib/services/supabase/queries/dailyLogs";
+import { incrementUserStreak } from "@/lib/services/supabase/queries/profiles";
 import { updateCalorieLimitAndTargetDate } from "@/lib/services/supabase/queries/setupUserAccount";
-import { getDailyLog, getActiveDates } from "@/lib/services/supabase/queries/dailyLogs";
-import { OverviewData, ToastType, IndexContextProps } from "@/types/indexContextType";
+import { IndexContextProps, OverviewData, ToastType } from "@/types/indexContextType";
+import { addDays, endOfMonth, format, isAfter, isBefore, isSameDay, isToday, startOfDay, startOfMonth, subDays } from "date-fns";
+import { createContext, useCallback, useEffect, useMemo, useState, type FC } from "react";
 
 export const IndexContext = createContext<IndexContextProps | undefined>(undefined);
 
@@ -72,7 +73,7 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
                 fats: { ...prev.macros.fats, max: Math.round((clampedMax * 0.3) / 9) },
                 protein: { ...prev.macros.protein, max: Math.round((clampedMax * 0.2) / 4) },
             }
-        }));        
+        }));
         if (userProfile?.id) {
             let newTargetDate: string | undefined;
             if (userProfile.current_weight && userProfile.goal_weight) {
@@ -161,6 +162,7 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
             const today = new Date();
             const dateStr = format(today, "yyyy-MM-dd");
             const { data } = await getDailyLog(userProfile.id, dateStr);
+            await incrementUserStreak(userProfile.id);
             await refreshProfile();
             const limit = userProfile.daily_calorie_limit || defaultCalLimit;
             const hasDateChanged = !isSameDay(today, overviewData.date);
@@ -182,11 +184,11 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
         return false;
     }, [userProfile, fetchMonthActiveDates, refreshProfile, overviewData.date, overviewData.calories.current]);
     const contextValue = useMemo(() => ({
-        toast, 
-        showToast, 
-        overviewData, 
+        toast,
+        showToast,
+        overviewData,
         dashboardDate,
-        handleUpdateCaloriesMax, 
+        handleUpdateCaloriesMax,
         activeDates,
         targetDate,
         setSelectedDate,

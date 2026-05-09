@@ -1,8 +1,10 @@
 import { View, Text, TouchableOpacity } from "react-native";
-import { ProfilePicture, Icon } from "@/components";
+import ProfilePicture from "./ProfilePicture";
+import Icon from "../buttons/Icon";
 import { type FC } from "react";
 import { CalendarDots, Bell } from "phosphor-react-native";
 import { useRouter } from "expo-router";
+import { getEffectiveStreak } from "@/lib/services/supabase/queries/profiles";
 
 type HomeHeaderProps = {
   firstName: string,
@@ -10,10 +12,11 @@ type HomeHeaderProps = {
   rating?: number | null,
   isPremium?: boolean | null,
   streakCount?: number | null,
+  lastLogDate?: string | null,
   onCalendarPress: () => void
 }
-const HomeHeader: FC<HomeHeaderProps> = ({ firstName, avatarUrl, rating, isPremium, streakCount, onCalendarPress }) => {
-  const streak = streakCount || 0;
+const HomeHeader: FC<HomeHeaderProps> = ({ firstName, avatarUrl, rating, isPremium, streakCount, lastLogDate, onCalendarPress }) => {
+  const streak = getEffectiveStreak(streakCount, lastLogDate);
   const name = firstName || "Friend";
   const router = useRouter();
   const hasDiacritics = /[áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]/.test(name);

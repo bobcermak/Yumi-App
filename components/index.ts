@@ -30,3 +30,4 @@ export { default as Toast } from "./common/Toast";
 export { default as DailyPulseCard } from "./common/DailyPulseCard";
 export { default as PopularMeal } from "./meals/PopularMeal";
 export { default as PopularMealsSection } from "./meals/PopularMealsSection";
+export { default as SearchResultItem } from "./results/SearchResultItem";

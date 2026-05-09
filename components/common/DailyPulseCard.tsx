@@ -2,7 +2,7 @@ import { View, Text, Image } from "react-native";
 import { type FC, useEffect } from "react";
 import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming, Easing } from "react-native-reanimated";
 import { Fire } from "phosphor-react-native";
-import { PulseBadge } from "@/components";
+import PulseBadge from "../dashboard/PulseBadge";
 
 type MacroData = {
     current: number;
