@@ -19,7 +19,7 @@ const IndexContent = () => {
     const journeyCalendarRef = useRef<BottomSheet>(null);
     //Contexts
     const { userProfile } = useAuth();
-    const { toast, overviewData, dashboardDate, isDataLoading, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, refreshData, refreshKey } = useIndexContext();
+    const { toast, overviewData, dashboardDate, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, refreshData, refreshKey } = useIndexContext();
     useFocusEffect(
         useCallback(() => {
             const fetchInitialData = async () => {

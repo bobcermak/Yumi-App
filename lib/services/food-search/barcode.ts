@@ -1,0 +1,26 @@
+import supabase from '../supabase/client';
+import type { FoodSearchResult } from '@/types/foodSearchResult';
+
+export const searchFoodByBarcode = async (barcode: string): Promise<FoodSearchResult | null> => {
+  if (!barcode) return null;
+  try {
+    const { data, error } = await supabase.functions.invoke('barcode-search', {
+      body: { barcode },
+    });
+    if (error) {
+      console.error(`[BarcodeService] Edge Function error:`, error);
+      return null;
+    }
+    if (!data || data.error) {
+      console.warn(`[BarcodeService] No data or error in response:`, data?.error);
+      return null;
+    }
+    const result = data as FoodSearchResult;
+    console.log(`[BarcodeService] Success! Found: ${result.name}`);
+    console.log(`[BarcodeService] Details: ${result.calories_per_100g} kcal | Brand: ${result.brand || 'N/A'}`);
+    return result;
+  } catch (error) {
+    console.error(`[BarcodeService] Unexpected error:`, error);
+    return null;
+  }
+};

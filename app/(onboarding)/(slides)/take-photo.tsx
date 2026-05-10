@@ -1,10 +1,10 @@
 import { Button, ImageSourcePicker, PhotoUploadCard } from "@/components";
-import { useOnboarding } from "@/lib/hooks/useOnboarding";
 import { pickImageHelper } from "@/lib/helpers/imageHelpers";
+import { useOnboarding } from "@/lib/hooks/useOnboarding";
 import { User, X } from "phosphor-react-native";
 import { useEffect, useState } from "react";
 import { Image, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import Animated, { FadeIn, FadeOut, FadeInUp, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from "react-native-reanimated";
+import Animated, { FadeIn, FadeInUp, FadeOut, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from "react-native-reanimated";
 
 const TakePhoto = () => {
     //Context
@@ -108,7 +108,7 @@ const TakePhoto = () => {
                             }}
                         >
                             {photoUri ? (
-                                <Image source={{ uri: photoUri }} className="w-full h-full opacity-80"/>
+                                <Image source={{ uri: photoUri }} className="w-full h-full opacity-80" />
                             ) : (
                                 <View className="items-center gap-2">
                                     <View className="w-16 h-16 rounded-full bg-white/5 items-center justify-center">

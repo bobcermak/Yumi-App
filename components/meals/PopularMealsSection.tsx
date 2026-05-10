@@ -1,13 +1,14 @@
-import { View, Text, FlatList, Dimensions, ActivityIndicator } from "react-native";
-import { PopularMeal, SegmentedControl } from "@/components";
+import { PopularMeal, PopularMealSkeleton, SegmentedControl } from "@/components";
 import { useSearchContext } from "@/lib/hooks/useSearchContext";
+import { ForkKnife, Ghost } from "phosphor-react-native";
+import { Dimensions, FlatList, Text, View } from "react-native";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const PopularMealsSection = () => {
   //Context
   const { popularMeals, filter, setFilter, isLoading } = useSearchContext();
-  
+
   return (
     <View className="w-full mt-8">
       <View className="w-[362px] self-center items-start gap-4 mb-4">
@@ -33,20 +34,33 @@ const PopularMealsSection = () => {
           />
         )}
         ListEmptyComponent={
-          <View 
-            style={{ width: SCREEN_WIDTH - 32 }} 
-            className="flex-1 justify-center items-center"
-          >
-            {isLoading ? (
-              <ActivityIndicator size="small" color="#C5E384"/>
-            ) : (
-              <Text className="text-white/50 font-nunito-600 text-base text-center px-4">
-                {filter === 'My' 
-                  ? "No crumbs here yet... 🥨 Try checking 'All' or start searching!"
-                  : "It's a bit empty here... 🕸️ Let's fill it up together!"}
-              </Text>
-            )}
-          </View>
+          isLoading ? (
+            <View className="flex-row items-center">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <PopularMealSkeleton key={`skel-${i}`} />
+              ))}
+            </View>
+          ) : (
+            <View
+              style={{ width: SCREEN_WIDTH - 32 }}
+              className="flex-1 justify-center items-center py-6"
+            >
+              <View className="items-center justify-center gap-3">
+                <View className="w-16 h-16 rounded-full bg-white/5 border border-dashed border-white/20 items-center justify-center">
+                  {filter === 'My' ? (
+                    <Ghost size={32} color="#C5E384" weight="duotone" />
+                  ) : (
+                    <ForkKnife size={32} color="#C5E384" weight="duotone" />
+                  )}
+                </View>
+                <Text className="text-white/40 font-nunito-600 text-base text-center px-8">
+                  {filter === 'My'
+                    ? "No crumbs here yet... Try checking 'All' or start searching!"
+                    : "It's a bit empty here... 🕸️ Let's fill it up together!"}
+                </Text>
+              </View>
+            </View>
+          )
         }
         contentContainerStyle={{ paddingHorizontal: 16, flexGrow: 1 }}
         style={{ height: 200 }}

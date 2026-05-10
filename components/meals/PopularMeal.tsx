@@ -1,6 +1,6 @@
 import { CaretRight } from "phosphor-react-native";
 import { FC } from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View, Image } from "react-native";
 
 type PopularMealProps = {
     imgUrl?: string | null,
@@ -33,7 +33,7 @@ const PopularMeal: FC<PopularMealProps> = ({ imgUrl, name, calories, url }) => {
                     <Text className="text-lg text-white font-nunito-700" numberOfLines={2}>{name}</Text>
                     <Text className="text-sm text-white/50 font-nunito-800" numberOfLines={1}>{calories} cal / 100 g</Text>
                 </View>
-                <CaretRight size={20} color="#FFFFFF" weight="bold" />
+                <CaretRight size={20} color="#FFFFFF" weight="bold"/>
             </View>
         </TouchableOpacity>
     );

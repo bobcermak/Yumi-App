@@ -8,6 +8,8 @@ import { ActivityIndicator, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AnimatedBackground } from "@/components";
+import { preloadStaticProduce } from "@/lib/services/food-search/cache";
+import { useEffect } from "react";
 import "./globals.css";
 
 const customTheme = {
@@ -22,6 +24,9 @@ const RootLayout = () => {
   const fontsLoaded = useCachedFonts();
   const segments = useSegments();
 
+  useEffect(() => {
+    preloadStaticProduce();
+  }, []);
   if (!fontsLoaded) return null;
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -31,7 +36,7 @@ const RootLayout = () => {
             if (!auth?.isReady) {
               return (
                 <View className="flex-1 bg-black items-center justify-center">
-                  <ActivityIndicator size="large" color="#FFFFFF"/>
+                  <ActivityIndicator size="large" color="#C5E384"/>
                 </View>
               );
             }

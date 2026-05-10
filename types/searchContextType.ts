@@ -1,5 +1,6 @@
 import { Food } from "./database/dbModels";
 import type { FoodSearchResult } from "./foodSearchResult";
+import type { FoodCategory, FoodType } from "./searchFilters";
 
 export type SearchContextType = {
     popularMeals: Food[];
@@ -13,4 +14,8 @@ export type SearchContextType = {
     isSearching: boolean;
     searchSource: 'openfoodfacts' | 'usda' | null;
     submitSearch: () => void;
+    category: FoodCategory;
+    setCategory: (category: FoodCategory) => void;
+    foodType: FoodType;
+    setFoodType: (foodType: FoodType) => void;
 };

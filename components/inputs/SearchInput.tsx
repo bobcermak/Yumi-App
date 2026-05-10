@@ -1,9 +1,11 @@
-import { View, Text, TouchableOpacity, TextInput } from "react-native";
-import { MagnifyingGlass, Barcode, ArrowRight } from "phosphor-react-native";
-import { type FC, useRef, useCallback } from "react";
-import { useRouter, useFocusEffect } from "expo-router";
+import { CameraModal } from "@/components";
 import { pickImageHelper } from "@/lib/helpers/imageHelpers";
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing } from "react-native-reanimated";
+import { searchFoodByBarcode } from "@/lib/services/food-search/barcode";
+import { useFocusEffect, useRouter } from "expo-router";
+import { ArrowRight, Barcode, MagnifyingGlass, X } from "phosphor-react-native";
+import { type FC, useCallback, useRef, useState } from "react";
+import { ActivityIndicator, Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 
 type SearchInputProps = {
   placeholder?: string,
@@ -15,9 +17,10 @@ type SearchInputProps = {
   autoFocus?: boolean,
   value?: string,
   onChangeText?: (text: string) => void,
-  onSubmit?: () => void
+  onSubmit?: () => void,
+  onClear?: () => void
 }
-const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...",showCamera = true,onSearchPress,onCameraPress,className = "",isInput = false,autoFocus = false,value,onChangeText,onSubmit,}) => {
+const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...", showCamera = true, onSearchPress, onCameraPress, className = "", isInput = false, autoFocus = false, value, onChangeText, onSubmit, onClear }) => {
   //Router
   const router = useRouter();
   //Hooks
@@ -32,6 +35,10 @@ const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...",
     opacity: 1 - arrowOpacity.value,
     transform: [{ scale: 1 - arrowOpacity.value * 0.3 }],
   }));
+  const [showScanner, setShowScanner] = useState<boolean>(false);
+  const [scanned, setScanned] = useState<boolean>(false);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+
   //Functions
   const handleChangeText = useCallback((text: string) => {
     onChangeText?.(text);
@@ -41,6 +48,42 @@ const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...",
       easing: Easing.out(Easing.ease),
     });
     arrowTranslateX.value = withSpring(textEntered ? 0 : 8, {
+      damping: 15,
+      stiffness: 180,
+    });
+  }, [onChangeText, arrowOpacity, arrowTranslateX]);
+  const handleBarcodePress = async () => {
+    setScanned(false);
+    setShowScanner(true);
+  };
+  const handleBarCodeScanned = async ({ data }: { data: string }) => {
+    if (scanned || isSearching) return;
+    setScanned(true);
+    setIsSearching(true);
+    try {
+      const result = await searchFoodByBarcode(data);
+      setIsSearching(false);
+      if (result) {
+        setShowScanner(false);
+        Alert.alert("Product Found!", `${result.name}\n${result.calories_per_100g} kcal / 100g`);
+      } else {
+        Alert.alert("Not Found", "We couldn't find this product in our database.");
+        setScanned(false);
+      }
+    } catch (error) {
+      setIsSearching(false);
+      setScanned(false);
+      Alert.alert("Error", "Something went wrong during the search.");
+    }
+  };
+  const handleClear = useCallback(() => {
+    onClear?.();
+    onChangeText?.("");
+    arrowOpacity.value = withTiming(0, {
+      duration: 200,
+      easing: Easing.out(Easing.ease),
+    });
+    arrowTranslateX.value = withSpring(8, {
       damping: 15,
       stiffness: 180,
     });
@@ -83,7 +126,7 @@ const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...",
       }}
     >
       <View className="flex-row items-center gap-2 flex-1">
-        <MagnifyingGlass size={24} color="white" weight="regular" />
+        <MagnifyingGlass size={24} color="#FFFFFF80" weight="regular" />
         {isInput ? (
           <TextInput
             ref={inputRef}
@@ -100,28 +143,40 @@ const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...",
           <Text className="text-white/40 text-base font-nunito-600">{placeholder}</Text>
         )}
       </View>
-      <View className="relative w-6 h-6 items-center justify-center">
+      <View className="relative flex-row items-center justify-center gap-3">
         {isInput && (
-          <Animated.View style={[arrowStyle, { position: 'absolute' }]}>
+          <Animated.View style={[arrowStyle, { flexDirection: 'row', alignItems: 'center', gap: 12 }]}>
+            <TouchableOpacity
+              onPress={handleClear}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              activeOpacity={0.25}
+            >
+              <X size={22} color="#FFFFFF80" weight="bold" />
+            </TouchableOpacity>
             <TouchableOpacity
               onPress={onSubmit}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               activeOpacity={0.25}
             >
-              <ArrowRight size={24} color="#C5E384" weight="bold"/>
+              <ArrowRight size={24} color="#C5E384" weight="bold" />
             </TouchableOpacity>
           </Animated.View>
         )}
-        <Animated.View style={barcodeStyle}>
-          <TouchableOpacity
-            onPress={handleDefaultCameraPress}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            activeOpacity={0.25}
-            disabled={value && value.length > 0 ? true : false}
-          >
-            <Barcode size={24} color="#FFFFFF80" weight="regular" />
-          </TouchableOpacity>
-        </Animated.View>
+        {!value && (
+          <Animated.View style={barcodeStyle}>
+            <TouchableOpacity
+              onPress={handleBarcodePress}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              activeOpacity={0.25}
+            >
+              {isSearching ? (
+                <ActivityIndicator size="small" color="#FFFFFF80" />
+              ) : (
+                <Barcode size={24} color="#FFFFFF80" weight="regular" />
+              )}
+            </TouchableOpacity>
+          </Animated.View>
+        )}
       </View>
     </View>
   );

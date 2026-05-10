@@ -1,6 +1,6 @@
 import { Icon, MealIngredient } from "@/components";
 import { CaretDown, Plus } from "phosphor-react-native";
-import { type FC, useState, useEffect } from "react";
+import { type FC, useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import Animated, { FadeIn, Layout, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { MealIngredientProps } from "./MealIngredient";
@@ -66,7 +66,7 @@ const MealCard: FC<MealCardProps> = ({ icon, title, allCal, isDayTime, onPress, 
                         <Text className={`base-text font-nunito-800 text-lg shrink-0 ${isDayTime ? 'text-white font-nunito-800' : 'text-white/80'}`} numberOfLines={1}>{allCal} cal</Text>
                         {hasIngredients && (
                             <Animated.View style={animatedIconStyle}>
-                                <CaretDown size={24} color={isDayTime ? "#FFFFFF" : "#FFFFFF80"} weight="bold"/>
+                                <CaretDown size={24} color={isDayTime ? "#FFFFFF" : "#FFFFFF80"} weight="bold" />
                             </Animated.View>
                         )}
                     </View>

@@ -1,21 +1,33 @@
-import { View, TouchableWithoutFeedback, Keyboard, FlatList, Text, ActivityIndicator } from "react-native";
-import { SearchInput, Icon, PopularMealsSection, Button, SearchResultItem } from "@/components";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { CaretLeft, DotsThree, Plus } from "phosphor-react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Button, FilterChip, Icon, PopularMealsSection, SearchInput, SearchResultItem, SearchResultSkeleton } from "@/components";
 import SearchProvider from "@/contexts/SearchContext";
 import { useSearchContext } from "@/lib/hooks/useSearchContext";
+import type { FoodCategory, FoodType } from "@/types/searchFilters";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { CaretLeft, DotsThree, MagnifyingGlass, Plus } from "phosphor-react-native";
+import { FlatList, Keyboard, ScrollView, Text, TouchableWithoutFeedback, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+const CATEGORY_OPTIONS: { label: string; value: FoodCategory }[] = [
+  { label: "All", value: "all" },
+  { label: "Fruits", value: "fruits" },
+  { label: "Vegetables", value: "vegetables" },
+];
+const FOOD_TYPE_OPTIONS: { label: string; value: FoodType }[] = [
+  { label: "All", value: "all" },
+  { label: "Homemade", value: "raw" },
+  { label: "Packaged", value: "branded" },
+];
 const SearchContent = () => {
   //Router
   const router = useRouter();
   const { focus } = useLocalSearchParams<{ focus: string }>();
   const insets = useSafeAreaInsets();
   //Contexts
-  const { query, setQuery, searchResults, isSearching, searchSource, submitSearch } = useSearchContext();
+  const { query, setQuery, searchResults, isSearching, searchSource, submitSearch, category, setCategory, foodType, setFoodType } = useSearchContext();
   //Constants
   const TAB_BAR_HEIGHT = 148;
-  const isSearchActive = query.trim().length > 0;
+  const hasFiltersActive = category !== "all" || foodType !== "all";
+  const isSearchActive = query.trim().length > 0 || hasFiltersActive;
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View className="flex-1 mt-[88px] w-full">
@@ -26,14 +38,14 @@ const SearchContent = () => {
           <Text className="font-nunito-700 text-[28px] text-white">Search</Text>
         </View>
         <FlatList
-          data={isSearchActive ? searchResults : []}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <SearchResultItem item={item} />}
+          data={searchResults.length > 0 && isSearchActive ? [] : [1]}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={() => null}
           showsVerticalScrollIndicator={false}
-          style={{ flex: 1 }}
           keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingBottom: TAB_BAR_HEIGHT + insets.bottom, flexGrow: 1 }}
           ListHeaderComponent={
-            <View>
+            <View className="z-20">
               <View className="w-[362px] self-center mt-4 flex-row items-center gap-1 justify-between">
                 <SearchInput
                   isInput
@@ -44,41 +56,106 @@ const SearchContent = () => {
                   value={query}
                   onChangeText={setQuery}
                   onSubmit={submitSearch}
+                  onClear={() => {
+                    setCategory("all");
+                    setFoodType("all");
+                  }}
                 />
-                <Icon onPress={() => {}} className="bg-yellow w-12 h-12">
+                <Icon onPress={() => { }} className="bg-yellow w-12 h-12">
                   <DotsThree size={24} color="#1D1D1D" weight="regular" />
                 </Icon>
               </View>
-              {isSearchActive && (
-                <View className="w-[362px] self-center mt-3 mb-1 flex-row items-center justify-between">
-                  {isSearching ? (
-                    <ActivityIndicator size="small" color="#F5D84E" />
-                  ) : (
-                    <Text className="text-white/40 font-nunito-600 text-sm">
-                      {searchResults.length > 0
-                        ? `${searchResults.length} results via ${searchSource === 'usda' ? 'USDA' : 'Open Food Facts'}`
-                        : 'No results found'}
-                    </Text>
-                  )}
+              <View className="w-[362px] self-center mt-3">
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 8 }}
+                >
+                  {CATEGORY_OPTIONS.map((opt) => (
+                    <FilterChip
+                      key={opt.value}
+                      label={opt.label}
+                      isActive={category === opt.value}
+                      onPress={() => setCategory(opt.value)}
+                    />
+                  ))}
+                </ScrollView>
+              </View>
+              {category === "all" && (
+                <View className="w-[362px] self-center mt-3">
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ gap: 8 }}
+                  >
+                    {FOOD_TYPE_OPTIONS.map((opt) => (
+                      <FilterChip
+                        key={opt.value}
+                        label={opt.label}
+                        isActive={foodType === opt.value}
+                        onPress={() => setFoodType(opt.value)}
+                      />
+                    ))}
+                  </ScrollView>
                 </View>
               )}
-              {!isSearchActive && <PopularMealsSection/>}
-              {!isSearchActive && (
-                <View className="w-[362px] self-center mt-8">
+              {isSearchActive && (
+                <View
+                  className="z-50 w-[362px] self-center bg-dark rounded-[20px] border border-white/10 py-4 mt-4 overflow-hidden"
+                  style={{ elevation: 10, shadowColor: "#000000", shadowOpacity: 0.5, shadowRadius: 10 }}
+                >
+                  <View className="flex-row items-center justify-between mb-1 px-4">
+                    <Text className="text-white/60 font-nunito-700 text-lg">
+                      {isSearching || searchResults.length > 0
+                        ? (query.trim().length === 0 && category !== "all" ? (category === "fruits" ? "Fruits" : "Vegetables") : "Related Searches")
+                        : "Not Found"}
+                    </Text>
+                    {!isSearching && searchResults.length > 0 && searchSource && (
+                      <Text className="text-white/30 font-nunito-600 text-sm">
+                        via {searchSource === 'usda' ? "Homemade" : "Packaged"}
+                      </Text>
+                    )}
+                  </View>
+                  <View>
+                    {isSearching ? (
+                      Array.from({ length: 4 }).map((_, i) => <SearchResultSkeleton key={`skel-${i}`} />)
+                    ) : searchResults.length > 0 ? (
+                      searchResults.map((item) => (
+                        <SearchResultItem
+                          key={item.id}
+                          item={item}
+                        />
+                      ))
+                    ) : (
+                      <View className="py-8 items-center justify-center gap-4">
+                        <View className="w-16 h-16 rounded-full bg-white/5 border border-dashed border-white/20 items-center justify-center">
+                          <MagnifyingGlass size={32} color="#C5E384" weight="duotone" />
+                        </View>
+                        <Text className="text-white/40 font-nunito-600 text-base text-center px-8">
+                          No food found... 🥑 Try adjusting your search or filters!
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              )}
+              <View className="z-10 relative mt-6">
+                <PopularMealsSection />
+                <View className="w-[362px] self-center mt-8 mb-4">
                   <View className="flex-row items-end justify-between">
                     <Text className="title">My Meals</Text>
                     <Button
-                      onPress={() => {}}
+                      onPress={() => { }}
                       icon={<Plus size={20} color="#1D1D1D" weight="bold" />}
                     >
                       Create
                     </Button>
                   </View>
                 </View>
-              )}
+              </View>
+
             </View>
           }
-          contentContainerStyle={{ paddingBottom: TAB_BAR_HEIGHT + insets.bottom }}
         />
       </View>
     </TouchableWithoutFeedback>

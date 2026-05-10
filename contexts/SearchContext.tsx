@@ -13,10 +13,10 @@ type SearchProviderProps = {
 const SearchProvider: FC<SearchProviderProps> = ({ children }) => {
     //Contexts
     const { userProfile } = useAuth();
+    const { query, setQuery, results: searchResults, isLoading: isSearching, source: searchSource, submitSearch, category, setCategory, foodType, setFoodType } = useFoodSearch();
     //Hooks
     const [filter, setFilter] = useState<'My' | 'All'>('My');
-    const { query, setQuery, results: searchResults, isLoading: isSearching, source: searchSource, submitSearch } = useFoodSearch();
-    
+
     //Functions
     const fetchPopularMealsFn = useCallback(async () => {
         if (filter === 'All') {
@@ -47,6 +47,10 @@ const SearchProvider: FC<SearchProviderProps> = ({ children }) => {
                 isSearching,
                 searchSource,
                 submitSearch,
+                category,
+                setCategory,
+                foodType,
+                setFoodType,
             }}
         >
             {children}

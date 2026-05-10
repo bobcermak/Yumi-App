@@ -1,8 +1,8 @@
 import { Icon, MealCard } from "@/components";
 import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { Cookie, CookingPot, EggCrack, Orange, Pizza, Plus } from "phosphor-react-native";
-import { forwardRef, useMemo, useState, useEffect, useRef, useImperativeHandle } from "react";
-import { Text, View, Keyboard } from "react-native";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { Keyboard, Text, View } from "react-native";
 
 const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
   //Hooks
@@ -10,7 +10,7 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
   useImperativeHandle(ref, () => internalRef.current as BottomSheet);
   const [isKeyboardVisible, setKeyboardVisible] = useState<boolean>(false);
   const snapPoints = useMemo(() => {
-    return isKeyboardVisible 
+    return isKeyboardVisible
       ? [105, "20%", "35%", "50%", "65%", "80%", "100%"]
       : [105, "20%", "35%", "50%", "65%", "80%"];
   }, [isKeyboardVisible]);
@@ -23,7 +23,7 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
     return "Dinner";
   }, []);
   const [expandedMeal, setExpandedMeal] = useState<string | null>(currentMeal);
-  const [meals, setMeals] = useState<{title: string, icon: React.ReactNode, ingredients: {id: string | number, amount?: string, title: string, baseCal?: number, cal: number}[]}[]>([
+  const [meals, setMeals] = useState<{ title: string, icon: React.ReactNode, ingredients: { id: string | number, amount?: string, title: string, baseCal?: number, cal: number }[] }[]>([
     {
       title: "Breakfast",
       icon: <EggCrack size={20} color="#84C754" weight="regular" />,
@@ -62,7 +62,7 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
       if (meal.title === mealTitle) {
         return {
           ...meal,
-          ingredients: meal.ingredients.map(ing => 
+          ingredients: meal.ingredients.map(ing =>
             ing.id === ingredientId ? { ...ing, cal: newCal } : ing
           )
         };
