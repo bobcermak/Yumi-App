@@ -4,7 +4,7 @@ import { searchFoodByBarcode } from "@/lib/services/food-search/barcode";
 import { useFocusEffect, useRouter } from "expo-router";
 import { ArrowRight, Barcode, MagnifyingGlass, X } from "phosphor-react-native";
 import { type FC, useCallback, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 
 type SearchInputProps = {
@@ -56,24 +56,32 @@ const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...",
     setScanned(false);
     setShowScanner(true);
   };
-  const handleBarCodeScanned = async ({ data }: { data: string }) => {
+  const handleBarCodeScanned = async (data: string) => {
     if (scanned || isSearching) return;
     setScanned(true);
     setIsSearching(true);
+    setShowScanner(false);
     try {
       const result = await searchFoodByBarcode(data);
       setIsSearching(false);
       if (result) {
-        setShowScanner(false);
-        Alert.alert("Product Found!", `${result.name}\n${result.calories_per_100g} kcal / 100g`);
+        Alert.alert(
+          result.name || "Unknown product",
+          result.calories_per_100g !== undefined ? `${Math.round(result.calories_per_100g)} kcal / 100g` : "Calories unknown",
+          [{ text: "OK" }]
+        );
       } else {
-        Alert.alert("Not Found", "We couldn't find this product in our database.");
-        setScanned(false);
+        Alert.alert("Not Found", "We couldn't find this product.", [
+          { text: "Try Again", onPress: () => { setScanned(false); setShowScanner(true); } },
+          { text: "Cancel" }
+        ]);
       }
-    } catch (error) {
+    } catch {
       setIsSearching(false);
-      setScanned(false);
-      Alert.alert("Error", "Something went wrong during the search.");
+      Alert.alert("Error", "Something went wrong.", [
+        { text: "Try Again", onPress: () => { setScanned(false); setShowScanner(true); } },
+        { text: "Cancel" }
+      ]);
     }
   };
   const handleClear = useCallback(() => {
@@ -116,7 +124,7 @@ const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...",
   };
   const Content = (
     <View
-      className="flex-row items-center justify-between bg-white/5 border border-white/10 h-16 pl-5 pr-6 rounded-[20px]"
+      className="flex-row items-center justify-between bg-white/5 border border-white/10 h-16 pl-5 pr-2 rounded-[20px] w-full"
       style={{
         shadowColor: "#000000",
         shadowOffset: { width: 0, height: 4 },
@@ -125,12 +133,15 @@ const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...",
         elevation: 5,
       }}
     >
-      <View className="flex-row items-center gap-2 flex-1">
-        <MagnifyingGlass size={24} color="#FFFFFF80" weight="regular" />
-        {isInput ? (
+      {isInput ? (
+        <Pressable
+          className="flex-row items-center gap-2 flex-1 h-full"
+          onPress={() => inputRef.current?.focus()}
+        >
+          <MagnifyingGlass size={24} color="#FFFFFF80" weight="regular" />
           <TextInput
             ref={inputRef}
-            className="text-white text-base font-nunito-600 flex-1 h-full"
+            className="text-white text-base font-nunito-600 flex-1 h-full py-2"
             placeholder={placeholder}
             placeholderTextColor="#FFFFFF66"
             autoFocus={autoFocus}
@@ -138,12 +149,16 @@ const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...",
             onChangeText={handleChangeText}
             onSubmitEditing={onSubmit}
             returnKeyType="search"
+            style={{ textAlignVertical: 'center' }}
           />
-        ) : (
-          <Text className="text-white/40 text-base font-nunito-600">{placeholder}</Text>
-        )}
-      </View>
-      <View className="relative flex-row items-center justify-center gap-3">
+        </Pressable>
+      ) : (
+        <View className="flex-row items-center gap-2 flex-1 h-full">
+          <MagnifyingGlass size={24} color="#FFFFFF80" weight="regular" />
+          <Text className="text-white/40 text-base font-nunito-600 flex-1">{placeholder}</Text>
+        </View>
+      )}
+      <View className="relative flex-row items-center -ml-12 pr-4">
         {isInput && (
           <Animated.View style={[arrowStyle, { flexDirection: 'row', alignItems: 'center', gap: 12 }]}>
             <TouchableOpacity
@@ -188,10 +203,20 @@ const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...",
         <TouchableOpacity
           activeOpacity={0.25}
           onPress={() => handlePress(onSearchPress)}
+          className="w-full"
         >
           {Content}
         </TouchableOpacity>
       )}
+      <CameraModal
+        visible={showScanner}
+        onClose={() => setShowScanner(false)}
+        mode="barcode"
+        onBarcodeScanned={handleBarCodeScanned}
+        isProcessing={isSearching}
+        title="Scan Barcode"
+        overlayText="Align barcode within the frame to scan"
+      />
     </View>
   );
 };

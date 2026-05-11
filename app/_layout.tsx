@@ -57,6 +57,9 @@ const RootLayout = () => {
                       <Stack.Screen name="(tabs)" options={{ animation: 'fade' }}/>
                       <Stack.Screen name="magic-scan/index"/>
                       <Stack.Screen name="quick-add/index"/>
+                      <Stack.Screen name="search-results/index" options={{ animation: 'slide_from_right' }}/>
+                      <Stack.Screen name="meal-log/index" options={{ animation: 'slide_from_bottom' }}/>
+                      <Stack.Screen name="meal-log/add-item" options={{ presentation: 'modal' }}/>
                       <Stack.Screen name="users/[id]"/>
                     </Stack>
                   </SafeAreaProvider>
