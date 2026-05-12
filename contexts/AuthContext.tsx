@@ -79,20 +79,6 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   }, []);
   useEffect(() => {
     if (!isReady || !segments || !router || isLoading) return;
-    const inAuthGroup = segments[0] === '(auth)';
-    const inOnboardingGroup = segments[0] === '(onboarding)';
-    const inTabsGroup = segments[0] === '(tabs)';
-    if (session) {
-      if (!inTabsGroup) {
-        router.replace('/(tabs)');
-      }
-    } else {
-      if (inTabsGroup) {
-        router.replace(hasOnboarded ? '/(auth)/login' : '/(onboarding)');
-      } else if (!inAuthGroup && !inOnboardingGroup) {
-        router.replace(hasOnboarded ? '/(auth)/login' : '/(onboarding)');
-      }
-    }
   }, [isReady, session, hasOnboarded, segments, isLoading]);
   const signUp = async (onboardingData?: {
     fullName: string;

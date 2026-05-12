@@ -34,8 +34,8 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
     });
 
     //Functions
-    const showToast = useCallback((message: string, dateStr?: string) => {
-        setToast({ message, dateStr });
+    const showToast = useCallback((message: string, dateStr?: string, type: 'success' | 'error' = 'success') => {
+        setToast({ message, dateStr, type });
         setTimeout(() => {
             setToast(null);
         }, 4000);

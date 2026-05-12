@@ -1,5 +1,4 @@
-import { Button, CalendarBottomSheet, DailyOverviewCard, HomeHeader, JourneyCalendar, SearchInput, Toast, DailyPulseCard, Icon } from "@/components";
-import IndexProvider from "@/contexts/IndexContext";
+import { Button, CalendarBottomSheet, DailyOverviewCard, HomeHeader, JourneyCalendar, SearchInput, DailyPulseCard, Icon } from "@/components";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useIndexContext } from "@/lib/hooks/useIndexContext";
 import { getEffectiveStreak } from "@/lib/services/supabase/queries/profiles";
@@ -13,13 +12,14 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const IndexContent = () => {
+const Home = () => {
     //Refs
     const todayCalendarRef = useRef<BottomSheet>(null);
     const journeyCalendarRef = useRef<BottomSheet>(null);
     //Contexts
     const { userProfile } = useAuth();
-    const { toast, overviewData, dashboardDate, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, refreshData, refreshKey } = useIndexContext();
+    const { overviewData, dashboardDate, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, refreshData, refreshKey } = useIndexContext();
+    
     useFocusEffect(
         useCallback(() => {
             const fetchInitialData = async () => {
@@ -28,7 +28,7 @@ const IndexContent = () => {
                 }
             };
             fetchInitialData();
-        }, [userProfile?.id])
+        }, [userProfile?.id, refreshData])
     );
     //Hooks
     const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -36,10 +36,8 @@ const IndexContent = () => {
     const insets = useSafeAreaInsets();
 
     const TAB_BAR_HEIGHT = 148;
-
     //Router
     const router = useRouter();
-
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
         const start = Date.now();
@@ -54,7 +52,7 @@ const IndexContent = () => {
     //Animations
     useEffect(() => {
         pageOpacity.value = withTiming(1, { duration: 250 });
-    }, []);
+    }, [pageOpacity]);
     const animatedPageStyle = useAnimatedStyle(() => ({
         opacity: pageOpacity.value,
         flex: 1
@@ -76,7 +74,6 @@ const IndexContent = () => {
     const todayButtonLabel = isToday(dashboardDate) ? "Today" : format(dashboardDate, "dd MMM, yyyy");
     return (
         <View className="flex-1">
-            <Toast toast={toast} />
             <Animated.View style={animatedPageStyle}>
                 <ScrollView 
                     className="flex-1 mt-[88px] w-[380px] self-center" 
@@ -172,7 +169,7 @@ const IndexContent = () => {
                             fats={overviewData.macros.fats}
                         />
                     </Animated.View>
-            </ScrollView>
+                </ScrollView>
             </Animated.View>
             <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} pointerEvents="box-none">
                 <CalendarBottomSheet
@@ -199,11 +196,4 @@ const IndexContent = () => {
         </View>
     );
 };
-const Index = () => {
-    return (
-        <IndexProvider>
-            <IndexContent />
-        </IndexProvider>
-    );
-};
-export default Index;
+export default Home;

@@ -1,5 +1,7 @@
 import { AuthContext, AuthProvider } from "@/contexts/AuthContext";
 import OnboardingProvider from "@/contexts/OnboardingContext";
+import SearchProvider from "@/contexts/SearchContext";
+import IndexProvider from "@/contexts/IndexContext";
 import { useCachedFonts } from "@/lib/hooks/useCachedFonts";
 import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 import { Redirect, Stack, useSegments } from "expo-router";
@@ -7,7 +9,8 @@ import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { AnimatedBackground } from "@/components";
+import { AnimatedBackground, Toast } from "@/components";
+import { useIndexContext } from "@/lib/hooks/useIndexContext";
 import { preloadStaticProduce } from "@/lib/services/food-search/cache";
 import { useEffect } from "react";
 import "./globals.css";
@@ -18,6 +21,26 @@ const customTheme = {
     ...DarkTheme.colors,
     background: "transparent"
   }
+};
+const RootLayoutContent = () => {
+  const { toast } = useIndexContext();
+  return (
+    <>
+      <Toast toast={toast} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(onboarding)" options={{ animation: 'slide_from_left' }}/>
+        <Stack.Screen name="(auth)" options={{ animation: 'slide_from_right' }}/>
+        <Stack.Screen name="(tabs)" options={{ animation: 'fade' }}/>
+        <Stack.Screen name="magic-scan/index"/>
+        <Stack.Screen name="quick-add/index"/>
+        <Stack.Screen name="search-results/index" options={{ animation: 'slide_from_right' }}/>
+        <Stack.Screen name="search-item/[id]" options={{ animation: 'slide_from_right' }}/>
+        <Stack.Screen name="meal-log/index" options={{ animation: 'slide_from_bottom' }}/>
+        <Stack.Screen name="meal-log/add-item" options={{ presentation: 'modal' }}/>
+        <Stack.Screen name="users/[id]"/>
+      </Stack>
+    </>
+  );
 };
 const RootLayout = () => {
   //Hooks
@@ -41,29 +64,31 @@ const RootLayout = () => {
               );
             }
             const { session, hasOnboarded } = auth;
-            const inTabsGroup = segments[0] === "(tabs)";
-            if (session && hasOnboarded && !inTabsGroup) return <Redirect href="/(tabs)"/>;
-            if ((!session || !hasOnboarded) && inTabsGroup) return <Redirect href="/(onboarding)"/>;
+            const inAuthGroup = segments[0] === "(auth)";
+            const inOnboardingGroup = segments[0] === "(onboarding)";
+            if (session && hasOnboarded) {
+              if (inAuthGroup || inOnboardingGroup) {
+                return <Redirect href="/(tabs)"/>;
+              }
+            } else {
+              if (!inAuthGroup && !inOnboardingGroup) {
+                return <Redirect href="/(onboarding)"/>;
+              }
+            }
             return (
               <OnboardingProvider>
-                <ThemeProvider value={customTheme}>
-                  <SafeAreaProvider>
-                    <StatusBar style="light" />
-                    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#121212' }}/>
-                    <AnimatedBackground/>
-                    <Stack screenOptions={{ headerShown: false }}>
-                      <Stack.Screen name="(onboarding)" options={{ animation: 'slide_from_left' }}/>
-                      <Stack.Screen name="(auth)" options={{ animation: 'slide_from_right' }}/>
-                      <Stack.Screen name="(tabs)" options={{ animation: 'fade' }}/>
-                      <Stack.Screen name="magic-scan/index"/>
-                      <Stack.Screen name="quick-add/index"/>
-                      <Stack.Screen name="search-results/index" options={{ animation: 'slide_from_right' }}/>
-                      <Stack.Screen name="meal-log/index" options={{ animation: 'slide_from_bottom' }}/>
-                      <Stack.Screen name="meal-log/add-item" options={{ presentation: 'modal' }}/>
-                      <Stack.Screen name="users/[id]"/>
-                    </Stack>
-                  </SafeAreaProvider>
-                </ThemeProvider>
+                <IndexProvider>
+                  <SearchProvider>
+                    <ThemeProvider value={customTheme}>
+                      <SafeAreaProvider>
+                        <StatusBar style="light" />
+                        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#121212' }}/>
+                        <AnimatedBackground/>
+                        <RootLayoutContent />
+                      </SafeAreaProvider>
+                    </ThemeProvider>
+                  </SearchProvider>
+                </IndexProvider>
               </OnboardingProvider>
             );
           }}

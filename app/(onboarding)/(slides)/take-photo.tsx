@@ -108,7 +108,7 @@ const TakePhoto = () => {
                             }}
                         >
                             {photoUri ? (
-                                <Image source={{ uri: photoUri }} className="w-full h-full opacity-80" />
+                                <Image source={{ uri: photoUri }} className="w-full h-full opacity-80"/>
                             ) : (
                                 <View className="items-center gap-2">
                                     <View className="w-16 h-16 rounded-full bg-white/5 items-center justify-center">

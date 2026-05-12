@@ -26,7 +26,7 @@ const Signup = () => {
       targetWeight,
       dailyCalories,
       activityLevel,
-      weightUnit,
+      weightUnit: weightUnit.toLowerCase() as "kg" | "lb",
       goalDate
     };
     console.log("[Signup Screen] Data from useOnboarding:", onboardingData);
@@ -119,8 +119,8 @@ const Signup = () => {
             entering={FadeInDown.delay(500).duration(250)}
             className="flex-row justify-center gap-4 mb-14"
           >
-            <LoginIconButton onPress={onGoogleLogin} icon={<Image source={require("@/assets/icons/google-logo.png")} resizeMode="contain" className="w-[32px] h-auto" />} />
-            <LoginIconButton onPress={onAppleLogin} icon={<Image source={require("@/assets/icons/apple-logo.png")} resizeMode="contain" className="w-[32px] h-auto" />} />
+            <LoginIconButton onPress={onGoogleLogin} icon={<Image source={require("@/assets/icons/google-logo.png")} resizeMode="contain" className="w-[32px] h-[32px]" />} />
+            <LoginIconButton onPress={onAppleLogin} icon={<Image source={require("@/assets/icons/apple-logo.png")} resizeMode="contain" className="w-[32px] h-[32px]" />} />
           </Animated.View>
         </View>
       </TouchableWithoutFeedback>

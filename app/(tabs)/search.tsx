@@ -1,5 +1,4 @@
 import { Button, FilterChip, Icon, PopularMealsSection, SearchInput, SearchResultItem, SearchResultSkeleton } from "@/components";
-import SearchProvider from "@/contexts/SearchContext";
 import { useSearchContext } from "@/lib/hooks/useSearchContext";
 import type { FoodCategory, FoodType } from "@/types/searchFilters";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -17,7 +16,7 @@ const FOOD_TYPE_OPTIONS: { label: string; value: FoodType }[] = [
   { label: "Homemade", value: "raw" },
   { label: "Packaged", value: "branded" },
 ];
-const SearchContent = () => {
+const Search = () => {
   //Router
   const router = useRouter();
   const { focus } = useLocalSearchParams<{ focus: string }>();
@@ -58,7 +57,11 @@ const SearchContent = () => {
                 className="w-[310px]"
                 value={query}
                 onChangeText={setQuery}
-                onSubmit={submitSearch}
+                isSubmitDisabled={searchResults.length === 0 || isSearching}
+                onSubmit={() => {
+                  submitSearch();
+                  router.push("/search-results");
+                }}
                 onClear={() => {
                   setCategory("all");
                   setFoodType("all");
@@ -138,6 +141,10 @@ const SearchContent = () => {
                       <SearchResultItem
                         key={item.id}
                         item={item}
+                        onPress={() => router.push({
+                          pathname: "/search-item/[id]",
+                          params: { id: item.id, item: JSON.stringify(item) }
+                        })}
                       />
                     ))
                   ) : (
@@ -171,13 +178,6 @@ const SearchContent = () => {
         }
       />
     </View>
-  );
-};
-const Search = () => {
-  return (
-    <SearchProvider>
-      <SearchContent />
-    </SearchProvider>
   );
 };
 export default Search;

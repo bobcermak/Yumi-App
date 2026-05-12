@@ -143,7 +143,7 @@ const ResultsWeight = () => {
                                     {dailyCalories}
                                 </Text>
                                 <View className="opacity-50 absolute -right-8 top-[37.5%]">
-                                    <PencilSimple size={24} color="#ffffff" weight="regular" />
+                                    <PencilSimple size={24} color="#ffffff" weight="regular"/>
                                 </View>
                             </TouchableOpacity>
                         )}

@@ -8,7 +8,7 @@ export const searchFoodByBarcode = async (barcode: string): Promise<FoodSearchRe
       body: { barcode },
     });
     if (error) {
-      console.error(`[BarcodeService] Edge Function error:`, error);
+      console.warn(`[BarcodeService] Edge Function error:`, error);
       return null;
     }
     if (!data || data.error) {
@@ -17,10 +17,10 @@ export const searchFoodByBarcode = async (barcode: string): Promise<FoodSearchRe
     }
     const result = data as FoodSearchResult;
     console.log(`[BarcodeService] Success! Found: ${result.name}`);
-    console.log(`[BarcodeService] Details: ${result.calories_per_100g} kcal | Brand: ${result.brand || 'N/A'}`);
+    console.log(`[BarcodeService] Details: ${result.calories_per_100g} cal | Brand: ${result.brand || 'N/A'}`);
     return result;
   } catch (error) {
-    console.error(`[BarcodeService] Unexpected error:`, error);
+    console.warn(`[BarcodeService] Unexpected error:`, error);
     return null;
   }
 };

@@ -37,3 +37,37 @@ export const getUserPopularFoods = async (userId: string, limit: number = 10): P
     }
     return data || [];
 };
+//FAVORITES
+export const checkIsFavorite = async (userId: string, foodId: string): Promise<boolean> => {
+    const { data, error } = await supabase
+        .from('user_favorites')
+        .select('food_id')
+        .eq('user_id', userId)
+        .eq('food_id', foodId)
+        .maybeSingle();
+    if (error) {
+        console.error("[supabase/queries/foods] Error in checkIsFavorite:", error);
+        return false;
+    }
+    return !!data;
+};
+export const addToFavorites = async (userId: string, foodId: string): Promise<void> => {
+    const { error } = await supabase
+        .from('user_favorites')
+        .insert({ user_id: userId, food_id: foodId });
+    if (error) {
+        console.error("[supabase/queries/foods] Error in addToFavorites:", error);
+        throw error;
+    }
+};
+export const removeFromFavorites = async (userId: string, foodId: string): Promise<void> => {
+    const { error } = await supabase
+        .from('user_favorites')
+        .delete()
+        .eq('user_id', userId)
+        .eq('food_id', foodId);
+    if (error) {
+        console.error("[supabase/queries/foods] Error in removeFromFavorites:", error);
+        throw error;
+    }
+};

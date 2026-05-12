@@ -6,12 +6,12 @@ type PopularMealProps = {
     imgUrl?: string | null,
     name: string,
     calories: number,
-    url: string,
+    onPress: () => void,
 }
-const PopularMeal: FC<PopularMealProps> = ({ imgUrl, name, calories, url }) => {
+const PopularMeal: FC<PopularMealProps> = ({ imgUrl, name, calories, onPress }) => {
     return (
         <TouchableOpacity
-            onPress={() => { }}
+            onPress={onPress}
             className="bg-dark rounded-[15px] overflow-hidden w-[200px] mr-4"
             activeOpacity={0.25}
             style={{

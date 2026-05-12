@@ -3,6 +3,7 @@ import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { Cookie, CookingPot, EggCrack, Orange, Pizza, Plus } from "phosphor-react-native";
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { Keyboard, Text, View } from "react-native";
+import { getMealTypeByTime } from "@/lib/helpers/dateHelpers";
 
 const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
   //Hooks
@@ -14,14 +15,7 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
       ? [105, "20%", "35%", "50%", "65%", "80%", "100%"]
       : [105, "20%", "35%", "50%", "65%", "80%"];
   }, [isKeyboardVisible]);
-  const currentMeal = useMemo(() => {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 10) return "Breakfast";
-    if (hour >= 10 && hour < 12) return "Morning Snack";
-    if (hour >= 12 && hour < 15) return "Lunch";
-    if (hour >= 15 && hour < 18) return "Afternoon Snack";
-    return "Dinner";
-  }, []);
+  const currentMeal = useMemo(() => getMealTypeByTime(), []);
   const [expandedMeal, setExpandedMeal] = useState<string | null>(currentMeal);
   const [meals, setMeals] = useState<{ title: string, icon: React.ReactNode, ingredients: { id: string | number, amount?: string, title: string, baseCal?: number, cal: number }[] }[]>([
     {

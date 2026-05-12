@@ -9,11 +9,12 @@ export type OverviewData = {
 };
 export type ToastType = { 
     message: string; 
-    dateStr?: string 
+    dateStr?: string;
+    type?: 'success' | 'error';
 };
 export type IndexContextProps = {
     toast: ToastType | null;
-    showToast: (message: string, dateStr?: string) => void;
+    showToast: (message: string, dateStr?: string, type?: 'success' | 'error') => void;
     overviewData: OverviewData;
     dashboardDate: Date;
     handleUpdateCaloriesMax: (newMax: number) => Promise<void>;

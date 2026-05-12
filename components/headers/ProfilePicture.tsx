@@ -1,26 +1,24 @@
 import { View, Text } from "react-native";
 import { Image } from "expo-image";
-import { TrendUp, TrendDown, Minus } from "phosphor-react-native";
+import { TrendUp, TrendDown } from "phosphor-react-native";
 
 type ProfilePictureProps = {
   size?: number,
   uri?: string | null,
   rating?: number | null,
-  isPremium?: boolean | null,
-  trend?: "up" | "down" | "stable"
+  isPremium?: boolean | null
 };
-const ProfilePicture = ({ size = 60, uri, rating, isPremium, trend = "up" }: ProfilePictureProps) => {
+type TrendIcon = typeof TrendUp | typeof TrendDown;
+const ProfilePicture = ({ size = 60, uri, rating, isPremium }: ProfilePictureProps) => {
   //Functions
-  const getRatingColor = (rating?: number | null): string => {
-    if (rating === undefined || rating === null) return "#FFFFFF30";
-    if (rating >= 8) return "#84C754";
-    if (rating >= 6) return "#C5E384";
-    if (rating >= 4) return "#ED8936";
-    return "#E53E3E";
+  const getRatingColorAndTrend = (rating?: number | null): {color: string, trend: TrendIcon} => {
+    if (rating === undefined || rating === null) return { color: "#CA877E", trend: TrendDown };
+    if (rating >= 8) return { color: "#84C754", trend: TrendUp};
+    if (rating >= 4) return { color: "#C5E384", trend: TrendUp};
+    return { color: "#CA877E", trend: TrendDown};
   };
   //Constants
-  const ratingColor = getRatingColor(rating);
-  const TrendIcon = trend === "up" ? TrendUp : trend === "down" ? TrendDown : Minus;
+  const ratingColorAndTrend = getRatingColorAndTrend(rating);
   return (
     <View style={{ width: size, height: size }} className="relative">
       <View className="w-full h-full rounded-full border-2 border-pink overflow-hidden opacity-80">
@@ -38,7 +36,7 @@ const ProfilePicture = ({ size = 60, uri, rating, isPremium, trend = "up" }: Pro
       {rating !== undefined && rating !== null && (
         <View 
           style={{ 
-            backgroundColor: ratingColor, 
+            backgroundColor: ratingColorAndTrend.color,
             transform: [{ translateX: "-50%" }] 
           }} 
           className="absolute -bottom-[10px] left-[50%] p-1 rounded-[6px] flex-row items-center gap-0.5"
@@ -46,7 +44,7 @@ const ProfilePicture = ({ size = 60, uri, rating, isPremium, trend = "up" }: Pro
           <Text className="text-dark text-xs font-nunito-700">
             {rating.toFixed(1)}
           </Text>
-          <TrendIcon size={12} color="#1D1D1D" weight="bold"/>
+          <ratingColorAndTrend.trend size={12} color="#1D1D1D" weight="bold"/>
         </View>
       )}
     </View>

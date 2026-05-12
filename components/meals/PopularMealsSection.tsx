@@ -2,10 +2,13 @@ import { PopularMeal, PopularMealSkeleton, SegmentedControl } from "@/components
 import { useSearchContext } from "@/lib/hooks/useSearchContext";
 import { ForkKnife, Ghost } from "phosphor-react-native";
 import { Dimensions, FlatList, Text, View } from "react-native";
+import { useRouter } from "expo-router";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const PopularMealsSection = () => {
+  //Router
+  const router = useRouter();
   //Context
   const { popularMeals, filter, setFilter, isLoading } = useSearchContext();
 
@@ -30,7 +33,12 @@ const PopularMealsSection = () => {
             name={item.name}
             imgUrl={item.image_url}
             calories={item.calories_per_100g}
-            url={item.id}
+            onPress={() => {
+              router.push({
+                pathname: "/search-item/[id]",
+                params: { id: item.id, item: JSON.stringify(item) }
+              })
+            }}
           />
         )}
         ListEmptyComponent={

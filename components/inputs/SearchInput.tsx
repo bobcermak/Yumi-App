@@ -1,10 +1,11 @@
 import { CameraModal } from "@/components";
 import { pickImageHelper } from "@/lib/helpers/imageHelpers";
 import { searchFoodByBarcode } from "@/lib/services/food-search/barcode";
+import { useIndexContext } from "@/lib/hooks/useIndexContext";
 import { useFocusEffect, useRouter } from "expo-router";
 import { ArrowRight, Barcode, MagnifyingGlass, X } from "phosphor-react-native";
 import { type FC, useCallback, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Pressable, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 
 type SearchInputProps = {
@@ -18,12 +19,14 @@ type SearchInputProps = {
   value?: string,
   onChangeText?: (text: string) => void,
   onSubmit?: () => void,
-  onClear?: () => void
+  onClear?: () => void,
+  isSubmitDisabled?: boolean
 }
-const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...", showCamera = true, onSearchPress, onCameraPress, className = "", isInput = false, autoFocus = false, value, onChangeText, onSubmit, onClear }) => {
+const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...", showCamera = true, onSearchPress, onCameraPress, className = "", isInput = false, autoFocus = false, value, onChangeText, onSubmit, onClear, isSubmitDisabled = false }) => {
   //Router
   const router = useRouter();
   //Hooks
+  const { showToast } = useIndexContext();
   const inputRef = useRef<TextInput>(null);
   const arrowOpacity = useSharedValue(0);
   const arrowTranslateX = useSharedValue(8);
@@ -65,23 +68,17 @@ const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...",
       const result = await searchFoodByBarcode(data);
       setIsSearching(false);
       if (result) {
-        Alert.alert(
-          result.name || "Unknown product",
-          result.calories_per_100g !== undefined ? `${Math.round(result.calories_per_100g)} kcal / 100g` : "Calories unknown",
-          [{ text: "OK" }]
-        );
+        router.push({
+          pathname: "/search-item/[id]",
+          params: { id: result.id, item: JSON.stringify(result) }
+        });
       } else {
-        Alert.alert("Not Found", "We couldn't find this product.", [
-          { text: "Try Again", onPress: () => { setScanned(false); setShowScanner(true); } },
-          { text: "Cancel" }
-        ]);
+        showToast('Product not found 🥑', undefined, 'error');
       }
-    } catch {
+    } catch (err) {
       setIsSearching(false);
-      Alert.alert("Error", "Something went wrong.", [
-        { text: "Try Again", onPress: () => { setScanned(false); setShowScanner(true); } },
-        { text: "Cancel" }
-      ]);
+      showToast('Something went wrong 🥑', undefined, 'error');
+      console.warn(`[BarcodeService] Error scanning:`, err);
     }
   };
   const handleClear = useCallback(() => {
@@ -95,7 +92,7 @@ const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...",
       damping: 15,
       stiffness: 180,
     });
-  }, [onChangeText, arrowOpacity, arrowTranslateX]);
+  }, [onClear, onChangeText, arrowOpacity, arrowTranslateX]);
   useFocusEffect(
     useCallback(() => {
       if (isInput && autoFocus) {
@@ -153,10 +150,14 @@ const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...",
           />
         </Pressable>
       ) : (
-        <View className="flex-row items-center gap-2 flex-1 h-full">
+        <TouchableOpacity
+          activeOpacity={0.25}
+          onPress={() => handlePress(onSearchPress)}
+          className="flex-row items-center gap-2 flex-1 h-full"
+        >
           <MagnifyingGlass size={24} color="#FFFFFF80" weight="regular" />
           <Text className="text-white/40 text-base font-nunito-600 flex-1">{placeholder}</Text>
-        </View>
+        </TouchableOpacity>
       )}
       <View className="relative flex-row items-center -ml-12 pr-4">
         {isInput && (
@@ -170,8 +171,10 @@ const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...",
             </TouchableOpacity>
             <TouchableOpacity
               onPress={onSubmit}
+              disabled={isSubmitDisabled}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               activeOpacity={0.25}
+              style={{ opacity: isSubmitDisabled ? 0.3 : 1 }}
             >
               <ArrowRight size={24} color="#C5E384" weight="bold" />
             </TouchableOpacity>
@@ -197,17 +200,7 @@ const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...",
   );
   return (
     <View className={`${className || 'w-full'}`}>
-      {isInput ? (
-        Content
-      ) : (
-        <TouchableOpacity
-          activeOpacity={0.25}
-          onPress={() => handlePress(onSearchPress)}
-          className="w-full"
-        >
-          {Content}
-        </TouchableOpacity>
-      )}
+      {Content}
       <CameraModal
         visible={showScanner}
         onClose={() => setShowScanner(false)}
