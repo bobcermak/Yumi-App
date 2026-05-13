@@ -87,8 +87,6 @@ Vytvoř soubor `.env.local` a vlož své klíče:
 ```env
 EXPO_PUBLIC_SUPABASE_URL=tvuj_supabase_url
 EXPO_PUBLIC_SUPABASE_ANON_KEY=tvuj_supabase_klic
-EXPO_PUBLIC_GEMINI_API_KEY=tvuj_gemini_3.1_klic
-EXPO_PUBLIC_OPENAI_API_KEY=tvuj_gpt5_mini_klic
 ```
 
 **4. Start aplikace:**
