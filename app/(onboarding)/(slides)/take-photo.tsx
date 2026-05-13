@@ -97,7 +97,7 @@ const TakePhoto = () => {
                             onPress={() => !isDeleteMode && handlePress(true)}
                             onLongPress={() => photoUri && setIsDeleteMode(true)}
                             delayLongPress={300}
-                            activeOpacity={isDeleteMode ? 1 : 0.7}
+                            activeOpacity={isDeleteMode ? 0.5 : 0.25}
                             className={`w-40 h-40 rounded-full bg-dark items-center justify-center overflow-hidden ${photoUri ? 'border-[2px] border-pink' : 'border-2 border-dashed border-white/10'}`}
                             style={{
                                 shadowColor: "#000000",

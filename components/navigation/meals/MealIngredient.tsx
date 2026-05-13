@@ -1,16 +1,18 @@
-import { PencilSimple, Trash, Check } from "phosphor-react-native";
-import { type FC, useState, useMemo, useEffect } from "react";
-import { Text, TouchableOpacity, View, TextInput } from "react-native";
+import { Check, PencilSimple, Trash } from "phosphor-react-native";
+import { type FC, useEffect, useMemo, useState } from "react";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useIndexContext } from "@/lib/hooks/useIndexContext";
 
 export type MealIngredientProps = {
-    title: string;
-    cal: number;
-    baseCal?: number;
-    amount?: string;
-    onDelete?: () => void;
-    onEdit?: (newCal: number) => void;
+    title: string,
+    cal: number,
+    baseCal?: number,
+    count?: number,
+    onDelete?: () => void,
+    onEdit?: (newCal: number) => void
 }
-const MealIngredient: FC<MealIngredientProps> = ({ title, cal, baseCal, amount, onDelete, onEdit }) => {
+const MealIngredient: FC<MealIngredientProps> = ({ title, cal, baseCal, count, onDelete, onEdit }) => {
+    const { showToast } = useIndexContext();
     //Hooks
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [editedCal, setEditedCal] = useState<string>(String(cal));
@@ -34,6 +36,7 @@ const MealIngredient: FC<MealIngredientProps> = ({ title, cal, baseCal, amount, 
                 setEditedCal(String(cal));
             } else if (newCal !== cal) {
                 onEdit?.(newCal);
+                showToast("Calories updated", undefined, 'success');
             }
             setIsEditing(false);
         } else {
@@ -44,14 +47,18 @@ const MealIngredient: FC<MealIngredientProps> = ({ title, cal, baseCal, amount, 
         setEditedCal(String(cal));
     }, [cal]);
     return (
-        <View className="flex-row items-center justify-between py-3">
+        <TouchableOpacity
+            activeOpacity={isEditing ? 0.5 : 0.25}
+            onPress={() => { if (!isEditing) setIsEditing(true); }}
+            className="flex-row items-center justify-between py-3"
+        >
             <View className="flex-row items-center gap-2 flex-1 mr-4">
                 <TouchableOpacity onPress={handleDelete} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                     <Trash size={20} color="#CA877E" weight="regular" />
                 </TouchableOpacity>
                 <View className="flex-row items-center gap-1 flex-1">
-                    {amount && (
-                        <Text className="base-text font-nunito-800 text-base shrink-0">{amount}</Text>
+                    {count !== undefined && count > 1 && (
+                        <Text className="base-text font-nunito-800 text-base shrink-0">{count}x</Text>
                     )}
                     <Text className="base-text font-nunito-600 text-base flex-1" numberOfLines={1} ellipsizeMode="tail">{title}</Text>
                 </View>
@@ -78,13 +85,13 @@ const MealIngredient: FC<MealIngredientProps> = ({ title, cal, baseCal, amount, 
                 </View>
                 <TouchableOpacity onPress={handleEditToggle} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                     {isEditing ? (
-                        <Check size={16} color="#84C754" weight="bold"/>
+                        <Check size={16} color="#84C754" weight="bold" />
                     ) : (
-                        <PencilSimple size={16} color="#FFFFFF80" weight="regular"/>
+                        <PencilSimple size={16} color="#FFFFFF80" weight="regular" />
                     )}
                 </TouchableOpacity>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 }
 export default MealIngredient;

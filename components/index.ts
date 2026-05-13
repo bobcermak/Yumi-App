@@ -36,3 +36,4 @@ export { default as SearchResultSkeleton } from "./results/SearchResultSkeleton"
 export { default as FilterChip } from "./buttons/FilterChip";
 export { default as CameraModal } from "./modals/CameraModal";
 export { default as ResultMeal } from "./meals/ResultMeal";
+export { default as ResultMealSkeleton } from "./meals/ResultMealSkeleton";

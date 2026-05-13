@@ -1,6 +1,6 @@
-import supabase from "../client";
 import { DailyLog } from "@/types/database/dbModels";
 import { PostgrestError } from "@supabase/supabase-js";
+import supabase from "../client";
 
 //GET
 export const getDailyLog = async (userId: string, dateStr: string): Promise<{ data: DailyLog | null, error: PostgrestError | null }> => {

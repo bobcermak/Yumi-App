@@ -1,11 +1,13 @@
 import { dateStringFromToday, daysFromCalories } from "@/lib/helpers/onBoardingHelpers";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { getActiveDates, getDailyLog } from "@/lib/services/supabase/queries/dailyLogs";
+import { deleteMealLog, getMealLogsForDay, updateMealLog } from "@/lib/services/supabase/queries/mealLogs";
 import { incrementUserStreak } from "@/lib/services/supabase/queries/profiles";
 import { updateCalorieLimitAndTargetDate } from "@/lib/services/supabase/queries/setupUserAccount";
+import { MealLog, MealLogWithIngredients } from "@/types/database/dbModels";
 import { IndexContextProps, OverviewData, ToastType } from "@/types/indexContextType";
 import { addDays, endOfMonth, format, isAfter, isBefore, isSameDay, isToday, startOfDay, startOfMonth, subDays } from "date-fns";
-import { createContext, useCallback, useEffect, useMemo, useState, type FC } from "react";
+import { createContext, useCallback, useEffect, useMemo, useState, type FC, useRef } from "react";
 
 export const IndexContext = createContext<IndexContextProps | undefined>(undefined);
 
@@ -23,6 +25,9 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
     const [isDataLoading, setIsDataLoading] = useState<boolean>(false);
     const [targetDate, setTargetDate] = useState<string | null | undefined>(userProfile?.target_date);
     const [refreshKey, setRefreshKey] = useState<number>(0);
+    const [mealLogs, setMealLogs] = useState<MealLogWithIngredients[]>([]);
+    const overviewDataRef = useRef<OverviewData | null>(null);
+    const dashboardDateRef = useRef<Date | null>(null);
     const [overviewData, setOverviewData] = useState<OverviewData>({
         date: new Date(),
         calories: { current: 0, max: defaultCalLimit },
@@ -32,7 +37,12 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
             protein: { current: 0, max: Math.round((defaultCalLimit * 0.2) / 4) },
         }
     });
-
+    useEffect(() => {
+        overviewDataRef.current = overviewData;
+    }, [overviewData]);
+    useEffect(() => {
+        dashboardDateRef.current = dashboardDate;
+    }, [dashboardDate]);
     //Functions
     const showToast = useCallback((message: string, dateStr?: string, type: 'success' | 'error' = 'success') => {
         setToast({ message, dateStr, type });
@@ -53,6 +63,10 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
                 protein: { ...prev.macros.protein, current: data?.protein_current || 0 },
             }
         }));
+
+        // Fetch meal logs as well
+        const logs = await getMealLogsForDay(userId, dateStr);
+        setMealLogs(logs);
     }, []);
     const fetchMonthActiveDates = useCallback(async (userId: string, date: Date) => {
         const start = format(startOfMonth(subDays(startOfMonth(date), 1)), "yyyy-MM-dd");
@@ -64,6 +78,7 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
     }, []);
     const handleUpdateCaloriesMax = useCallback(async (newMax: number) => {
         const clampedMax = Math.min(8000, Math.max(newMax, 600));
+        if (overviewDataRef.current?.calories.max === clampedMax) return;
         setOverviewData(prev => ({
             ...prev,
             calories: { ...prev.calories, max: clampedMax },
@@ -117,6 +132,56 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
         }
         setTargetDate(userProfile?.target_date);
     }, [userProfile?.daily_calorie_limit, userProfile?.target_date]);
+
+    const deleteMeal = useCallback(async (mealId: string) => {
+        if (!userProfile?.id) return;
+        try {
+            await deleteMealLog(userProfile.id, mealId);
+            showToast("Meal removed");
+            // Refresh data to update dashboard and logs
+            const dateStr = format(dashboardDate, "yyyy-MM-dd");
+            const logs = await getMealLogsForDay(userProfile.id, dateStr);
+            setMealLogs(logs);
+            
+            const { data } = await getDailyLog(userProfile.id, dateStr);
+            setOverviewData(prev => ({
+                ...prev,
+                calories: { ...prev.calories, current: data?.calories_current || 0 },
+                macros: {
+                    carbs: { ...prev.macros.carbs, current: data?.carbs_current || 0 },
+                    fats: { ...prev.macros.fats, current: data?.fats_current || 0 },
+                    protein: { ...prev.macros.protein, current: data?.protein_current || 0 },
+                }
+            }));
+        } catch (error) {
+            showToast("Failed to remove meal", undefined, "error");
+        }
+    }, [userProfile?.id, dashboardDate, showToast]);
+
+    const updateMeal = useCallback(async (mealId: string, updates: Partial<MealLog>) => {
+        if (!userProfile?.id) return;
+        try {
+            await updateMealLog(userProfile.id, mealId, updates);
+            // Refresh data
+            const dateStr = format(dashboardDate, "yyyy-MM-dd");
+            const logs = await getMealLogsForDay(userProfile.id, dateStr);
+            setMealLogs(logs);
+            
+            const { data } = await getDailyLog(userProfile.id, dateStr);
+            setOverviewData(prev => ({
+                ...prev,
+                calories: { ...prev.calories, current: data?.calories_current || 0 },
+                macros: {
+                    carbs: { ...prev.macros.carbs, current: data?.carbs_current || 0 },
+                    fats: { ...prev.macros.fats, current: data?.fats_current || 0 },
+                    protein: { ...prev.macros.protein, current: data?.protein_current || 0 },
+                }
+            }));
+        } catch (error) {
+            showToast("Failed to update meal", undefined, "error");
+        }
+    }, [userProfile?.id, dashboardDate, showToast]);
+
     const setSelectedDate = useCallback(async (date: Date) => {
         if (isSameDay(date, overviewData.date)) return;
         const oldMonth = overviewData.date.getMonth();
@@ -130,6 +195,10 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
             setIsDataLoading(true);
             const dateStr = format(dateDay, "yyyy-MM-dd");
             const { data } = await getDailyLog(userProfile.id, dateStr);
+            
+            const logs = await getMealLogsForDay(userProfile.id, dateStr);
+            setMealLogs(logs);
+
             setDashboardDate(dateDay);
             setOverviewData(prev => ({
                 ...prev,
@@ -162,27 +231,35 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
             const today = new Date();
             const dateStr = format(today, "yyyy-MM-dd");
             const { data } = await getDailyLog(userProfile.id, dateStr);
+            const logs = await getMealLogsForDay(userProfile.id, dateStr);
+            setMealLogs(logs);
+
             await incrementUserStreak(userProfile.id);
             await refreshProfile();
             const limit = userProfile.daily_calorie_limit || defaultCalLimit;
-            const hasDateChanged = !isSameDay(today, overviewData.date);
-            const hasDataChanged = (data?.calories_current || 0) !== overviewData.calories.current;
-            if (hasDateChanged || hasDataChanged) setRefreshKey(prev => prev + 1);
-            setOverviewData({
-                date: today,
-                calories: { current: data?.calories_current || 0, max: limit },
-                macros: {
-                    carbs: { current: data?.carbs_current || 0, max: Math.round((limit * 0.5) / 4) },
-                    fats: { current: data?.fats_current || 0, max: Math.round((limit * 0.3) / 9) },
-                    protein: { current: data?.protein_current || 0, max: Math.round((limit * 0.2) / 4) },
-                }
-            });
-            setDashboardDate(startOfDay(today));
-            await fetchMonthActiveDates(userProfile.id, today);
+            
+            const currentOverview = overviewDataRef.current;
+            const hasDateChanged = currentOverview ? !isSameDay(today, currentOverview.date) : true;
+            const hasDataChanged = currentOverview ? (data?.calories_current || 0) !== currentOverview.calories.current : true;
+            
+            if (hasDateChanged || hasDataChanged) {
+                setRefreshKey(prev => prev + 1);
+                setOverviewData({
+                    date: today,
+                    calories: { current: data?.calories_current || 0, max: limit },
+                    macros: {
+                        carbs: { current: data?.carbs_current || 0, max: Math.round((limit * 0.5) / 4) },
+                        fats: { current: data?.fats_current || 0, max: Math.round((limit * 0.3) / 9) },
+                        protein: { current: data?.protein_current || 0, max: Math.round((limit * 0.2) / 4) },
+                    }
+                });
+                setDashboardDate(startOfDay(today));
+                await fetchMonthActiveDates(userProfile.id, today);
+            }
             return hasDateChanged || hasDataChanged;
         }
         return false;
-    }, [userProfile, fetchMonthActiveDates, refreshProfile, overviewData.date, overviewData.calories.current]);
+    }, [userProfile?.id, fetchMonthActiveDates, refreshProfile]);
     const contextValue = useMemo(() => ({
         toast,
         showToast,
@@ -197,8 +274,11 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
         goToToday,
         refreshData,
         refreshKey,
-        isDataLoading
-    }), [toast, showToast, overviewData, dashboardDate, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, goToToday, refreshData, refreshKey, isDataLoading]);
+        isDataLoading,
+        mealLogs,
+        deleteMeal,
+        updateMeal
+    }), [toast, showToast, overviewData, dashboardDate, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, goToToday, refreshData, refreshKey, isDataLoading, mealLogs, deleteMeal, updateMeal]);
     return (
         <IndexContext.Provider value={contextValue}>
             {children}

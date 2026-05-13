@@ -1,8 +1,8 @@
 import { PopularMeal, PopularMealSkeleton, SegmentedControl } from "@/components";
 import { useSearchContext } from "@/lib/hooks/useSearchContext";
+import { useRouter } from "expo-router";
 import { ForkKnife, Ghost } from "phosphor-react-native";
 import { Dimensions, FlatList, Text, View } from "react-native";
-import { useRouter } from "expo-router";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -30,13 +30,17 @@ const PopularMealsSection = () => {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <PopularMeal
-            name={item.name}
+            name={item.name || "Unknown Meal"}
             imgUrl={item.image_url}
-            calories={item.calories_per_100g}
+            calories={item.calories_per_100g || 0}
             onPress={() => {
               router.push({
                 pathname: "/search-item/[id]",
-                params: { id: item.id, item: JSON.stringify(item) }
+                params: { 
+                  id: item.id, 
+                  item: JSON.stringify(item),
+                  isFavorite: filter === 'My' ? 'true' : 'false'
+                }
               })
             }}
           />

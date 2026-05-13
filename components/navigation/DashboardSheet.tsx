@@ -1,87 +1,109 @@
 import { Icon, MealCard } from "@/components";
+import { getMealTypeByTime } from "@/lib/helpers/dateHelpers";
+import { useIndexContext } from "@/lib/hooks/useIndexContext";
 import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import * as Haptics from "expo-haptics";
 import { Cookie, CookingPot, EggCrack, Orange, Pizza, Plus } from "phosphor-react-native";
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { Keyboard, Text, View } from "react-native";
-import { getMealTypeByTime } from "@/lib/helpers/dateHelpers";
+import { Keyboard, Text, TouchableOpacity, View } from "react-native";
+import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withRepeat, withTiming, Easing } from "react-native-reanimated";
 
 const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
+  //Context
+  const { mealLogs, deleteMeal, updateMeal, showToast } = useIndexContext();
   //Hooks
   const internalRef = useRef<BottomSheet>(null);
+  const scrollViewRef = useRef<any>(null);
+  const scrollOffsetRef = useRef(0);
   useImperativeHandle(ref, () => internalRef.current as BottomSheet);
   const [isKeyboardVisible, setKeyboardVisible] = useState<boolean>(false);
+  const [isSheetLoading, setIsSheetLoading] = useState<boolean>(false);
   const snapPoints = useMemo(() => {
     return isKeyboardVisible
       ? [105, "20%", "35%", "50%", "65%", "80%", "100%"]
       : [105, "20%", "35%", "50%", "65%", "80%"];
   }, [isKeyboardVisible]);
-  const currentMeal = useMemo(() => getMealTypeByTime(), []);
-  const [expandedMeal, setExpandedMeal] = useState<string | null>(currentMeal);
-  const [meals, setMeals] = useState<{ title: string, icon: React.ReactNode, ingredients: { id: string | number, amount?: string, title: string, baseCal?: number, cal: number }[] }[]>([
-    {
-      title: "Breakfast",
-      icon: <EggCrack size={20} color="#84C754" weight="regular" />,
-      ingredients: []
-    },
-    {
-      title: "Morning Snack",
-      icon: <Cookie size={20} color="#84C754" weight="regular" />,
-      ingredients: [
-        { id: 1, title: 'Cookie', cal: 100 },
-        { id: 2, amount: '2x', title: 'Avocado', baseCal: 60.5, cal: 121 }
-      ]
-    },
-    {
-      title: "Lunch",
-      icon: <CookingPot size={20} color="#84C754" weight="regular" />,
-      ingredients: []
-    },
-    {
-      title: "Afternoon Snack",
-      icon: <Orange size={20} color="#84C754" weight="regular" />,
-      ingredients: []
-    },
-    {
-      title: "Dinner",
-      icon: <Pizza size={20} color="#84C754" weight="regular" />,
-      ingredients: [
-        { id: 1, title: 'Cookie', cal: 100 },
-        { id: 2, amount: '2x', title: 'Avocado', baseCal: 60.5, cal: 121 }
-      ]
+  const currentMealType = useMemo(() => getMealTypeByTime(), []);
+  const [expandedMeal, setExpandedMeal] = useState<string | null>(currentMealType);
+  
+  const mealSections = useMemo(() => {
+    const sections = [
+      { title: "Breakfast", type: "breakfast", icon: <EggCrack size={20} color="#84C754" weight="regular" /> },
+      { title: "Morning Snack", type: "morning_snack", icon: <Cookie size={20} color="#84C754" weight="regular" /> },
+      { title: "Lunch", type: "lunch", icon: <CookingPot size={20} color="#84C754" weight="regular" /> },
+      { title: "Afternoon Snack", type: "afternoon_snack", icon: <Orange size={20} color="#84C754" weight="regular" /> },
+      { title: "Dinner", type: "dinner", icon: <Pizza size={20} color="#84C754" weight="regular" /> },
+    ];
+    return sections.map(section => {
+      const logsForType = mealLogs.filter(log => log.type === section.type);
+      const ingredients = logsForType.flatMap(log => {
+        const grouped = new Map<string, typeof log.meal_ingredients>();
+        for (const ing of log.meal_ingredients) {
+          const key = (ing.food_id ?? ing.name) + '_' + log.id;
+          if (!grouped.has(key)) grouped.set(key, []);
+          grouped.get(key)!.push(ing);
+        }
+        return Array.from(grouped.values()).map(items => {
+          const first = items[0];
+          const totalCal = items.reduce((sum, i) => sum + i.calories, 0);
+          return {
+            id: first.id,
+            mealLogId: log.id,
+            title: first.name,
+            cal: totalCal,
+            count: items.length > 1 ? items.length : undefined,
+            baseCal: items.length > 1 ? first.calories : undefined,
+          };
+        });
+      });
+      const totalCal = logsForType.reduce((sum, log) => sum + (log.total_calories || 0), 0);
+      return { ...section, ingredients, totalCal };
+    });
+  }, [mealLogs]);
+  useEffect(() => {
+    const offset = scrollOffsetRef.current;
+    if (offset > 0) {
+      requestAnimationFrame(() => {
+        scrollViewRef.current?.scrollTo({ y: offset, animated: false });
+      });
     }
-  ]);
+  }, [mealSections]);
+  const rotation = useSharedValue(0);
+  useEffect(() => {
+    rotation.value = withRepeat(
+      withTiming(360, { duration: 900, easing: Easing.linear }),
+      -1
+    );
+  }, []);
+  const spinnerStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
+  }));
   //Functions
-  const updateIngredientCal = (mealTitle: string, ingredientId: string | number, newCal: number) => {
-    setMeals(prevMeals => prevMeals.map(meal => {
-      if (meal.title === mealTitle) {
-        return {
-          ...meal,
-          ingredients: meal.ingredients.map(ing =>
-            ing.id === ingredientId ? { ...ing, cal: newCal } : ing
-          )
-        };
-      }
-      return meal;
-    }));
+  const handleIngredientEdit = async (mealLogId: string, newCal: number) => {
+    setIsSheetLoading(true);
+    try {
+      await updateMeal(mealLogId, { total_calories: newCal });
+      showToast("Calories updated!", undefined, 'success');
+    } catch (error) {
+      showToast("Update failed", undefined, 'error');
+    } finally {
+      setIsSheetLoading(false);
+    }
   };
-  const deleteIngredient = (mealTitle: string, ingredientId: string | number) => {
-    setMeals(prevMeals => prevMeals.map(meal => {
-      if (meal.title === mealTitle) {
-        return {
-          ...meal,
-          ingredients: meal.ingredients.filter(ing => ing.id !== ingredientId)
-        };
-      }
-      return meal;
-    }));
+  const handleIngredientDelete = async (mealLogId: string) => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    setIsSheetLoading(true);
+    try {
+      await deleteMeal(mealLogId);
+    } catch (error) {
+      showToast("Delete failed", undefined, 'error');
+    } finally {
+      setIsSheetLoading(false);
+    }
   };
   useEffect(() => {
-    const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
-      setKeyboardVisible(true);
-    });
-    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
-      setKeyboardVisible(false);
-    });
+    const showSubscription = Keyboard.addListener("keyboardDidShow", () => setKeyboardVisible(true));
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => setKeyboardVisible(false));
     return () => {
       showSubscription.remove();
       hideSubscription.remove();
@@ -94,9 +116,9 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
       snapPoints={snapPoints}
       detached={false}
       bottomInset={0}
-      backgroundStyle={{
-        backgroundColor: '#121212',
-      }}
+      keyboardBehavior="extend"
+      keyboardBlurBehavior="none"
+      backgroundStyle={{ backgroundColor: '#121212' }}
       style={{
         marginHorizontal: 16,
         borderRadius: 40,
@@ -118,32 +140,72 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
       }}
       enableOverDrag={false}
     >
-      <BottomSheetScrollView showsVerticalScrollIndicator={false}>
+      {isSheetLoading && (
+        <Animated.View
+          entering={FadeIn.duration(180)}
+          exiting={FadeOut.duration(180)}
+          className="absolute inset-0 z-50 items-center justify-center"
+          style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
+        >
+          <Animated.View
+            entering={FadeIn.duration(220).springify()}
+            className="items-center gap-3 px-8 py-6 rounded-[24px] border border-white/10"
+            style={{
+              backgroundColor: '#1A1A1A',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.5,
+              shadowRadius: 20,
+              elevation: 20,
+            }}
+          >
+            <Animated.View style={spinnerStyle}>
+              <View
+                className="w-10 h-10 rounded-full border-[3px] border-transparent"
+                style={{ borderTopColor: '#C5E384', borderRightColor: '#C5E38440' }}
+              />
+            </Animated.View>
+            <Text className="text-white/70 font-nunito-700 text-sm tracking-wide">Updating...</Text>
+          </Animated.View>
+        </Animated.View>
+      )}
+      <BottomSheetScrollView
+        ref={scrollViewRef}
+        showsVerticalScrollIndicator={false}
+        onScroll={({ nativeEvent }) => { scrollOffsetRef.current = nativeEvent.contentOffset.y; }}
+      >
         <View className="px-5">
-          <View className="flex-row justify-between items-center mt-10 pb-5">
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => internalRef.current?.snapToIndex(3)}
+            className="flex-row justify-between items-center mt-10 pb-5"
+          >
             <Text className="text-white text-xl font-nunito-800">Today&apos;s Food</Text>
             <Icon className="w-[36px] h-[36px]" onPress={() => { }}>
               <Plus size={24} color="#1D1D1D" weight="regular" />
             </Icon>
-          </View>
+          </TouchableOpacity>
           <View className="mt-1 gap-4 pb-10">
-            {meals.map((meal) => {
-              const totalCal = meal.ingredients.reduce((sum, ing) => sum + (ing.cal || 0), 0);
-              return (
-                <MealCard
-                  key={meal.title}
-                  icon={meal.icon}
-                  title={meal.title}
-                  allCal={totalCal}
-                  isDayTime={currentMeal === meal.title}
-                  expanded={expandedMeal === meal.title}
-                  onToggle={() => setExpandedMeal(expandedMeal === meal.title ? null : meal.title)}
-                  ingredients={meal.ingredients}
-                  onIngredientEdit={(id, newCal) => updateIngredientCal(meal.title, id, newCal)}
-                  onIngredientDelete={(id) => deleteIngredient(meal.title, id)}
-                />
-              );
-            })}
+            {mealSections.map((section) => (
+              <MealCard
+                key={section.type}
+                icon={section.icon}
+                title={section.title}
+                allCal={Math.round(section.totalCal)}
+                isDayTime={currentMealType === section.title}
+                expanded={expandedMeal === section.title}
+                onToggle={() => setExpandedMeal(expandedMeal === section.title ? null : section.title)}
+                ingredients={section.ingredients}
+                onIngredientEdit={(id, newCal) => {
+                  const ing = section.ingredients.find(i => i.id === id);
+                  if (ing) handleIngredientEdit(ing.mealLogId, newCal);
+                }}
+                onIngredientDelete={(id) => {
+                  const ing = section.ingredients.find(i => i.id === id);
+                  if (ing) handleIngredientDelete(ing.mealLogId);
+                }}
+              />
+            ))}
           </View>
         </View>
       </BottomSheetScrollView>

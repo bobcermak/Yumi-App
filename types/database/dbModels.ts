@@ -36,6 +36,10 @@ export type MealLogUpdate = TablesUpdate<"meal_logs">;
 export type MealIngredient = Tables<"meal_ingredients">;
 export type MealIngredientInsert = TablesInsert<"meal_ingredients">;
 
+export type MealLogWithIngredients = MealLog & {
+    meal_ingredients: MealIngredient[];
+};
+
 export type Poke = Tables<"pokes">;
 export type PokeInsert = TablesInsert<"pokes">;
 

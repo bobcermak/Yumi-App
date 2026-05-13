@@ -14,8 +14,9 @@ export const useFoodSearch = () => {
     const [foodType, setFoodType] = useState<FoodType>("all");
     //Refs
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const searchIdRef = useRef<number>(0); 
+    const searchIdRef = useRef<number>(0);
     const lastRequestSignature = useRef<string>("");
+    const isFullSearchRef = useRef<boolean>(false);
     
     //Functions
     const effectiveQuery = query.trim();
@@ -28,17 +29,20 @@ export const useFoodSearch = () => {
             return { results: [], source: null };
         }
         const currentSearchId = ++searchIdRef.current;
-        const cacheKey = `${effectiveQuery}-${category}-${effectiveFoodType}`;
+        const isFull = isFullSearchRef.current;
+        const cacheKey = `${effectiveQuery}-${category}-${effectiveFoodType}-${isFull ? 'full' : 'quick'}`;
         if (globalSearchCache.has(cacheKey)) {
             return globalSearchCache.get(cacheKey);
         }
-        const results = await searchExternalFoods({
+        let results;
+        results = await searchExternalFoods({
             query: effectiveQuery,
             category: category === "all" ? undefined : category,
             foodType: effectiveFoodType,
+            maxResults: isFull ? 10 : 4,
         });
         if (currentSearchId !== searchIdRef.current) {
-            return new Promise<any>(() => {}); 
+            return new Promise<any>(() => {});
         }
         const finalData = {
             results,
@@ -57,8 +61,9 @@ export const useFoodSearch = () => {
         const currentTrimmed = query.trim();
         const currentSignature = `${currentTrimmed}-${category}-${foodType}`;
         if (category !== "all" && currentTrimmed.length === 0) {
+            isFullSearchRef.current = false;
             lastRequestSignature.current = currentSignature;
-            performSearch(); 
+            performSearch();
             return;
         }
         if (!currentTrimmed) {
@@ -70,6 +75,7 @@ export const useFoodSearch = () => {
             if (lastRequestSignature.current === currentSignature) {
                 return;
             }
+            isFullSearchRef.current = false;
             lastRequestSignature.current = currentSignature;
             performSearch();
         }, DEBOUNCE_MS);
@@ -79,11 +85,10 @@ export const useFoodSearch = () => {
     }, [query, category, foodType, performSearch, reset]);
     const submitSearch = useCallback(() => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
+        isFullSearchRef.current = true;
         const currentSignature = `${query.trim()}-${category}-${foodType}`;
-        if (lastRequestSignature.current !== currentSignature) {
-            lastRequestSignature.current = currentSignature;
-            performSearch();
-        }
+        lastRequestSignature.current = currentSignature;
+        performSearch();
     }, [query, category, foodType, performSearch]);
     return {
         query, setQuery,

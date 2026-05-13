@@ -6,7 +6,7 @@ import { Profile } from "@/types/database/dbModels";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Session } from "@supabase/supabase-js";
 import { useRouter, useSegments } from "expo-router";
-import React, { createContext, useEffect, useState, type FC } from "react";
+import React, { createContext, useEffect, useState, type FC, useCallback } from "react";
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -80,7 +80,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     if (!isReady || !segments || !router || isLoading) return;
   }, [isReady, session, hasOnboarded, segments, isLoading]);
-  const signUp = async (onboardingData?: {
+  const signUp = useCallback(async (onboardingData?: {
     fullName: string;
     username: string;
     photoUri: string | null;
@@ -120,8 +120,8 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
-  const signIn = async () => {
+  }, [email, password]);
+  const signIn = useCallback(async () => {
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -129,15 +129,15 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
-  const signOut = async () => {
+  }, [email, password]);
+  const signOut = useCallback(async () => {
     setIsLoading(true);
     try {
       await supabase.auth.signOut();
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
   /* 
     =================================================================================
     NÁVOD NA ZPROVOZNĚNÍ NATIVNÍHO GOOGLE LOGINU (VARIANTA B):
@@ -217,12 +217,12 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     4. V app.json přidej "expo-apple-authentication" do pluginů.
     =================================================================================
   */
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (session?.user.id) {
       const { data: profile } = await getProfile(session.user.id);
       if (profile) setUserProfile(profile);
     }
-  };
+  }, [session?.user.id]);
   const value = {
     session,
     userProfile,

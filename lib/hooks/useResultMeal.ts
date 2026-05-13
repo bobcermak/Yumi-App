@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { TextInput } from "react-native";
 import { calculateTotalValue, calculateMacros, getMacroRatio, formatMacroDisplay, cleanNumericInput } from "@/lib/helpers/mealHelpers";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { useIndexContext } from "@/lib/hooks/useIndexContext";
+import { addToFavorites, checkIsFavorite, removeFromFavorites } from "@/lib/services/supabase/queries/foods";
 
 export type ResultMealData = {
   grams: number,
@@ -8,15 +11,21 @@ export type ResultMealData = {
   calories: number
 };
 type UseResultMealProps = {
+  id?: string,
   calories_per_100g: number,
   carbs_per_100g: number,
   protein_per_100g: number,
   fat_per_100g: number,
   initialGrams: number,
   initialCount: number,
+  isFavoriteExternal?: boolean,
+  onToggleFavoriteExternal?: () => void,
   onDataChange?: (data: ResultMealData) => void
 }
-export const useResultMeal = ({ calories_per_100g, carbs_per_100g, protein_per_100g, fat_per_100g, initialGrams, initialCount, onDataChange }: UseResultMealProps) => {
+export const useResultMeal = ({ id, calories_per_100g, carbs_per_100g, protein_per_100g, fat_per_100g, initialGrams, initialCount, isFavoriteExternal, onToggleFavoriteExternal, onDataChange }: UseResultMealProps) => {
+  //Context
+  const { userProfile } = useAuth();
+  const { showToast } = useIndexContext();
   //Refs
   const calorieInputRef = useRef<TextInput>(null);
   const gramsInputRef = useRef<TextInput>(null);
@@ -29,6 +38,9 @@ export const useResultMeal = ({ calories_per_100g, carbs_per_100g, protein_per_1
   const [calInputVal, setCalInputVal] = useState<string>('');
   const [isGramsFocused, setIsGramsFocused] = useState<boolean>(false);
   const [gramInputVal, setGramInputVal] = useState<string>('');
+  const [isFavoriteLocal, setIsFavoriteLocal] = useState<boolean>(false);
+
+  const isFavorite = isFavoriteExternal ?? isFavoriteLocal;
 
   // Calculations
   const factor = grams / 100;
@@ -48,6 +60,36 @@ export const useResultMeal = ({ calories_per_100g, carbs_per_100g, protein_per_1
   useEffect(() => {
     onDataChange?.({ grams, count, calories: totalCalories });
   }, [grams, count, totalCalories]);
+  useEffect(() => {
+    const fetchFavoriteStatus = async () => {
+      if (userProfile?.id && id && isFavoriteExternal === undefined) {
+        const favorite = await checkIsFavorite(userProfile.id, id);
+        setIsFavoriteLocal(favorite);
+      }
+    };
+    fetchFavoriteStatus();
+  }, [userProfile?.id, id, isFavoriteExternal]);
+  const handleToggleFavorite = async () => {
+    if (onToggleFavoriteExternal) {
+      onToggleFavoriteExternal();
+      return;
+    }
+    if (!userProfile?.id || !id) return;
+    const newState = !isFavorite;
+    setIsFavoriteLocal(newState);
+    try {
+      if (newState) {
+        await addToFavorites(userProfile.id, id);
+      } else {
+        await removeFromFavorites(userProfile.id, id);
+      }
+      showToast(newState ? "Added to favorites" : "Removed from favorites");
+    } catch (error) {
+      setIsFavoriteLocal(!newState);
+      showToast("Action failed", undefined, 'error');
+      console.error("[useResultMeal] Error toggling favorite:", error);
+    }
+  };
   const handleGramsDataChange = (newGrams: number) => setGrams(newGrams);
   const handleCaloriesDataChange = (newCalories: number) => {
     if (calories_per_100g === 0) return;
@@ -113,7 +155,8 @@ export const useResultMeal = ({ calories_per_100g, carbs_per_100g, protein_per_1
       fatRatio,
       carbsDisplay,
       proteinDisplay,
-      fatDisplay
+      fatDisplay,
+      isFavorite
     },
     refs: {
       calorieInputRef,
@@ -131,6 +174,7 @@ export const useResultMeal = ({ calories_per_100g, carbs_per_100g, protein_per_1
       handleTogglePercentage: () => setIsPercentaged(prev => !prev),
       handleCalorieInputChange,
       handleGramsInputChange,
+      handleToggleFavorite,
       handleCalorieFocus: () => {
         setCalInputVal(calories.toString());
         setIsCalFocused(true);

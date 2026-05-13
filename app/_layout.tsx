@@ -1,6 +1,7 @@
 import { AuthContext, AuthProvider } from "@/contexts/AuthContext";
 import OnboardingProvider from "@/contexts/OnboardingContext";
 import SearchProvider from "@/contexts/SearchContext";
+import { SearchItemProvider } from "@/contexts/SearchItemContext";
 import IndexProvider from "@/contexts/IndexContext";
 import { useCachedFonts } from "@/lib/hooks/useCachedFonts";
 import { DarkTheme, ThemeProvider } from "@react-navigation/native";
@@ -79,14 +80,16 @@ const RootLayout = () => {
               <OnboardingProvider>
                 <IndexProvider>
                   <SearchProvider>
-                    <ThemeProvider value={customTheme}>
-                      <SafeAreaProvider>
-                        <StatusBar style="light" />
-                        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#121212' }}/>
-                        <AnimatedBackground/>
-                        <RootLayoutContent />
-                      </SafeAreaProvider>
-                    </ThemeProvider>
+                    <SearchItemProvider>
+                      <ThemeProvider value={customTheme}>
+                        <SafeAreaProvider>
+                          <StatusBar style="light" />
+                          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#121212' }}/>
+                          <AnimatedBackground/>
+                          <RootLayoutContent />
+                        </SafeAreaProvider>
+                      </ThemeProvider>
+                    </SearchItemProvider>
                   </SearchProvider>
                 </IndexProvider>
               </OnboardingProvider>

@@ -1,7 +1,7 @@
 import { CameraModal } from "@/components";
 import { pickImageHelper } from "@/lib/helpers/imageHelpers";
-import { searchFoodByBarcode } from "@/lib/services/food-search/barcode";
 import { useIndexContext } from "@/lib/hooks/useIndexContext";
+import { searchFoodByBarcode } from "@/lib/services/food-search/barcode";
 import { useFocusEffect, useRouter } from "expo-router";
 import { ArrowRight, Barcode, MagnifyingGlass, X } from "phosphor-react-native";
 import { type FC, useCallback, useRef, useState } from "react";

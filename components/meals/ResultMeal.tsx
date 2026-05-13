@@ -1,11 +1,12 @@
-import { Minus as MinusIcon, PencilSimple, Plus, Star } from "phosphor-react-native";
-import { FC } from "react";
-import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
-import Animated, { FadeInDown, FadeInRight, FadeOutRight, useAnimatedStyle, withSpring, LinearTransition,
-} from "react-native-reanimated";
+import { getRatingColor } from "@/lib/helpers/mealHelpers";
 import { useResultMeal } from "@/lib/hooks/useResultMeal";
+import { Minus as MinusIcon, PencilSimple, Plus, Star, Heart } from "phosphor-react-native";
+import { FC } from "react";
+import { ActivityIndicator, Image, Text, TextInput, TouchableOpacity, View } from "react-native";
+import Animated, { FadeInDown, FadeInRight, FadeOutRight, LinearTransition, useAnimatedStyle, withSpring } from "react-native-reanimated";
 
 type ResultMealProps = {
+    id?: string,
     imgSrc: string,
     title: string,
     calories_per_100g: number,
@@ -15,13 +16,16 @@ type ResultMealProps = {
     rating?: number | null,
     initialGrams?: number,
     initialCount?: number,
+    isFavorite?: boolean,
+    isFavoriteLoading?: boolean,
+    onToggleFavorite?: () => void,
     onDataChange?: (data: { grams: number, count: number, calories: number }) => void
 }
-const ResultMeal: FC<ResultMealProps> = ({ imgSrc, title, calories_per_100g, carbs_per_100g, protein_per_100g, fat_per_100g, rating, initialGrams = 100, initialCount = 1, onDataChange 
+const ResultMeal: FC<ResultMealProps> = ({ id, imgSrc, title, calories_per_100g, carbs_per_100g, protein_per_100g, fat_per_100g, rating, initialGrams = 100, initialCount = 1, isFavorite, isFavoriteLoading, onToggleFavorite, onDataChange
 }) => {
     const { state, refs, handlers } = useResultMeal({
-        calories_per_100g, carbs_per_100g, protein_per_100g, fat_per_100g,
-        initialGrams, initialCount, onDataChange
+        id, calories_per_100g, carbs_per_100g, protein_per_100g, fat_per_100g,
+        initialGrams, initialCount, isFavoriteExternal: isFavorite, onToggleFavoriteExternal: onToggleFavorite, onDataChange
     });
     const carbsBarStyle = useAnimatedStyle(() => ({
         width: withSpring(`${state.carbsRatio * 100}%`, { damping: 10, stiffness: 80 }),
@@ -33,9 +37,7 @@ const ResultMeal: FC<ResultMealProps> = ({ imgSrc, title, calories_per_100g, car
         width: withSpring(`${state.proteinRatio * 100}%`, { damping: 10, stiffness: 80 }),
     }));
     return (
-        <Animated.View 
-            entering={FadeInDown.duration(250).springify()}
-            layout={LinearTransition.springify().damping(15)}
+        <Animated.View
             className="self-center justify-center items-center gap-6 rounded-[20px] overflow-hidden bg-dark border border-white/10 pb-5 w-[362px]"
             style={{
                 shadowColor: "#000000",
@@ -45,7 +47,7 @@ const ResultMeal: FC<ResultMealProps> = ({ imgSrc, title, calories_per_100g, car
             }}>
             {state.editMode === 'count' && (
                 <TouchableOpacity
-                    activeOpacity={1}
+                    activeOpacity={0.25}
                     onPress={() => handlers.setEditMode('none')}
                     className="absolute inset-0 z-10"
                 />
@@ -55,10 +57,26 @@ const ResultMeal: FC<ResultMealProps> = ({ imgSrc, title, calories_per_100g, car
                 resizeMode="cover"
                 className="w-[362px] h-[200px] opacity-80 bg-[#2B2B2B]"
             />
-            <View className="absolute top-4 left-4 bg-dark/80 px-2 py-1 rounded-[10px] flex-row items-center gap-1 border border-white/10 z-20">
-                <Star size={16} color="#F6E05E" weight="fill" />
-                <Text className="text-white font-nunito-700 text-sm">{rating ? rating.toFixed(1) : "0.0"}</Text>
+            <View className="absolute top-4 left-4 px-2 py-1 rounded-[10px] flex-row items-center border border-white/10 z-20 gap-1" style={{ backgroundColor: getRatingColor(rating) }}>
+                <Star size={20} color="#1D1D1D" weight="regular"/>
+                <Text className="text-dark font-nunito-700 text-base">{rating ? rating.toFixed(1) : "0.0"}</Text>
             </View>
+            <TouchableOpacity
+                onPress={handlers.handleToggleFavorite}
+                activeOpacity={0.25}
+                className="absolute top-4 right-4 p-2 rounded-full bg-black/40 border border-white/10 z-20"
+                disabled={isFavoriteLoading}
+            >
+                {isFavoriteLoading ? (
+                    <ActivityIndicator size="small" color="#C5E384" />
+                ) : (
+                    <Heart
+                        size={24}
+                        color={state.isFavorite ? "#C5E384" : "white"}
+                        weight={state.isFavorite ? "fill" : "regular"}
+                    />
+                )}
+            </TouchableOpacity>
             <View className="w-full px-4">
                 <View className="gap-1">
                     <View className="flex-row justify-between items-center">
@@ -67,8 +85,8 @@ const ResultMeal: FC<ResultMealProps> = ({ imgSrc, title, calories_per_100g, car
                         </Text>
                         <View className="flex-row items-center z-20">
                             {state.editMode === 'count' && (
-                                <Animated.View 
-                                    entering={FadeInRight.springify()} 
+                                <Animated.View
+                                    entering={FadeInRight.springify()}
                                     exiting={FadeOutRight.duration(250)}
                                     className="absolute -top-14 right-0 flex-row items-center bg-[#2B2B2B] border border-white/10 rounded-[15px] px-2 gap-1 shadow-xl"
                                 >
@@ -111,7 +129,7 @@ const ResultMeal: FC<ResultMealProps> = ({ imgSrc, title, calories_per_100g, car
                                     <Text className="text-white/50 font-nunito-700 text-[32px] ml-2 mt-2">cal</Text>
                                 </View>
                                 {state.count > 1 && (
-                                    <Animated.Text 
+                                    <Animated.Text
                                         layout={LinearTransition.springify()}
                                         className="absolute -bottom-3 text-white/40 font-nunito-600 text-sm ml-1"
                                     >
@@ -154,7 +172,7 @@ const ResultMeal: FC<ResultMealProps> = ({ imgSrc, title, calories_per_100g, car
                     <Animated.View style={[fatBarStyle]} className="h-4 bg-[#ED8936]" />
                     <Animated.View style={[proteinBarStyle]} className="h-4 rounded-tr-[2px] rounded-br-[2px] bg-[#3182CE]" />
                 </View>
-                <Animated.View 
+                <Animated.View
                     layout={LinearTransition.springify().damping(12)}
                     className="gap-10 flex-row self-center"
                 >

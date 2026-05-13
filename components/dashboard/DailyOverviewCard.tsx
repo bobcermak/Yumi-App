@@ -76,7 +76,7 @@ const DailyOverviewCard: FC<DailyOverviewCardProps> = ({ date, calories, macros,
                     <TouchableOpacity
                         className="flex-row items-center gap-2 -mt-3"
                         onPress={() => setIsEditingCalories(true)}
-                        activeOpacity={0.8}
+                        activeOpacity={0.25}
                     >
                         <View className="flex-row items-center">
                             {isEditingCalories ? (

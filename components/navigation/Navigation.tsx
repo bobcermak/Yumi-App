@@ -1,11 +1,11 @@
+import { DashboardSheet } from "@/components";
+import BottomSheet from "@gorhom/bottom-sheet";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import * as Haptics from "expo-haptics";
 import { Plus } from "phosphor-react-native";
 import { type FC, useEffect, useRef, useState } from "react";
-import { Animated, TouchableOpacity, View, Image } from "react-native";
-import * as Haptics from "expo-haptics";
+import { Animated, Image, TouchableOpacity, View } from "react-native";
 import AnimatedTabIcon from "./AnimatedTabIcon";
-import BottomSheet from "@gorhom/bottom-sheet";
-import { DashboardSheet } from "@/components";
 
 const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
   //Hooks
@@ -53,11 +53,11 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
   }, [state.index, tabBarWidth]);
   return (
     <View className="absolute top-0 left-0 right-0 bottom-0" pointerEvents="box-none">
-      <Image source={require('../../assets/images/bottom-shadow.png')} resizeMode="stretch" className="absolute bottom-0 left-0 right-0 w-full h-[120px] pointer-events-none"/>
+      <Image source={require('../../assets/images/bottom-shadow.png')} resizeMode="stretch" className="absolute bottom-0 left-0 right-0 w-full h-[120px] pointer-events-none" />
       <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 48 }} pointerEvents="box-none">
-        <DashboardSheet ref={bottomSheetRef}/>
+        <DashboardSheet ref={bottomSheetRef} />
       </View>
-      <Animated.View 
+      <Animated.View
         className="absolute bottom-8 left-4 right-4 items-center"
         style={{
           opacity: entranceAnim,
@@ -105,6 +105,9 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
               if (!focused && !event.defaultPrevented) {
                 navigation.navigate(route.name);
               }
+              if (route.name === 'index') {
+                bottomSheetRef.current?.snapToIndex(3);
+              }
             };
             if (isCenter) {
               return (
@@ -132,7 +135,7 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
                 activeOpacity={0.25}
                 className="flex-1 h-full justify-center items-center"
               >
-                <AnimatedTabIcon route={route.name} focused={focused} isNotification={route.name === "groups"}/>
+                <AnimatedTabIcon route={route.name} focused={focused} isNotification={route.name === "groups"} />
               </TouchableOpacity>
             );
           })}

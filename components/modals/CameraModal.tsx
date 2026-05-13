@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect, type FC } from "react";
-import { View, Text, TouchableOpacity, Modal, ActivityIndicator, Alert, StyleSheet } from "react-native";
+import { Icon } from "@/components";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { CaretLeft, Lightning, LightningSlash } from "phosphor-react-native";
+import { useEffect, useRef, useState, type FC } from "react";
+import { ActivityIndicator, Alert, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Icon } from "@/components";
 
 type CameraModalProps = {
   visible: boolean,
@@ -23,7 +23,7 @@ const CameraModal: FC<CameraModalProps> = ({ visible, onClose, mode, onBarcodeSc
   const [scanned, setScanned] = useState<boolean>(false);
   const cameraRef = useRef<CameraView>(null);
   const scannedRef = useRef<boolean>(false);
-  
+
   //Functions
   const handleBarcodeScanned = ({ data }: { data: string }) => {
     if (mode === 'barcode' && onBarcodeScanned && !scannedRef.current) {
@@ -79,59 +79,59 @@ const CameraModal: FC<CameraModalProps> = ({ visible, onClose, mode, onBarcodeSc
         <View className="absolute inset-0 items-center justify-center pointer-events-none">
           {mode === 'barcode' ? (
             <View className="w-72 h-48 border-2 border-yellow/50 rounded-[20px] items-center justify-center">
-               <View className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-yellow rounded-tl-[20px]"/>
-               <View className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-yellow rounded-tr-[20px]"/>
-               <View className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-yellow rounded-bl-[20px]"/>
-               <View className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-yellow rounded-br-[20px]"/>
-               {isProcessing && <ActivityIndicator size="large" color="#C5E384"/>}
+              <View className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-yellow rounded-tl-[20px]" />
+              <View className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-yellow rounded-tr-[20px]" />
+              <View className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-yellow rounded-bl-[20px]" />
+              <View className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-yellow rounded-br-[20px]" />
+              {isProcessing && <ActivityIndicator size="large" color="#C5E384" />}
             </View>
           ) : (
             <View className="w-80 h-80 border-2 border-white/20 rounded-[40px] items-center justify-center">
-                {isProcessing && <ActivityIndicator size="large" color="#C5E384"/>}
+              {isProcessing && <ActivityIndicator size="large" color="#C5E384" />}
             </View>
           )}
-          <Text className="text-white font-nunito-600 mt-8 bg-black/50 px-4 py-2 rounded-[20px] overflow-hidden">
+          <Text className="text-white font-nunito-600 mt-8 bg-black/50 px-4 py-2 rounded-[20px] overflow-hidden border border-white/10">
             {overlayText || (mode === 'barcode' ? "Align barcode within the frame" : "Center item in the frame")}
           </Text>
         </View>
-        <View 
+        <View
           style={{ paddingTop: insets.top + 12 }}
           className="absolute top-0 left-0 right-0 flex-row justify-between px-6 items-center"
         >
-          <Icon 
+          <Icon
             className="w-12 h-12 bg-black/50 border border-white/10"
             onPress={onClose}
           >
-            <CaretLeft size={24} color="white"/>
+            <CaretLeft size={24} color="white" />
           </Icon>
           {title && <Text className="font-nunito-800 text-xl text-white">{title}</Text>}
-          <Icon 
+          <Icon
             className={`w-12 h-12 border border-white/10 ${torch ? 'bg-yellow' : 'bg-black/50'}`}
             onPress={() => setTorch(!torch)}
             shadowColor={torch ? "#C5E384" : "transparent"}
           >
             {torch ? (
-              <Lightning size={24} color="#1D1D1D" weight="fill"/>
+              <Lightning size={24} color="#1D1D1D" weight="fill" />
             ) : (
-              <LightningSlash size={24} color="white"/>
+              <LightningSlash size={24} color="white" />
             )}
           </Icon>
         </View>
         {mode === 'photo' && (
-          <View 
+          <View
             style={{ paddingBottom: insets.bottom + 40 }}
             className="absolute bottom-0 left-0 right-0 items-center"
           >
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={capturePhoto}
               disabled={isProcessing}
               className="w-20 h-20 items-center justify-center"
             >
               <View className="w-16 h-16 rounded-full border-4 border-white items-center justify-center">
                 {isProcessing ? (
-                  <ActivityIndicator color="white"/>
+                  <ActivityIndicator color="white" />
                 ) : (
-                  <View className="w-12 h-12 rounded-full bg-white"/>
+                  <View className="w-12 h-12 rounded-full bg-white" />
                 )}
               </View>
             </TouchableOpacity>

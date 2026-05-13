@@ -1,3 +1,5 @@
+import { MealLog, MealLogWithIngredients } from "./database/dbModels";
+
 export type OverviewData = {
     date: Date;
     calories: { current: number; max: number };
@@ -27,4 +29,7 @@ export type IndexContextProps = {
     refreshData: () => Promise<boolean>;
     refreshKey: number;
     isDataLoading: boolean;
+    mealLogs: MealLogWithIngredients[];
+    deleteMeal: (mealId: string) => Promise<void>;
+    updateMeal: (mealId: string, updates: Partial<MealLog>) => Promise<void>;
 };

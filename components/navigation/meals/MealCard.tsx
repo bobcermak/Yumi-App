@@ -79,7 +79,7 @@ const MealCard: FC<MealCardProps> = ({ icon, title, allCal, isDayTime, onPress, 
                                 title={ingredient.title}
                                 cal={ingredient.cal}
                                 baseCal={ingredient.baseCal}
-                                amount={ingredient.amount}
+                                count={ingredient.count}
                                 onDelete={() => onIngredientDelete?.(ingredient.id)}
                                 onEdit={(newCal) => onIngredientEdit?.(ingredient.id, newCal)}
                             />
