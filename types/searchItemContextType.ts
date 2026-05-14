@@ -7,11 +7,13 @@ export type SearchItemContextType = {
     isFavoriteLoading: boolean,
     mealType: string,
     setMealType: (type: string) => void,
-    mealData: { grams: number; count: number; calories: number },
-    setMealData: React.Dispatch<React.SetStateAction<{ grams: number; count: number; calories: number }>>,
+    mealData: { grams: number; count: number; calories: number; waterMl: number },
+    setMealData: React.Dispatch<React.SetStateAction<{ grams: number; count: number; calories: number; waterMl: number }>>,
     isLoading: boolean,
     isDropdownOpen: boolean,
     setIsDropdownOpen: (open: boolean) => void,
+    isDrink: boolean,
+    setIsDrink: (v: boolean) => void,
     handleToggleFavorite: () => Promise<void>,
-    handleAddToMeal: () => Promise<void>
+    handleAddToMeal: (waterMlOverride?: number) => Promise<void>
 };

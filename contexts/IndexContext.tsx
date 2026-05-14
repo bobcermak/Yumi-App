@@ -26,7 +26,9 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
     const [targetDate, setTargetDate] = useState<string | null | undefined>(userProfile?.target_date);
     const [refreshKey, setRefreshKey] = useState<number>(0);
     const [mealLogs, setMealLogs] = useState<MealLogWithIngredients[]>([]);
-    const WATER_GOAL_ML = 2000;
+    const DEFAULT_WATER_GOAL_ML = 2000;
+    const rawLimit = userProfile?.daily_water_limit;
+    const waterGoalMl = rawLimit ? Math.round(rawLimit * 1000) : DEFAULT_WATER_GOAL_ML;
     const [waterMl, setWaterMl] = useState<number>(0);
     const overviewDataRef = useRef<OverviewData | null>(null);
     const dashboardDateRef = useRef<Date | null>(null);
@@ -65,9 +67,7 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
                 protein: { ...prev.macros.protein, current: data?.protein_current || 0 },
             }
         }));
-        setWaterMl((data as any)?.water_ml || 0);
-
-        // Fetch meal logs as well
+        setWaterMl(data?.water_ml || 0);
         const logs = await getMealLogsForDay(userId, dateStr);
         setMealLogs(logs);
     }, []);
@@ -135,25 +135,21 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
         }
         setTargetDate(userProfile?.target_date);
     }, [userProfile?.daily_calorie_limit, userProfile?.target_date]);
-
     const handleSetWater = useCallback(async (ml: number) => {
         if (!userProfile?.id) return;
-        const clamped = Math.max(0, Math.min(WATER_GOAL_ML, ml));
+        const clamped = Math.max(0, Math.min(waterGoalMl, ml));
         setWaterMl(clamped);
         const dateStr = format(dashboardDate, "yyyy-MM-dd");
         await updateWaterIntake(userProfile.id, dateStr, clamped);
     }, [userProfile?.id, dashboardDate]);
-
     const deleteMeal = useCallback(async (mealId: string) => {
         if (!userProfile?.id) return;
         try {
             await deleteMealLog(userProfile.id, mealId);
             showToast("Meal removed");
-            // Refresh data to update dashboard and logs
             const dateStr = format(dashboardDate, "yyyy-MM-dd");
             const logs = await getMealLogsForDay(userProfile.id, dateStr);
             setMealLogs(logs);
-            
             const { data } = await getDailyLog(userProfile.id, dateStr);
             setOverviewData(prev => ({
                 ...prev,
@@ -168,16 +164,13 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
             showToast("Failed to remove meal", undefined, "error");
         }
     }, [userProfile?.id, dashboardDate, showToast]);
-
     const updateMeal = useCallback(async (mealId: string, updates: Partial<MealLog>) => {
         if (!userProfile?.id) return;
         try {
             await updateMealLog(userProfile.id, mealId, updates);
-            // Refresh data
             const dateStr = format(dashboardDate, "yyyy-MM-dd");
             const logs = await getMealLogsForDay(userProfile.id, dateStr);
             setMealLogs(logs);
-            
             const { data } = await getDailyLog(userProfile.id, dateStr);
             setOverviewData(prev => ({
                 ...prev,
@@ -192,7 +185,6 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
             showToast("Failed to update meal", undefined, "error");
         }
     }, [userProfile?.id, dashboardDate, showToast]);
-
     const setSelectedDate = useCallback(async (date: Date) => {
         if (isSameDay(date, overviewData.date)) return;
         const oldMonth = overviewData.date.getMonth();
@@ -206,10 +198,8 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
             setIsDataLoading(true);
             const dateStr = format(dateDay, "yyyy-MM-dd");
             const { data } = await getDailyLog(userProfile.id, dateStr);
-            
             const logs = await getMealLogsForDay(userProfile.id, dateStr);
             setMealLogs(logs);
-
             setDashboardDate(dateDay);
             setOverviewData(prev => ({
                 ...prev,
@@ -220,7 +210,7 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
                     protein: { ...prev.macros.protein, current: data?.protein_current || 0 },
                 }
             }));
-            setWaterMl((data as any)?.water_ml || 0);
+            setWaterMl(data?.water_ml || 0);
             if (date.getMonth() !== oldMonth || date.getFullYear() !== oldYear) {
                 await fetchMonthActiveDates(userProfile.id, dateDay);
             }
@@ -245,15 +235,12 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
             const { data } = await getDailyLog(userProfile.id, dateStr);
             const logs = await getMealLogsForDay(userProfile.id, dateStr);
             setMealLogs(logs);
-
             await incrementUserStreak(userProfile.id);
             await refreshProfile();
             const limit = userProfile.daily_calorie_limit || defaultCalLimit;
-            
             const currentOverview = overviewDataRef.current;
             const hasDateChanged = currentOverview ? !isSameDay(today, currentOverview.date) : true;
             const hasDataChanged = currentOverview ? (data?.calories_current || 0) !== currentOverview.calories.current : true;
-            
             if (hasDateChanged || hasDataChanged) {
                 setRefreshKey(prev => prev + 1);
                 setOverviewData({
@@ -265,7 +252,7 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
                         protein: { current: data?.protein_current || 0, max: Math.round((limit * 0.2) / 4) },
                     }
                 });
-                setWaterMl((data as any)?.water_ml || 0);
+                setWaterMl(data?.water_ml || 0);
                 setDashboardDate(startOfDay(today));
                 await fetchMonthActiveDates(userProfile.id, today);
             }
@@ -292,9 +279,9 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
         deleteMeal,
         updateMeal,
         waterMl,
-        waterGoalMl: WATER_GOAL_ML,
+        waterGoalMl,
         handleSetWater,
-    }), [toast, showToast, overviewData, dashboardDate, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, goToToday, refreshData, refreshKey, isDataLoading, mealLogs, deleteMeal, updateMeal, waterMl, handleSetWater]);
+    }), [toast, showToast, overviewData, dashboardDate, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, goToToday, refreshData, refreshKey, isDataLoading, mealLogs, deleteMeal, updateMeal, waterMl, waterGoalMl, handleSetWater]);
     return (
         <IndexContext.Provider value={contextValue}>
             {children}

@@ -34,7 +34,6 @@ export const updateWaterIntake = async (userId: string, dateStr: string, waterMl
         }, { onConflict: 'user_id,date' });
     return { error };
 };
-
 //UPSERT
 export const upsertDailyLog = async (userId: string, dateStr: string, logData: Partial<DailyLog>): Promise<{ data: DailyLog | null, error: PostgrestError | null }> => {
     const { id, user_id, date, updated_at, ...cleanData } = logData;

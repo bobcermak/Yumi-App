@@ -11,12 +11,12 @@ const RootLayoutContent = () => {
         <Stack.Screen name="(onboarding)" options={{ animation: 'slide_from_left' }}/>
         <Stack.Screen name="(auth)" options={{ animation: 'slide_from_right' }}/>
         <Stack.Screen name="(tabs)" options={{ animation: 'fade' }}/>
-        <Stack.Screen name="magic-scan/index"/>
-        <Stack.Screen name="quick-add/index"/>
-        <Stack.Screen name="create-meal/index" options={{ animation: 'slide_from_right' }}/>
-        <Stack.Screen name="search-results/index" options={{ animation: 'slide_from_right' }}/>
+        <Stack.Screen name="magic-scan" options={{ animation: 'slide_from_right' }}/>
+        <Stack.Screen name="quick-add" options={{ animation: 'slide_from_right' }}/>
+        <Stack.Screen name="create-meal" options={{ animation: 'slide_from_right' }}/>
+        <Stack.Screen name="search-results" options={{ animation: 'slide_from_right' }}/>
         <Stack.Screen name="search-item/[id]" options={{ animation: 'slide_from_right' }}/>
-        <Stack.Screen name="meal-log/index" options={{ animation: 'slide_from_bottom' }}/>
+        <Stack.Screen name="meal-log" options={{ animation: 'slide_from_bottom' }}/>
         <Stack.Screen name="meal-log/add-item" options={{ presentation: 'modal' }}/>
         <Stack.Screen name="users/[id]"/>
       </Stack>

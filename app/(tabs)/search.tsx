@@ -128,7 +128,7 @@ const Search = () => {
                         >
                           <TouchableOpacity
                             onPress={item.onPress}
-                            activeOpacity={0.6}
+                            activeOpacity={0.25}
                             style={{
                               flexDirection: 'row',
                               alignItems: 'center',

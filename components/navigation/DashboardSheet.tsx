@@ -28,7 +28,6 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
     if (daysAgo <= 6) return `${format(dashboardDate, "EEEE")}'s Food`;
     return `${format(dashboardDate, "d MMM")}'s Food`;
   }, [dashboardDate]);
-  
   const mealSections = useMemo(() => {
     const sections = [
       { title: "Breakfast", type: "breakfast", icon: <EggCrack size={20} color="#84C754" weight="regular" /> },
@@ -171,7 +170,7 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
       >
         <View className="px-5">
           <TouchableOpacity
-            activeOpacity={0.7}
+            activeOpacity={0.25}
             onPress={() => internalRef.current?.snapToIndex(3)}
             className="flex-row justify-between items-center mt-10 pb-5"
           >

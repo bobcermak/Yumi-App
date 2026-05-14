@@ -19,7 +19,7 @@ type ResultMealProps = {
     isFavorite?: boolean,
     isFavoriteLoading?: boolean,
     onToggleFavorite?: () => void,
-    onDataChange?: (data: { grams: number, count: number, calories: number }) => void
+    onDataChange?: (data: { grams: number, count: number, calories: number, waterMl: number }) => void
 }
 const ResultMeal: FC<ResultMealProps> = ({ id, imgSrc, title, calories_per_100g, carbs_per_100g, protein_per_100g, fat_per_100g, rating, initialGrams = 100, initialCount = 1, isFavorite, isFavoriteLoading, onToggleFavorite, onDataChange
 }) => {

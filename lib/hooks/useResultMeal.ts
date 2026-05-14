@@ -8,7 +8,8 @@ import { addToFavorites, checkIsFavorite, removeFromFavorites } from "@/lib/serv
 export type ResultMealData = {
   grams: number,
   count: number,
-  calories: number
+  calories: number,
+  waterMl: number,
 };
 type UseResultMealProps = {
   id?: string,
@@ -39,6 +40,7 @@ export const useResultMeal = ({ id, calories_per_100g, carbs_per_100g, protein_p
   const [isGramsFocused, setIsGramsFocused] = useState<boolean>(false);
   const [gramInputVal, setGramInputVal] = useState<string>('');
   const [isFavoriteLocal, setIsFavoriteLocal] = useState<boolean>(false);
+  const [waterMl, setWaterMl] = useState<number>(initialGrams * initialCount);
 
   const isFavorite = isFavoriteExternal ?? isFavoriteLocal;
 
@@ -57,9 +59,13 @@ export const useResultMeal = ({ id, calories_per_100g, carbs_per_100g, protein_p
   const proteinDisplay = formatMacroDisplay(protein, isPercentaged, totalMacros);
   const fatDisplay = formatMacroDisplay(fat, isPercentaged, totalMacros);
   //Functions
+  // Auto-sync waterMl = grams × count (used as default when logging a drink)
   useEffect(() => {
-    onDataChange?.({ grams, count, calories: totalCalories });
-  }, [grams, count, totalCalories]);
+    setWaterMl(grams * count);
+  }, [grams, count]);
+  useEffect(() => {
+    onDataChange?.({ grams, count, calories: totalCalories, waterMl });
+  }, [grams, count, totalCalories, waterMl]);
   useEffect(() => {
     const fetchFavoriteStatus = async () => {
       if (userProfile?.id && id && isFavoriteExternal === undefined) {
@@ -148,6 +154,7 @@ export const useResultMeal = ({ id, calories_per_100g, carbs_per_100g, protein_p
       calInputVal,
       isGramsFocused,
       gramInputVal,
+      waterMl,
       calories,
       totalCalories,
       carbsRatio,
@@ -160,7 +167,7 @@ export const useResultMeal = ({ id, calories_per_100g, carbs_per_100g, protein_p
     },
     refs: {
       calorieInputRef,
-      gramsInputRef
+      gramsInputRef,
     },
     handlers: {
       setEditMode,
@@ -182,7 +189,7 @@ export const useResultMeal = ({ id, calories_per_100g, carbs_per_100g, protein_p
       handleGramsFocus: () => {
         setGramInputVal(grams.toString());
         setIsGramsFocused(true);
-      }
+      },
     }
   };
 };

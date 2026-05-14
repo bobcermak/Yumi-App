@@ -14,7 +14,7 @@ export const SearchItemContext = createContext<SearchItemContextType | undefined
 
 export const SearchItemProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     //Contexts
-    const { showToast, refreshData } = useIndexContext();
+    const { showToast, refreshData, waterMl, handleSetWater } = useIndexContext();
     const { userProfile } = useAuth();
     //Router
     const router = useRouter();
@@ -33,12 +33,16 @@ export const SearchItemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const [isFavorite, setIsFavorite] = useState<boolean>(isFavoriteParam === 'true');
     const [mealType, setMealType] = useState<string>(getMealTypeByTime());
     const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
-    const [mealData, setMealData] = useState({ grams: 100, count: 1, calories: 0 });
+    const [mealData, setMealData] = useState({ grams: 100, count: 1, calories: 0, waterMl: 100 });
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isFavoriteLoading, setIsFavoriteLoading] = useState<boolean>(false);
+    const [isDrink, setIsDrink] = useState<boolean>(!!(initialItem?.is_drink));
     //Functions
     useEffect(() => {
-        if (initialItem) setItem(initialItem);
+        if (initialItem) {
+            setItem(initialItem);
+            setIsDrink(!!(initialItem.is_drink));
+        }
     }, [initialItem]);
     useEffect(() => {
         const fetchFavorite = async () => {
@@ -66,7 +70,7 @@ export const SearchItemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             setIsFavoriteLoading(false);
         }
     }, [userProfile?.id, item, isFavoriteLoading, showToast]);
-    const handleAddToMeal = useCallback(async () => {
+    const handleAddToMeal = useCallback(async (waterMlOverride?: number) => {
         if (!userProfile?.id || !item) return;
         setIsLoading(true);
         try {
@@ -76,6 +80,10 @@ export const SearchItemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 mealLog,
                 ingredients
             );
+            if (isDrink) {
+                const addedMl = waterMlOverride ?? mealData.waterMl ?? Math.round(mealData.grams * mealData.count);
+                await handleSetWater(waterMl + addedMl);
+            }
             await refreshData();
             showToast(`Added to ${mealType}!`, format(new Date(), "HH:mm"), 'success');
             router.dismissAll();
@@ -85,7 +93,7 @@ export const SearchItemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         } finally {
             setIsLoading(false);
         }
-    }, [userProfile?.id, item, mealData, mealType, refreshData, showToast, router]);
+    }, [userProfile?.id, item, mealData, mealType, isDrink, waterMl, handleSetWater, refreshData, showToast, router]);
     const value = useMemo(() => ({
         item,
         setItem,
@@ -98,9 +106,11 @@ export const SearchItemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         isLoading,
         isDropdownOpen,
         setIsDropdownOpen,
+        isDrink,
+        setIsDrink,
         handleToggleFavorite,
         handleAddToMeal,
-    }), [item, isFavorite, isFavoriteLoading, mealType, mealData, isLoading, isDropdownOpen, handleToggleFavorite, handleAddToMeal]);
+    }), [item, isFavorite, isFavoriteLoading, mealType, mealData, isLoading, isDropdownOpen, isDrink, handleToggleFavorite, handleAddToMeal]);
     return (
         <SearchItemContext.Provider value={value}>
             {children}
