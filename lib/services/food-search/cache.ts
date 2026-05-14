@@ -1,7 +1,10 @@
+import supabase from '../supabase/client';
 import { searchExternalFoods } from './search';
 
 export const globalSearchCache = new Map<string, any>();
 export const preloadStaticProduce = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
     if (!globalSearchCache.has("-fruits-raw-quick")) {
         searchExternalFoods({ query: "", category: "fruits", foodType: "raw" })
             .then(res => {

@@ -20,13 +20,13 @@ export const prepareMealLogData = (item: FoodSearchResult, mealData: { grams: nu
     protein: (item.protein_per_100g || 0) * factor,
   };
   const foodId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item.id) ? item.id : null;
-  const singleIngredient = {
+  const totalIngredient = {
     name: item.name || "Unknown Product",
-    amount_g: grams,
-    calories: singleCalories,
-    carbs: singleMacros.carbs,
-    fat: singleMacros.fat,
-    protein: singleMacros.protein,
+    amount_g: grams * count,
+    calories: singleCalories * count,
+    carbs: singleMacros.carbs * count,
+    fat: singleMacros.fat * count,
+    protein: singleMacros.protein * count,
     food_id: foodId,
   };
   return {
@@ -40,7 +40,7 @@ export const prepareMealLogData = (item: FoodSearchResult, mealData: { grams: nu
       total_protein: singleMacros.protein * count,
       image_url: item.image_url
     },
-    ingredients: Array.from({ length: count }, () => ({ ...singleIngredient }))
+    ingredients: [totalIngredient]
   };
 };
 export const calculateMacros = (factor: number, per100g: number) => factor * per100g;

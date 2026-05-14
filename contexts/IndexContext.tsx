@@ -137,10 +137,10 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
     }, [userProfile?.daily_calorie_limit, userProfile?.target_date]);
     const handleSetWater = useCallback(async (ml: number) => {
         if (!userProfile?.id) return;
-        const clamped = Math.max(0, Math.min(waterGoalMl, ml));
-        setWaterMl(clamped);
+        const next = Math.max(0, Math.round(ml));
+        setWaterMl(next);
         const dateStr = format(dashboardDate, "yyyy-MM-dd");
-        await updateWaterIntake(userProfile.id, dateStr, clamped);
+        await updateWaterIntake(userProfile.id, dateStr, next);
     }, [userProfile?.id, dashboardDate]);
     const deleteMeal = useCallback(async (mealId: string) => {
         if (!userProfile?.id) return;

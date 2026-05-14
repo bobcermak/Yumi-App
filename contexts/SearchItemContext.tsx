@@ -87,7 +87,7 @@ export const SearchItemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             await refreshData();
             showToast(`Added to ${mealType}!`, format(new Date(), "HH:mm"), 'success');
             router.dismissAll();
-            router.replace('/(tabs)');
+            router.replace('/(tabs)/search');
         } catch (error) {
             showToast("Failed to add meal", undefined, 'error');
         } finally {

@@ -151,10 +151,26 @@ export const toggleFavoriteFood = async (userId: string, item: FoodSearchResult)
                 .select('id')
                 .single();
             if (insertError) {
-                console.error("[supabase/queries/foods] Error saving external food:", insertError);
-                throw insertError;
+                if (insertError.code === '23505') {
+                    const { data: existingByName } = await supabase
+                        .from('foods')
+                        .select('id')
+                        .eq('name', item.name || 'Unknown Food')
+                        .limit(1)
+                        .maybeSingle();
+                    if (existingByName) {
+                        foodId = existingByName.id;
+                    } else {
+                        console.error("[supabase/queries/foods] Error saving external food:", insertError);
+                        throw insertError;
+                    }
+                } else {
+                    console.error("[supabase/queries/foods] Error saving external food:", insertError);
+                    throw insertError;
+                }
+            } else {
+                foodId = newFood.id;
             }
-            foodId = newFood.id;
         }
     }
     const { data: existingFav } = await supabase

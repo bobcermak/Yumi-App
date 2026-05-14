@@ -2,6 +2,7 @@ import { Button, Icon, ResultMeal, ResultMealSkeleton } from "@/components";
 import { MEAL_TYPES } from "@/lib/helpers/mealHelpers";
 import { useSearchItem } from "@/lib/hooks/useSearchItem";
 import { useRouter } from "expo-router";
+import * as Haptics from "expo-haptics";
 import { CaretDown, CaretLeft, Drop, Heart, Info } from "phosphor-react-native";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, ScrollView, Switch, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
@@ -18,6 +19,7 @@ const SearchItem = () => {
   const [isWaterInputFocused, setIsWaterInputFocused] = useState<boolean>(false);
   const [isWaterManual, setIsWaterManual] = useState<boolean>(false);
   const waterInputRef = useRef<TextInput>(null);
+  const [mealCardHeight, setMealCardHeight] = useState<number>(0);
 
   useEffect(() => {
     if (!isWaterInputFocused && !isWaterManual) {
@@ -122,28 +124,46 @@ const SearchItem = () => {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ alignItems: "center", paddingBottom: 40 }}
           >
-            {isLoading ? <ResultMealSkeleton /> : (
-              <ResultMeal
-                id={item.id}
-                imgSrc={item.image_url || ""}
-                title={item.name || "Unknown Product"}
-                calories_per_100g={item.calories_per_100g || 0}
-                carbs_per_100g={item.carbs_per_100g || 0}
-                protein_per_100g={item.protein_per_100g || 0}
-                fat_per_100g={item.fat_per_100g || 0}
-                rating={item.health_rating}
-                initialGrams={100}
-                isFavorite={isFavorite}
-                isFavoriteLoading={isFavoriteLoading}
-                onToggleFavorite={handleToggleFavorite}
-                onDataChange={setMealData}
-              />
-            )}
-            {!isLoading && (
-              <View style={{ width: 362, marginTop: 10 }}>
+            <View style={{ width: 362, height: mealCardHeight > 0 ? mealCardHeight : undefined }}>
+              {isLoading && mealCardHeight > 0 ? (
+                <View style={{ height: mealCardHeight }}>
+                  <ResultMealSkeleton />
+                </View>
+              ) : (
+                <View
+                  onLayout={(e) => {
+                    const h = e.nativeEvent.layout.height;
+                    if (h > 0 && h !== mealCardHeight) setMealCardHeight(h);
+                  }}
+                >
+                  <ResultMeal
+                    id={item.id}
+                    imgSrc={item.image_url || ""}
+                    title={item.name || "Unknown Product"}
+                    calories_per_100g={item.calories_per_100g || 0}
+                    carbs_per_100g={item.carbs_per_100g || 0}
+                    protein_per_100g={item.protein_per_100g || 0}
+                    fat_per_100g={item.fat_per_100g || 0}
+                    rating={item.health_rating}
+                    initialGrams={100}
+                    isFavorite={isFavorite}
+                    isFavoriteLoading={isFavoriteLoading}
+                    onToggleFavorite={handleToggleFavorite}
+                    onDataChange={setMealData}
+                  />
+                </View>
+              )}
+            </View>
+            <View
+              pointerEvents={isLoading ? "none" : "auto"}
+              style={{ width: 362, marginTop: 10, opacity: isLoading ? 0.5 : 1 }}
+            >
                 <TouchableOpacity
                   activeOpacity={0.25}
-                  onPress={() => setIsDrink(!isDrink)}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setIsDrink(!isDrink);
+                  }}
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
@@ -175,7 +195,10 @@ const SearchItem = () => {
                   </View>
                   <Switch
                     value={isDrink}
-                    onValueChange={setIsDrink}
+                    onValueChange={(v) => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setIsDrink(v);
+                    }}
                     trackColor={{ false: "rgba(255,255,255,0.12)", true: "#3B82F6" }}
                     thumbColor={isDrink ? "#FFFFFF" : "rgba(255,255,255,0.55)"}
                   />
@@ -246,8 +269,7 @@ const SearchItem = () => {
                     </TouchableOpacity>
                   </Animated.View>
                 )}
-              </View>
-            )}
+            </View>
             <View className="w-full px-4 mt-4 items-center mt-8">
               <Button
                 className="rounded-[30px] mx-0 w-full py-5"

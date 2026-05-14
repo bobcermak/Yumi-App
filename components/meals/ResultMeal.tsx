@@ -66,6 +66,7 @@ const ResultMeal: FC<ResultMealProps> = ({ id, imgSrc, title, calories_per_100g,
                 />
             )}
             <Image
+                key={imgSrc || "fallback"}
                 source={imgSrc ? { uri: imgSrc } : require("@/assets/images/not-found-meal.webp")}
                 resizeMode="cover"
                 className="w-[362px] h-[200px] opacity-80 bg-[#2B2B2B]"

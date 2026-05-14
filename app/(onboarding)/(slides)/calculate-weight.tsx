@@ -80,7 +80,7 @@ const CalculateWeight = () => {
                         <Text className="font-nunito-700 text-yellow">success</Text>.
                     </Text>
                 </Animated.View>
-                <View className="w-full gap-12">
+                <View className="w-full items-center gap-12">
                     <Animated.View entering={FadeIn.delay(300).duration(250)}>
                         <SegmentedControl
                             options={['KG', 'LB']}

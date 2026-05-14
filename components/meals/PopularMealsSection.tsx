@@ -3,6 +3,7 @@ import { useSearchContext } from "@/lib/hooks/useSearchContext";
 import { useRouter } from "expo-router";
 import { ForkKnife, Ghost } from "phosphor-react-native";
 import { Dimensions, FlatList, Text, View } from "react-native";
+import { useRef, useEffect } from "react";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -11,7 +12,13 @@ const PopularMealsSection = () => {
   const router = useRouter();
   //Context
   const { popularMeals, filter, setFilter, isLoading } = useSearchContext();
+  const flatListRef = useRef<FlatList>(null);
 
+  useEffect(() => {
+    if (!isLoading) {
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    }
+  }, [isLoading]);
   return (
     <View className="w-full mt-8">
       <View className="w-[362px] self-center items-start gap-4 mb-4">
@@ -24,6 +31,7 @@ const PopularMealsSection = () => {
         />
       </View>
       <FlatList
+        ref={flatListRef}
         data={popularMeals}
         horizontal
         showsHorizontalScrollIndicator={false}

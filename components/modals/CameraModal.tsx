@@ -101,14 +101,15 @@ const CameraModal: FC<CameraModalProps> = ({ visible, onClose, mode, onBarcodeSc
           <Icon
             className="w-12 h-12 bg-black/50 border border-white/10"
             onPress={onClose}
+            shadowColor="#000000"
           >
-            <CaretLeft size={24} color="white" />
+            <CaretLeft size={24} color="white"/>
           </Icon>
           {title && <Text className="font-nunito-800 text-xl text-white">{title}</Text>}
           <Icon
             className={`w-12 h-12 border border-white/10 ${torch ? 'bg-yellow' : 'bg-black/50'}`}
             onPress={() => setTorch(!torch)}
-            shadowColor={torch ? "#C5E384" : "transparent"}
+            shadowColor={torch ? "#C5E384" : "#000000"}
           >
             {torch ? (
               <Lightning size={24} color="#1D1D1D" weight="fill" />

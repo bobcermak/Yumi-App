@@ -9,16 +9,16 @@ const QUICK_ADD = [
     { label: "Can",    ml: 330,  icon: "🥤" },
     { label: "Bottle", ml: 500,  icon: "💧" },
 ] as const;
-const fmtL = (ml: number) =>
-    ml >= 1000 ? `${(ml / 1000).toFixed(1)} L` : `${ml} ml`;
+const fmtL = (ml: number) => `${(ml / 1000).toFixed(2)} L`;
 type WaterTrackerProps = {
-    waterMl: number;
-    goalMl: number;
-    onSetWater: (ml: number) => void;
+    waterMl: number,
+    goalMl: number,
+    onSetWater: (ml: number) => void
 };
 const WaterTracker: FC<WaterTrackerProps> = ({ waterMl, goalMl, onSetWater }) => {
     const glasses     = Math.min(8, Math.max(1, Math.round(goalMl / ML_PER_GLASS)));
-    const filledCount = Math.min(glasses, Math.floor(waterMl / ML_PER_GLASS));
+    const mlPerGlass  = goalMl / glasses;
+    const filledCount = Math.min(glasses, Math.floor(waterMl / mlPerGlass));
     const progressRatio = Math.min(1, goalMl > 0 ? waterMl / goalMl : 0);
     const progressWidth = useSharedValue(progressRatio);
     const progressStyle = useAnimatedStyle(() => ({
@@ -29,19 +29,19 @@ const WaterTracker: FC<WaterTrackerProps> = ({ waterMl, goalMl, onSetWater }) =>
         progressWidth.value = withTiming(Math.min(1, ratio), { duration: 250 });
     };
     const handleAdd = (ml: number) => {
-        const next = Math.min(goalMl, waterMl + ml);
+        const next = waterMl + ml;
         onSetWater(next);
         updateProgress(goalMl > 0 ? next / goalMl : 0);
     };
     const handleRemove = () => {
-        const next = Math.max(0, waterMl - ML_PER_GLASS);
+        const next = Math.max(0, waterMl - Math.round(mlPerGlass));
         onSetWater(next);
         updateProgress(goalMl > 0 ? next / goalMl : 0);
     };
     const handleGlassTap = (index: number) => {
         const next = index < filledCount
-            ? index * ML_PER_GLASS
-            : (index + 1) * ML_PER_GLASS;
+            ? Math.round(index * mlPerGlass)
+            : Math.round((index + 1) * mlPerGlass);
         onSetWater(next);
         updateProgress(goalMl > 0 ? next / goalMl : 0);
     };
@@ -58,10 +58,13 @@ const WaterTracker: FC<WaterTrackerProps> = ({ waterMl, goalMl, onSetWater }) =>
         >
             <View className="flex-row items-center justify-between mb-5">
                 <View className="flex-row items-center gap-2">
-                    <Drop size={20} color="#60A5FA" weight="fill" />
+                    <Drop size={20} color="#3182CE" weight="fill" />
                     <Text className="text-white font-nunito-800 text-xl">Hydration</Text>
                 </View>
-                <Text className="text-white/50 font-nunito-600 text-base">
+                <Text
+                    className="text-white/50 font-nunito-600 text-base text-right"
+                    style={{ fontVariant: ['tabular-nums'], minWidth: 130 }}
+                >
                     <Text className="text-white font-nunito-700">{fmtL(waterMl)}</Text>
                     {" / "}{fmtL(goalMl)}
                 </Text>
@@ -107,14 +110,33 @@ const WaterTracker: FC<WaterTrackerProps> = ({ waterMl, goalMl, onSetWater }) =>
                     ]}
                 />
             </View>
-            <View className="flex-row justify-between mb-5">
-                <Text className="text-white/30 font-nunito-600 text-xs">0</Text>
-                {progressRatio >= 1 ? (
-                    <Text className="font-nunito-700 text-xs mt-1" style={{ color: '#C5E384' }}>Goal reached! 🎉</Text>
-                ) : (
-                    <Text className="text-white/30 font-nunito-600 text-xs">{fmtL(goalMl - waterMl)} to go</Text>
-                )}
-                <Text className="text-white/30 font-nunito-600 text-xs">{fmtL(goalMl)}</Text>
+            <View className="flex-row items-center mb-5">
+                <Text
+                    className="text-white/30 font-nunito-600 text-xs"
+                    style={{ width: 60, fontVariant: ['tabular-nums'] }}
+                >
+                    0
+                </Text>
+                <View className="flex-1 items-center">
+                    {progressRatio >= 1 ? (
+                        <Text className="font-nunito-700 text-xs" style={{ color: '#C5E384' }}>
+                            Goal reached!
+                        </Text>
+                    ) : (
+                        <Text
+                            className="text-white/30 font-nunito-600 text-xs"
+                            style={{ fontVariant: ['tabular-nums'] }}
+                        >
+                            {fmtL(goalMl - waterMl)} to go
+                        </Text>
+                    )}
+                </View>
+                <Text
+                    className="text-white/30 font-nunito-600 text-xs text-right"
+                    style={{ width: 60, fontVariant: ['tabular-nums'] }}
+                >
+                    {fmtL(goalMl)}
+                </Text>
             </View>
             <View className="flex-row gap-2 items-center">
                 {QUICK_ADD.map(({ label, ml, icon }) => (
@@ -122,13 +144,12 @@ const WaterTracker: FC<WaterTrackerProps> = ({ waterMl, goalMl, onSetWater }) =>
                         key={label}
                         onPress={() => handleAdd(ml)}
                         activeOpacity={0.25}
-                        disabled={waterMl >= goalMl}
                         className="flex-1 flex-row items-center justify-center gap-1 p-4 rounded-[15px]"
                         style={{
                             backgroundColor: '#3182CE50',
                             borderWidth: 1,
                             borderColor: '#3182CE',
-                            opacity: waterMl >= goalMl ? 0.35 : 1,
+                            opacity: 1,
                         }}
                     >
                         <Text style={{ fontSize: 14 }}>{icon}</Text>

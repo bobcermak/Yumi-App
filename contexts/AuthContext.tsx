@@ -5,7 +5,7 @@ import { AuthContextType } from "@/types/authContextType";
 import { Profile } from "@/types/database/dbModels";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Session } from "@supabase/supabase-js";
-import React, { createContext, useEffect, useState, type FC, useCallback } from "react";
+import React, { createContext, useEffect, useState, type FC, useCallback, useRef } from "react";
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -21,6 +21,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const isSigningUpRef = useRef<boolean>(false);
 
   useEffect(() => {
     let mounted = true;
@@ -55,16 +56,19 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     };
     loadState();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, authSession) => {
-      if (mounted) {
-        setSession(authSession);
-        if (authSession) {
-          const { data: profile } = await getProfile(authSession.user.id);
-          setUserProfile(profile);
-          const onboarded = await AsyncStorage.getItem("v1_onboarding_done");
+      if (!mounted) return;
+      if (isSigningUpRef.current) return;
+      if (authSession) {
+        const { data: profile } = await getProfile(authSession.user.id);
+        const onboarded = await AsyncStorage.getItem("v1_onboarding_done");
+        if (mounted) {
+          setUserProfile(profile ?? null);
           setHasOnboarded(onboarded === "true");
-        } else {
-          setUserProfile(null);
+          setSession(authSession);
         }
+      } else {
+        setSession(null);
+        setUserProfile(null);
       }
     });
     return () => {
@@ -85,6 +89,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     goalDate: string | null;
   }) => {
     setIsLoading(true);
+    isSigningUpRef.current = true;
     try {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
@@ -103,13 +108,18 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
           return { error: onboardingError };
         }
       }
+      const { data: sessionData } = await supabase.auth.getSession();
+      const { data: profile } = await getProfile(authData.user.id);
+      setUserProfile(profile ?? null);
       setHasOnboarded(true);
       await AsyncStorage.setItem("v1_onboarding_done", "true");
+      if (sessionData.session) setSession(sessionData.session);
       return { error: null };
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "An unexpected error occurred.";
       return { error: { message } };
     } finally {
+      isSigningUpRef.current = false;
       setIsLoading(false);
     }
   }, [email, password]);

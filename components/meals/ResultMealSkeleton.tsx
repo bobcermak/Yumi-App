@@ -21,6 +21,7 @@ const ResultMealSkeleton = () => {
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.25,
         shadowRadius: 4,
+        flex: 1
       }}
       className="self-center rounded-[20px] overflow-hidden bg-dark border border-white/10 pb-5 w-[362px]"
     >
