@@ -1,4 +1,4 @@
-import { Button, CalendarBottomSheet, DailyOverviewCard, HomeHeader, JourneyCalendar, SearchInput, DailyPulseCard, Icon } from "@/components";
+import { Button, CalendarBottomSheet, DailyOverviewCard, HomeHeader, JourneyCalendar, SearchInput, DailyPulseCard, Icon, WaterTracker } from "@/components";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useIndexContext } from "@/lib/hooks/useIndexContext";
 import { getEffectiveStreak } from "@/lib/services/supabase/queries/profiles";
@@ -18,7 +18,7 @@ const Home = () => {
     const journeyCalendarRef = useRef<BottomSheet>(null);
     //Contexts
     const { userProfile } = useAuth();
-    const { overviewData, dashboardDate, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, refreshData, refreshKey } = useIndexContext();
+    const { overviewData, dashboardDate, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, refreshData, refreshKey, waterMl, waterGoalMl, handleSetWater } = useIndexContext();
     
     useFocusEffect(
         useCallback(() => {
@@ -160,7 +160,14 @@ const Home = () => {
                             </View>
                         </GestureDetector>
                     </Animated.View>
-                    <Animated.View key={`pulse-${refreshKey}`} entering={FadeInDown.duration(250).delay(350)} className="w-[362px] self-center mt-8">
+                    <Animated.View key={`water-${refreshKey}`} entering={FadeInDown.duration(250).delay(320)} className="w-[362px] self-center mt-8">
+                        <WaterTracker
+                            waterMl={waterMl}
+                            goalMl={waterGoalMl}
+                            onSetWater={handleSetWater}
+                        />
+                    </Animated.View>
+                    <Animated.View key={`pulse-${refreshKey}`} entering={FadeInDown.duration(250).delay(400)} className="w-[362px] self-center mt-8">
                         <Text className="title mb-4">Daily Pulse</Text>
                         <DailyPulseCard 
                             streak={getEffectiveStreak(userProfile?.streak_count, userProfile?.last_log_date)}

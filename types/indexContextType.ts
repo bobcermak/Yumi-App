@@ -32,4 +32,7 @@ export type IndexContextProps = {
     mealLogs: MealLogWithIngredients[];
     deleteMeal: (mealId: string) => Promise<void>;
     updateMeal: (mealId: string, updates: Partial<MealLog>) => Promise<void>;
+    waterMl: number;
+    waterGoalMl: number;
+    handleSetWater: (ml: number) => Promise<void>;
 };

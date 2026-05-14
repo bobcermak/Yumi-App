@@ -22,6 +22,19 @@ export const getActiveDates = async (userId: string, startDate: string, endDate:
         .gt("calories_current", 0);
     return { data, error };
 };
+//WATER
+export const updateWaterIntake = async (userId: string, dateStr: string, waterMl: number): Promise<{ error: any }> => {
+    const { error } = await supabase
+        .from('daily_logs')
+        .upsert({
+            user_id: userId,
+            date: dateStr,
+            water_ml: waterMl,
+            updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,date' });
+    return { error };
+};
+
 //UPSERT
 export const upsertDailyLog = async (userId: string, dateStr: string, logData: Partial<DailyLog>): Promise<{ data: DailyLog | null, error: PostgrestError | null }> => {
     const { id, user_id, date, updated_at, ...cleanData } = logData;

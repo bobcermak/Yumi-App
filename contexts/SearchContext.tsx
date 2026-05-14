@@ -49,10 +49,10 @@ const SearchProvider: FC<SearchProviderProps> = ({ children }) => {
         console.error(`[SearchContext] Error fetching meals:`, error);
     }
     useEffect(() => {
-        if (!isLoading && filter === 'My' && !hasManuallyChangedFilter && popularMeals.length === 0) {
+        if (!isLoading && data !== null && filter === 'My' && !hasManuallyChangedFilter && popularMeals.length === 0) {
             setFilter('All');
         }
-    }, [isLoading, filter, hasManuallyChangedFilter, popularMeals.length]);
+    }, [isLoading, data, filter, hasManuallyChangedFilter, popularMeals.length]);
     return (
         <SearchContext.Provider
             value={{

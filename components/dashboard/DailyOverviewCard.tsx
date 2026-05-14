@@ -2,7 +2,7 @@ import { format } from "date-fns";
 import { Avocado, Fish, Hamburger, PencilSimple } from "phosphor-react-native";
 import { memo, useEffect, useState, type FC } from "react";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, withSequence } from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay } from "react-native-reanimated";
 import CircularProgress from "./CircularProgress";
 import MacroColumn from "./MacroColumn";
 
@@ -23,19 +23,27 @@ const DailyOverviewCard: FC<DailyOverviewCardProps> = ({ date, calories, macros,
     //Hooks
     const [isEditingCalories, setIsEditingCalories] = useState<boolean>(false);
     const [editCalMax, setEditCalMax] = useState<string>(calories.max.toString());
-
-    const animValues = [useSharedValue(0), useSharedValue(0), useSharedValue(0), useSharedValue(0), useSharedValue(0), useSharedValue(0)];
+    const anim0 = useSharedValue(0);
+    const anim1 = useSharedValue(0);
+    const anim2 = useSharedValue(0);
+    const anim3 = useSharedValue(0);
+    const anim4 = useSharedValue(0);
+    const anim5 = useSharedValue(0);
 
     useEffect(() => {
-        animValues.forEach((val, i) => {
+        const anims = [anim0, anim1, anim2, anim3, anim4, anim5];
+        anims.forEach((val, i) => {
             val.value = 0;
             val.value = withDelay(i * 100, withTiming(1, { duration: 400 }));
         });
     }, []);
-    const createStyle = (index: number) => useAnimatedStyle(() => ({
-        opacity: animValues[index].value,
-        transform: [{ translateY: (1 - animValues[index].value) * 10 }]
-    }));
+    const style0 = useAnimatedStyle(() => ({ opacity: anim0.value, transform: [{ translateY: (1 - anim0.value) * 10 }] }));
+    const style1 = useAnimatedStyle(() => ({ opacity: anim1.value, transform: [{ translateY: (1 - anim1.value) * 10 }] }));
+    const style2 = useAnimatedStyle(() => ({ opacity: anim2.value, transform: [{ translateY: (1 - anim2.value) * 10 }] }));
+    const style3 = useAnimatedStyle(() => ({ opacity: anim3.value, transform: [{ translateY: (1 - anim3.value) * 10 }] }));
+    const style4 = useAnimatedStyle(() => ({ opacity: anim4.value, transform: [{ translateY: (1 - anim4.value) * 10 }] }));
+    const style5 = useAnimatedStyle(() => ({ opacity: anim5.value, transform: [{ translateY: (1 - anim5.value) * 10 }] }));
+    const animStyles = [style0, style1, style2, style3, style4, style5];
     //Functions
     const handleSaveCalories = () => {
         setIsEditingCalories(false);
@@ -53,6 +61,9 @@ const DailyOverviewCard: FC<DailyOverviewCardProps> = ({ date, calories, macros,
     useEffect(() => {
         setEditCalMax(calories.max.toString());
     }, [calories.max]);
+    const calFontSize = calories.current.toString().length >= 6 ? 36
+        : calories.current.toString().length === 5 ? 46
+        : 61;
     return (
         <View
             className="bg-dark rounded-[20px] px-5 py-10 mt-4 w-[362px] self-center border border-white/10"
@@ -64,13 +75,13 @@ const DailyOverviewCard: FC<DailyOverviewCardProps> = ({ date, calories, macros,
                 elevation: 5
             }}
         >
-            <Animated.Text style={createStyle(0)} className="text-white text-xl font-nunito-700 -mb-2">
+            <Animated.Text style={animStyles[0]} className="text-white text-xl font-nunito-700 -mb-2">
                 <Text className="text-yellow">{format(date, "dd")} </Text>
                 {format(date, "MMMM, EEEE")}
             </Animated.Text>
             <View className="flex-row justify-between items-center">
-                <Animated.View style={createStyle(1)}>
-                    <Text className="text-white text-[61px] font-nunito-700 pt-2">
+                <Animated.View style={animStyles[1]}>
+                    <Text className="text-white font-nunito-700 pt-2" style={{ fontSize: calFontSize, lineHeight: calFontSize * 1.1 }}>
                         {calories.current}
                     </Text>
                     <TouchableOpacity
@@ -115,15 +126,15 @@ const DailyOverviewCard: FC<DailyOverviewCardProps> = ({ date, calories, macros,
                         )}
                     </TouchableOpacity>
                 </Animated.View>
-                <Animated.View style={createStyle(1)}>
+                <Animated.View style={animStyles[1]}>
                     <MemoizedCircularProgress value={calories.current} max={calories.max} />
                 </Animated.View>
             </View>
-            <Animated.Text style={createStyle(2)} className="text-white/80 text-xl font-nunito-600 mt-2">
+            <Animated.Text style={animStyles[2]} className="text-white/80 text-xl font-nunito-600 mt-2">
                 Macronutrients
             </Animated.Text>
             <View className="flex-row justify-between gap-6 mt-2">
-                <Animated.View style={createStyle(3)} className="flex-1">
+                <Animated.View style={animStyles[3]} className="flex-1">
                     <MemoizedMacroColumn
                         label="Carbs"
                         current={macros.carbs.current}
@@ -132,7 +143,7 @@ const DailyOverviewCard: FC<DailyOverviewCardProps> = ({ date, calories, macros,
                         icon={<Hamburger size={20} color="#E53E3E" weight="regular" />}
                     />
                 </Animated.View>
-                <Animated.View style={createStyle(4)} className="flex-1">
+                <Animated.View style={animStyles[4]} className="flex-1">
                     <MemoizedMacroColumn
                         label="Fats"
                         current={macros.fats.current}
@@ -141,7 +152,7 @@ const DailyOverviewCard: FC<DailyOverviewCardProps> = ({ date, calories, macros,
                         icon={<Avocado size={20} color="#ED8936" weight="regular" />}
                     />
                 </Animated.View>
-                <Animated.View style={createStyle(5)} className="flex-1">
+                <Animated.View style={animStyles[5]} className="flex-1">
                     <MemoizedMacroColumn
                         label="Protein"
                         current={macros.protein.current}

@@ -105,9 +105,6 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
               if (!focused && !event.defaultPrevented) {
                 navigation.navigate(route.name);
               }
-              if (route.name === 'index') {
-                bottomSheetRef.current?.snapToIndex(3);
-              }
             };
             if (isCenter) {
               return (

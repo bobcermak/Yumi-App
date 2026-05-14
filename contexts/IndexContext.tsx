@@ -1,6 +1,6 @@
 import { dateStringFromToday, daysFromCalories } from "@/lib/helpers/onBoardingHelpers";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { getActiveDates, getDailyLog } from "@/lib/services/supabase/queries/dailyLogs";
+import { getActiveDates, getDailyLog, updateWaterIntake } from "@/lib/services/supabase/queries/dailyLogs";
 import { deleteMealLog, getMealLogsForDay, updateMealLog } from "@/lib/services/supabase/queries/mealLogs";
 import { incrementUserStreak } from "@/lib/services/supabase/queries/profiles";
 import { updateCalorieLimitAndTargetDate } from "@/lib/services/supabase/queries/setupUserAccount";
@@ -26,6 +26,8 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
     const [targetDate, setTargetDate] = useState<string | null | undefined>(userProfile?.target_date);
     const [refreshKey, setRefreshKey] = useState<number>(0);
     const [mealLogs, setMealLogs] = useState<MealLogWithIngredients[]>([]);
+    const WATER_GOAL_ML = 2000;
+    const [waterMl, setWaterMl] = useState<number>(0);
     const overviewDataRef = useRef<OverviewData | null>(null);
     const dashboardDateRef = useRef<Date | null>(null);
     const [overviewData, setOverviewData] = useState<OverviewData>({
@@ -63,6 +65,7 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
                 protein: { ...prev.macros.protein, current: data?.protein_current || 0 },
             }
         }));
+        setWaterMl((data as any)?.water_ml || 0);
 
         // Fetch meal logs as well
         const logs = await getMealLogsForDay(userId, dateStr);
@@ -132,6 +135,14 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
         }
         setTargetDate(userProfile?.target_date);
     }, [userProfile?.daily_calorie_limit, userProfile?.target_date]);
+
+    const handleSetWater = useCallback(async (ml: number) => {
+        if (!userProfile?.id) return;
+        const clamped = Math.max(0, Math.min(WATER_GOAL_ML, ml));
+        setWaterMl(clamped);
+        const dateStr = format(dashboardDate, "yyyy-MM-dd");
+        await updateWaterIntake(userProfile.id, dateStr, clamped);
+    }, [userProfile?.id, dashboardDate]);
 
     const deleteMeal = useCallback(async (mealId: string) => {
         if (!userProfile?.id) return;
@@ -209,6 +220,7 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
                     protein: { ...prev.macros.protein, current: data?.protein_current || 0 },
                 }
             }));
+            setWaterMl((data as any)?.water_ml || 0);
             if (date.getMonth() !== oldMonth || date.getFullYear() !== oldYear) {
                 await fetchMonthActiveDates(userProfile.id, dateDay);
             }
@@ -253,6 +265,7 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
                         protein: { current: data?.protein_current || 0, max: Math.round((limit * 0.2) / 4) },
                     }
                 });
+                setWaterMl((data as any)?.water_ml || 0);
                 setDashboardDate(startOfDay(today));
                 await fetchMonthActiveDates(userProfile.id, today);
             }
@@ -277,8 +290,11 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
         isDataLoading,
         mealLogs,
         deleteMeal,
-        updateMeal
-    }), [toast, showToast, overviewData, dashboardDate, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, goToToday, refreshData, refreshKey, isDataLoading, mealLogs, deleteMeal, updateMeal]);
+        updateMeal,
+        waterMl,
+        waterGoalMl: WATER_GOAL_ML,
+        handleSetWater,
+    }), [toast, showToast, overviewData, dashboardDate, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, goToToday, refreshData, refreshKey, isDataLoading, mealLogs, deleteMeal, updateMeal, waterMl, handleSetWater]);
     return (
         <IndexContext.Provider value={contextValue}>
             {children}

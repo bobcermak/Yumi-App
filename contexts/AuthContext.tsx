@@ -5,7 +5,6 @@ import { AuthContextType } from "@/types/authContextType";
 import { Profile } from "@/types/database/dbModels";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Session } from "@supabase/supabase-js";
-import { useRouter, useSegments } from "expo-router";
 import React, { createContext, useEffect, useState, type FC, useCallback } from "react";
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,8 +21,6 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const segments = useSegments();
-  const router = useRouter();
 
   useEffect(() => {
     let mounted = true;
@@ -53,11 +50,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
       } catch (e) {
         console.error("Auth initialization error:", e);
       } finally {
-        if (mounted) {
-          setTimeout(() => {
-            if (mounted) setIsReady(true);
-          }, 200);
-        }
+        if (mounted) setIsReady(true);
       }
     };
     loadState();
@@ -67,6 +60,8 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
         if (authSession) {
           const { data: profile } = await getProfile(authSession.user.id);
           setUserProfile(profile);
+          const onboarded = await AsyncStorage.getItem("v1_onboarding_done");
+          setHasOnboarded(onboarded === "true");
         } else {
           setUserProfile(null);
         }
@@ -77,9 +72,6 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
       subscription.unsubscribe();
     };
   }, []);
-  useEffect(() => {
-    if (!isReady || !segments || !router || isLoading) return;
-  }, [isReady, session, hasOnboarded, segments, isLoading]);
   const signUp = useCallback(async (onboardingData?: {
     fullName: string;
     username: string;
@@ -244,6 +236,5 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     signInWithApple: async () => ({ error: { message: "Apple Sign-In not configured yet. See instructions in AuthContext.tsx" } }),
     signOut
   };
-  if (!isReady) return null;
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

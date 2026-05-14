@@ -97,6 +97,28 @@ export const removeFromFavorites = async (userId: string, foodId: string): Promi
         throw error;
     }
 };
+//INCREMENT
+export const incrementFoodLogCount = async (foodIds: string[]): Promise<void> => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const validIds = [...new Set(foodIds.filter(id => uuidRegex.test(id)))];
+    if (validIds.length === 0) return;
+    await Promise.allSettled(
+        validIds.map(async (id) => {
+            const { data } = await supabase
+                .from('foods')
+                .select('log_count')
+                .eq('id', id)
+                .single();
+            if (data) {
+                await supabase
+                    .from('foods')
+                    .update({ log_count: (data.log_count || 0) + 1 })
+                    .eq('id', id);
+            }
+        })
+    );
+};
+//INSERT
 export const toggleFavoriteFood = async (userId: string, item: FoodSearchResult): Promise<{ isFavorite: boolean, newFoodId: string }> => {
     let foodId = item.id;
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

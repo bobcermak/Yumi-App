@@ -1,9 +1,9 @@
 import { getRatingColor } from "@/lib/helpers/mealHelpers";
 import { useResultMeal } from "@/lib/hooks/useResultMeal";
 import { Minus as MinusIcon, PencilSimple, Plus, Star, Heart } from "phosphor-react-native";
-import { FC } from "react";
-import { ActivityIndicator, Image, Text, TextInput, TouchableOpacity, View } from "react-native";
-import Animated, { FadeInDown, FadeInRight, FadeOutRight, LinearTransition, useAnimatedStyle, withSpring } from "react-native-reanimated";
+import { FC, useEffect } from "react";
+import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
+import Animated, { cancelAnimation, Easing, FadeInDown, FadeOutRight, LinearTransition, useAnimatedStyle, useSharedValue, withRepeat, withTiming, FadeInRight } from "react-native-reanimated";
 
 type ResultMealProps = {
     id?: string,
@@ -27,15 +27,28 @@ const ResultMeal: FC<ResultMealProps> = ({ id, imgSrc, title, calories_per_100g,
         id, calories_per_100g, carbs_per_100g, protein_per_100g, fat_per_100g,
         initialGrams, initialCount, isFavoriteExternal: isFavorite, onToggleFavoriteExternal: onToggleFavorite, onDataChange
     });
-    const carbsBarStyle = useAnimatedStyle(() => ({
-        width: withSpring(`${state.carbsRatio * 100}%`, { damping: 10, stiffness: 80 }),
-    }));
-    const fatBarStyle = useAnimatedStyle(() => ({
-        width: withSpring(`${state.fatRatio * 100}%`, { damping: 10, stiffness: 80 }),
-    }));
-    const proteinBarStyle = useAnimatedStyle(() => ({
-        width: withSpring(`${state.proteinRatio * 100}%`, { damping: 10, stiffness: 80 }),
-    }));
+    const carbsAnim = useSharedValue(0);
+    const fatAnim = useSharedValue(0);
+    const proteinAnim = useSharedValue(0);
+    useEffect(() => {
+        const cfg = { duration: 700, easing: Easing.out(Easing.cubic) };
+        carbsAnim.value = withTiming(state.carbsRatio, cfg);
+        fatAnim.value = withTiming(state.fatRatio, cfg);
+        proteinAnim.value = withTiming(state.proteinRatio, cfg);
+    }, [state.carbsRatio, state.fatRatio, state.proteinRatio]);
+    const carbsBarStyle = useAnimatedStyle(() => ({ flex: carbsAnim.value }));
+    const fatBarStyle = useAnimatedStyle(() => ({ flex: fatAnim.value }));
+    const proteinBarStyle = useAnimatedStyle(() => ({ flex: proteinAnim.value }));
+    const favPulse = useSharedValue(0.25);
+    const favPulseStyle = useAnimatedStyle(() => ({ opacity: favPulse.value }));
+    useEffect(() => {
+        if (isFavoriteLoading) {
+            favPulse.value = withRepeat(withTiming(0.8, { duration: 600 }), -1, true);
+        } else {
+            cancelAnimation(favPulse);
+            favPulse.value = 0.25;
+        }
+    }, [isFavoriteLoading]);
     return (
         <Animated.View
             className="self-center justify-center items-center gap-6 rounded-[20px] overflow-hidden bg-dark border border-white/10 pb-5 w-[362px]"
@@ -68,7 +81,7 @@ const ResultMeal: FC<ResultMealProps> = ({ id, imgSrc, title, calories_per_100g,
                 disabled={isFavoriteLoading}
             >
                 {isFavoriteLoading ? (
-                    <ActivityIndicator size="small" color="#C5E384" />
+                    <Animated.View style={favPulseStyle} className="w-6 h-6 rounded-full bg-white/40" />
                 ) : (
                     <Heart
                         size={24}
@@ -167,10 +180,10 @@ const ResultMeal: FC<ResultMealProps> = ({ id, imgSrc, title, calories_per_100g,
                 onPress={handlers.handleTogglePercentage}
                 className="w-full gap-6"
             >
-                <View className="w-full px-4 flex-row gap-[2px]">
-                    <Animated.View style={[carbsBarStyle]} className="h-4 rounded-tl-[2px] rounded-bl-[2px] bg-[#E53E3E]" />
-                    <Animated.View style={[fatBarStyle]} className="h-4 bg-[#ED8936]" />
-                    <Animated.View style={[proteinBarStyle]} className="h-4 rounded-tr-[2px] rounded-br-[2px] bg-[#3182CE]" />
+                <View className="w-full px-4 flex-row gap-[1px]">
+                    <Animated.View style={carbsBarStyle} className="h-4 rounded-tl-[2px] rounded-bl-[2px] bg-[#E53E3E]" />
+                    <Animated.View style={fatBarStyle} className="h-4 bg-[#ED8936]" />
+                    <Animated.View style={proteinBarStyle} className="h-4 rounded-tr-[2px] rounded-br-[2px] bg-[#3182CE]" />
                 </View>
                 <Animated.View
                     layout={LinearTransition.springify().damping(12)}

@@ -1,30 +1,33 @@
 import { Icon, MealCard } from "@/components";
 import { getMealTypeByTime } from "@/lib/helpers/dateHelpers";
 import { useIndexContext } from "@/lib/hooks/useIndexContext";
+import { differenceInCalendarDays, format, isToday, isYesterday } from "date-fns";
 import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import * as Haptics from "expo-haptics";
 import { Cookie, CookingPot, EggCrack, Orange, Pizza, Plus } from "phosphor-react-native";
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { Keyboard, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withRepeat, withTiming, Easing } from "react-native-reanimated";
 
 const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
   //Context
-  const { mealLogs, deleteMeal, updateMeal, showToast } = useIndexContext();
+  const { mealLogs, deleteMeal, updateMeal, showToast, dashboardDate } = useIndexContext();
   //Hooks
   const internalRef = useRef<BottomSheet>(null);
   const scrollViewRef = useRef<any>(null);
   const scrollOffsetRef = useRef(0);
   useImperativeHandle(ref, () => internalRef.current as BottomSheet);
-  const [isKeyboardVisible, setKeyboardVisible] = useState<boolean>(false);
   const [isSheetLoading, setIsSheetLoading] = useState<boolean>(false);
-  const snapPoints = useMemo(() => {
-    return isKeyboardVisible
-      ? [105, "20%", "35%", "50%", "65%", "80%", "100%"]
-      : [105, "20%", "35%", "50%", "65%", "80%"];
-  }, [isKeyboardVisible]);
+  const snapPoints = useMemo(() => [105, "20%", "35%", "50%", "65%", "80%"], []);
   const currentMealType = useMemo(() => getMealTypeByTime(), []);
   const [expandedMeal, setExpandedMeal] = useState<string | null>(currentMealType);
+  const dateLabel = useMemo(() => {
+    if (isToday(dashboardDate)) return "Today's Food";
+    if (isYesterday(dashboardDate)) return "Yesterday's Food";
+    const daysAgo = differenceInCalendarDays(new Date(), dashboardDate);
+    if (daysAgo <= 6) return `${format(dashboardDate, "EEEE")}'s Food`;
+    return `${format(dashboardDate, "d MMM")}'s Food`;
+  }, [dashboardDate]);
   
   const mealSections = useMemo(() => {
     const sections = [
@@ -101,14 +104,6 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
       setIsSheetLoading(false);
     }
   };
-  useEffect(() => {
-    const showSubscription = Keyboard.addListener("keyboardDidShow", () => setKeyboardVisible(true));
-    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => setKeyboardVisible(false));
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, []);
   return (
     <BottomSheet
       ref={internalRef}
@@ -116,8 +111,8 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
       snapPoints={snapPoints}
       detached={false}
       bottomInset={0}
-      keyboardBehavior="extend"
-      keyboardBlurBehavior="none"
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
       backgroundStyle={{ backgroundColor: '#121212' }}
       style={{
         marginHorizontal: 16,
@@ -180,7 +175,7 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
             onPress={() => internalRef.current?.snapToIndex(3)}
             className="flex-row justify-between items-center mt-10 pb-5"
           >
-            <Text className="text-white text-xl font-nunito-800">Today&apos;s Food</Text>
+            <Text className="text-white text-xl font-nunito-800">{dateLabel}</Text>
             <Icon className="w-[36px] h-[36px]" onPress={() => { }}>
               <Plus size={24} color="#1D1D1D" weight="regular" />
             </Icon>
@@ -192,7 +187,7 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
                 icon={section.icon}
                 title={section.title}
                 allCal={Math.round(section.totalCal)}
-                isDayTime={currentMealType === section.title}
+                isDayTime={isToday(dashboardDate) && currentMealType === section.title}
                 expanded={expandedMeal === section.title}
                 onToggle={() => setExpandedMeal(expandedMeal === section.title ? null : section.title)}
                 ingredients={section.ingredients}
