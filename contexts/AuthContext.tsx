@@ -6,6 +6,7 @@ import { Profile } from "@/types/database/dbModels";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Session } from "@supabase/supabase-js";
 import React, { createContext, useEffect, useState, type FC, useCallback, useRef } from "react";
+import { posthog } from "@/lib/config/posthog";
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -41,6 +42,9 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
           } else {
             setSession(session);
             setUserProfile(profile);
+            posthog.identify(session.user.id, {
+              $set: { username: profile.username ?? null },
+            });
             const onboarded = await AsyncStorage.getItem("v1_onboarding_done");
             setHasOnboarded(onboarded === "true");
           }
@@ -114,6 +118,24 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
       setHasOnboarded(true);
       await AsyncStorage.setItem("v1_onboarding_done", "true");
       if (sessionData.session) setSession(sessionData.session);
+
+      posthog.identify(authData.user.id, {
+        $set: { username: onboardingData ? onboardingData.username : null },
+        $set_once: { signup_date: new Date().toISOString() },
+      });
+      posthog.capture('user_signed_up', {
+        has_onboarding_data: !!onboardingData,
+      });
+      if (onboardingData) {
+        posthog.capture('onboarding_completed', {
+          activity_level: onboardingData.activityLevel,
+          weight_unit: onboardingData.weightUnit,
+          daily_calories: onboardingData.dailyCalories,
+          has_goal_date: !!onboardingData.goalDate,
+          has_profile_photo: !!onboardingData.photoUri,
+        });
+      }
+
       return { error: null };
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "An unexpected error occurred.";
@@ -126,7 +148,13 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const signIn = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (!error && data.user) {
+        posthog.identify(data.user.id);
+        posthog.capture('user_logged_in', {
+          method: 'password',
+        });
+      }
       return { error: error ? { message: error.message } : null };
     } finally {
       setIsLoading(false);
@@ -135,12 +163,14 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const signOut = useCallback(async () => {
     setIsLoading(true);
     try {
+      posthog.capture('user_logged_out');
+      posthog.reset();
       await supabase.auth.signOut();
     } finally {
       setIsLoading(false);
     }
   }, []);
-  /* 
+  /*
     =================================================================================
     NÁVOD NA ZPROVOZNĚNÍ NATIVNÍHO GOOGLE LOGINU (VARIANTA B):
     =================================================================================
@@ -205,7 +235,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     }
   };
   */
-  /* 
+  /*
     =================================================================================
     NÁVOD NA ZPROVOZNĚNÍ APPLE LOGINU:
     =================================================================================

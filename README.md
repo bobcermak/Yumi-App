@@ -7,7 +7,7 @@
 
 ---
 
-📝 **[Dokumentace](./RP2025-26_Cermak-Yumi.docx)**
+📝 **[Dokumentace](./RP2025-26_Cermak-Yumi.pdf)**
 
 ---
 
@@ -25,7 +25,7 @@
 
 ### 🤖 Next-Gen AI Skenování
 * **Primární Engine:** Využíváme **Gemini 3.1 Flash Lite** pro bleskovou a levnou analýzu vizuálních dat (fotek jídla).
-* **Smart Failover:** V případě výpadku nebo složitějších dotazů aplikace automaticky přepíná na záložní model **GPT-5 mini**, aby byla zajištěna 100% spolehlivost.
+* **Smart Failover:** V případě výpadku nebo složitějších dotazů aplikace automaticky přepíná na záložní model **GPT-4o mini**, aby byla zajištěna 100% spolehlivost.
 * **Editace v reálném čase:** AI ti navrhne gramáž a kalorie, které můžeš jedním klikem upravit.
 * **Skener čárových kódů:** Integrace open-source API (OpenFoodFacts) pro okamžitý zápis balených potravin.
 
@@ -46,9 +46,9 @@ Aplikace je navržena jako udržitelný **Freemium** model.
 * **Yumi+ (Premium):** 99 Kč/měsíc za neomezené skenování, hluboké AI analýzy a nulové reklamy.
 
 **Jednotková ekonomika (Unit Economics):**
-* Náklad na 1 AI sken: cca **0,0014 Kč**
+* Náklad na 1 AI sken: cca **0,01 Kč**
 * Výnos z 1 video reklamy (Rewarded): cca **0,35 Kč**
-* *1 zhlédnutá video reklama zaplatí provoz pro 250 AI skenů.*
+* *1 zhlédnutá video reklama zaplatí provoz pro 35 AI skenů.*
 
 ## 🛠 Technický Stack
 

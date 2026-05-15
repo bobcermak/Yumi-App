@@ -4,6 +4,7 @@ import type { SearchContextType } from "@/types/searchContextType";
 import { getPopularFoods, getUserPopularFoods } from "@/lib/services/supabase/queries/foods";
 import { useFetch } from "@/lib/hooks/useFetch";
 import { useFoodSearch } from "@/lib/hooks/useFoodSearch";
+import { posthog } from "@/lib/config/posthog";
 
 export const SearchContext = createContext<SearchContextType | undefined>(undefined);
 
@@ -53,6 +54,16 @@ const SearchProvider: FC<SearchProviderProps> = ({ children }) => {
             setFilter('All');
         }
     }, [isLoading, data, filter, hasManuallyChangedFilter, popularMeals.length]);
+    const handleSubmitSearch = useCallback(() => {
+        if (query.trim().length > 0) {
+            posthog.capture('food_searched', {
+                query_length: query.trim().length,
+                category,
+                food_type: foodType,
+            });
+        }
+        submitSearch();
+    }, [query, category, foodType, submitSearch]);
     return (
         <SearchContext.Provider
             value={{
@@ -66,7 +77,7 @@ const SearchProvider: FC<SearchProviderProps> = ({ children }) => {
                 searchResults,
                 isSearching,
                 searchSource,
-                submitSearch,
+                submitSearch: handleSubmitSearch,
                 category,
                 setCategory,
                 foodType,

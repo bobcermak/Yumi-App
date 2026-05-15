@@ -119,60 +119,51 @@ export const incrementFoodLogCount = async (foodIds: string[]): Promise<void> =>
     );
 };
 //INSERT
-export const toggleFavoriteFood = async (userId: string, item: FoodSearchResult): Promise<{ isFavorite: boolean, newFoodId: string }> => {
-    let foodId = item.id;
+export const upsertExternalFood = async (item: FoodSearchResult): Promise<string> => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    const isUUID = uuidRegex.test(foodId);
+    if (uuidRegex.test(item.id)) return item.id;
     const normalizedBrand = item.brand || '';
-    if (!isUUID) {
-        const { data: existingFood } = await supabase
-            .from('foods')
-            .select('id')
-            .eq('name', item.name || '')
-            .eq('brand', normalizedBrand)
-            .limit(1)
-            .maybeSingle();
-        if (existingFood) {
-            foodId = existingFood.id;
-        } else {
-            const { data: newFood, error: insertError } = await supabase
+    const { data: existingFood } = await supabase
+        .from('foods')
+        .select('id')
+        .eq('name', item.name || '')
+        .eq('brand', normalizedBrand)
+        .limit(1)
+        .maybeSingle();
+    if (existingFood) return existingFood.id;
+    const { data: newFood, error: insertError } = await supabase
+        .from('foods')
+        .insert({
+            name: item.name || 'Unknown Food',
+            brand: normalizedBrand,
+            calories_per_100g: item.calories_per_100g || 0,
+            carbs_per_100g: item.carbs_per_100g || 0,
+            protein_per_100g: item.protein_per_100g || 0,
+            fat_per_100g: item.fat_per_100g || 0,
+            image_url: item.image_url,
+            health_rating: item.health_rating,
+            barcode: item.barcode,
+        })
+        .select('id')
+        .single();
+    if (insertError) {
+        if (insertError.code === '23505') {
+            const { data: existingByName } = await supabase
                 .from('foods')
-                .insert({
-                    name: item.name || 'Unknown Food',
-                    brand: normalizedBrand,
-                    calories_per_100g: item.calories_per_100g || 0,
-                    carbs_per_100g: item.carbs_per_100g || 0,
-                    protein_per_100g: item.protein_per_100g || 0,
-                    fat_per_100g: item.fat_per_100g || 0,
-                    image_url: item.image_url,
-                    health_rating: item.health_rating,
-                    barcode: item.barcode,
-                })
                 .select('id')
-                .single();
-            if (insertError) {
-                if (insertError.code === '23505') {
-                    const { data: existingByName } = await supabase
-                        .from('foods')
-                        .select('id')
-                        .eq('name', item.name || 'Unknown Food')
-                        .limit(1)
-                        .maybeSingle();
-                    if (existingByName) {
-                        foodId = existingByName.id;
-                    } else {
-                        console.error("[supabase/queries/foods] Error saving external food:", insertError);
-                        throw insertError;
-                    }
-                } else {
-                    console.error("[supabase/queries/foods] Error saving external food:", insertError);
-                    throw insertError;
-                }
-            } else {
-                foodId = newFood.id;
-            }
+                .eq('name', item.name || 'Unknown Food')
+                .limit(1)
+                .maybeSingle();
+            if (existingByName) return existingByName.id;
         }
+        console.error("[supabase/queries/foods] Error upserting external food:", insertError);
+        throw insertError;
     }
+    return newFood.id;
+};
+export const toggleFavoriteFood = async (userId: string, item: FoodSearchResult): Promise<{ isFavorite: boolean, newFoodId: string }> => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    let foodId = uuidRegex.test(item.id) ? item.id : await upsertExternalFood(item);
     const { data: existingFav } = await supabase
         .from('user_favorites')
         .select('food_id')

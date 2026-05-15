@@ -8,6 +8,7 @@ import { MealLog, MealLogWithIngredients } from "@/types/database/dbModels";
 import { IndexContextProps, OverviewData, ToastType } from "@/types/indexContextType";
 import { addDays, endOfMonth, format, isAfter, isBefore, isSameDay, isToday, startOfDay, startOfMonth, subDays } from "date-fns";
 import { createContext, useCallback, useEffect, useMemo, useState, type FC, useRef } from "react";
+import { posthog } from "@/lib/config/posthog";
 
 export const IndexContext = createContext<IndexContextProps | undefined>(undefined);
 
@@ -111,6 +112,10 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
                 console.error("Failed to update daily_calorie_limit and target_date", error);
             } else {
                 await refreshProfile();
+                posthog.capture('calorie_goal_updated', {
+                    new_daily_calories: clampedMax,
+                    has_new_target_date: !!newTargetDate,
+                });
             }
         }
     }, [userProfile, refreshProfile, showToast]);
@@ -141,11 +146,19 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
         setWaterMl(next);
         const dateStr = format(dashboardDate, "yyyy-MM-dd");
         await updateWaterIntake(userProfile.id, dateStr, next);
-    }, [userProfile?.id, dashboardDate]);
+        posthog.capture('water_intake_updated', {
+            amount_ml: next,
+            goal_ml: waterGoalMl,
+            goal_reached: next >= waterGoalMl,
+        });
+    }, [userProfile?.id, dashboardDate, waterGoalMl]);
     const deleteMeal = useCallback(async (mealId: string) => {
         if (!userProfile?.id) return;
         try {
             await deleteMealLog(userProfile.id, mealId);
+            posthog.capture('meal_deleted', {
+                meal_id: mealId,
+            });
             showToast("Meal removed");
             const dateStr = format(dashboardDate, "yyyy-MM-dd");
             const logs = await getMealLogsForDay(userProfile.id, dateStr);

@@ -1,11 +1,18 @@
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { FlipType } from 'expo-image-manipulator';
+import * as Notifications from 'expo-notifications';
 import { Alert } from 'react-native';
 
 export const requestImagePermissions = async (type: 'camera' | 'library') => {
   if (type === 'camera') {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status === 'granted') {
+      const { status: notifStatus } = await Notifications.getPermissionsAsync();
+      if (notifStatus === 'undetermined') {
+        await Notifications.requestPermissionsAsync();
+      }
+    }
     return status === 'granted';
   } else {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();

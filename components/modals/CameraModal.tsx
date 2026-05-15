@@ -1,5 +1,6 @@
 import { Icon } from "@/components";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import * as Notifications from "expo-notifications";
 import { CaretLeft, Lightning, LightningSlash } from "phosphor-react-native";
 import { useEffect, useRef, useState, type FC } from "react";
 import { ActivityIndicator, Alert, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -53,7 +54,12 @@ const CameraModal: FC<CameraModalProps> = ({ visible, onClose, mode, onBarcodeSc
       if (!granted) {
         Alert.alert("Permission Required", "Camera access is needed.");
         onClose();
+        return;
       }
+    }
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status === "undetermined") {
+      await Notifications.requestPermissionsAsync();
     }
   };
   useEffect(() => {

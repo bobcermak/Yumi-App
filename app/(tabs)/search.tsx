@@ -151,7 +151,7 @@ const Search = () => {
             }
             ListHeaderComponent={
               <View className="z-20">
-                <Animated.View entering={FadeInDown.duration(250).delay(100)} className="w-[362px] self-center mt-4 flex-row items-center gap-1 justify-between">
+                <Animated.View entering={FadeInDown.duration(250).delay(100)} className="w-[362px] self-center mt-4 flex-row items-center gap-1 justify-between" style={{ zIndex: 150 }}>
                   <SearchInput
                     isInput
                     autoFocus={focus === "true"}
@@ -184,19 +184,11 @@ const Search = () => {
                     </Icon>
                     {showDotsMenu && (
                       <Animated.View
-                        entering={FadeIn.duration(140)}
-                        exiting={FadeOut.duration(110)}
+                        entering={FadeIn.duration(250)}
+                        exiting={FadeOut.duration(250)}
+                        className="absolute top-[54px] right-0 w-[200px] bg-[#1A1A1A] rounded-2xl border border-white/10 overflow-hidden z-[200]"
                         style={{
-                          position: "absolute",
-                          top: 54,
-                          right: 0,
-                          width: 200,
-                          backgroundColor: "#1A1A1A",
-                          borderRadius: 16,
-                          borderWidth: 1,
-                          borderColor: "rgba(255,255,255,0.08)",
-                          overflow: "hidden",
-                          shadowColor: "#000",
+                          shadowColor: "#000000",
                           shadowOffset: { width: 0, height: 8 },
                           shadowOpacity: 0.5,
                           shadowRadius: 16,
@@ -207,42 +199,21 @@ const Search = () => {
                           <Animated.View
                             key={item.label}
                             entering={FadeInDown.delay(i * 45)
-                              .duration(200)
+                              .duration(250)
                               .springify()}
                           >
                             <TouchableOpacity
                               onPress={item.onPress}
                               activeOpacity={0.25}
+                              className="flex-row items-center gap-3 px-4 py-3 border-b border-white/10 bg-dark z-50"
                               style={{
-                                flexDirection: "row",
-                                alignItems: "center",
-                                gap: 12,
-                                paddingHorizontal: 16,
-                                paddingVertical: 14,
-                                borderBottomWidth:
-                                  i < DOTS_OPTIONS.length - 1 ? 1 : 0,
-                                borderBottomColor: "rgba(255,255,255,0.05)",
+                                borderBottomWidth: i < DOTS_OPTIONS.length - 1 ? 1 : 0
                               }}
                             >
-                              <View
-                                style={{
-                                  width: 32,
-                                  height: 32,
-                                  borderRadius: 10,
-                                  backgroundColor: "rgba(197,227,132,0.1)",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                }}
-                              >
+                              <View className="w-8 h-8 rounded-[15px] items-center justify-center bg-yellow/10">
                                 {item.icon}
                               </View>
-                              <Text
-                                style={{
-                                  color: "#FFFFFF",
-                                  fontFamily: "Nunito_700Bold",
-                                  fontSize: 15,
-                                }}
-                              >
+                              <Text className="text-base text-white font-nunito-700">
                                 {item.label}
                               </Text>
                             </TouchableOpacity>
