@@ -6,10 +6,12 @@ type ButtonProps = TouchableOpacityProps & {
     icon?: ReactNode,
     className?: string,
     textClassName?: string,
+    shadowColor?: string,
     children: ReactNode,
 };
-const Button: FC<ButtonProps> = ({ icon, children, className, textClassName, disabled, onPress, ...props }) => {
-    const defaultButtonStyles = "bg-yellow px-4 py-3 rounded-[10px] flex-row justify-center items-center shadow-xl";
+const Button: FC<ButtonProps> = ({ icon, children, className, textClassName, shadowColor, disabled, onPress, ...props }) => {
+    const hasBgOverride = /\bbg-/.test(className ?? "");
+    const defaultButtonStyles = `${hasBgOverride ? "" : "bg-yellow"} px-4 py-3 rounded-[10px] flex-row justify-center items-center shadow-xl`;
     const defaultTextStyles = "text-base font-nunito-800 text-dark text-center";
     //Functions
     const handlePress = (e: GestureResponderEvent) => {
@@ -26,7 +28,7 @@ const Button: FC<ButtonProps> = ({ icon, children, className, textClassName, dis
             className={`${defaultButtonStyles} ${className || ""} ${disabled ? "opacity-50" : ""}`}
             {...props}
             style={{
-                shadowColor: disabled ? "transparent" : "#C5E384",
+                shadowColor: disabled ? "transparent" : (shadowColor ?? "#C5E384"),
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.25,
                 shadowRadius: 4,

@@ -6,12 +6,7 @@ import { useRouter } from "expo-router";
 import { NotePencil, Plus, X } from "phosphor-react-native";
 import { type FC, useEffect, useRef, useState } from "react";
 import { Animated, Image, TouchableOpacity, View } from "react-native";
-import Reanimated, {
-  FadeIn,
-  FadeInDown,
-  FadeOut,
-  FadeOutDown,
-} from "react-native-reanimated";
+import Reanimated, { FadeIn, FadeInDown, FadeOut, FadeOutDown } from "react-native-reanimated";
 import AnimatedTabIcon from "./AnimatedTabIcon";
 
 const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
@@ -212,8 +207,9 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
               exiting={FadeOutDown.duration(250)}
             >
               <Button
-                className="rounded-[30px] mx-0 w-full py-5"
-                textClassName="text-xl"
+                className="rounded-[30px] mx-0 w-full py-5 bg-dark"
+                textClassName="text-xl text-white"
+                shadowColor="#000000"
                 onPress={() => {
                   handleMenuClose();
                   router.push("/quick-add");
@@ -230,11 +226,12 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
               <Button
                 className="rounded-[30px] mx-0 w-full py-5"
                 textClassName="text-xl"
+                shadowColor="#C5E384"
                 onPress={() => {
                   handleMenuClose();
                   router.push("/magic-scan");
                 }}
-                icon={<NotePencil size={24} color="#FFFFFF" weight="regular" />}
+                icon={<NotePencil size={24} color="#1D1D1D" weight="regular"/>}
               >
                 Magic Scan
               </Button>
@@ -243,7 +240,7 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
           <Reanimated.View
             entering={FadeInDown.delay(30).duration(250).springify()}
             exiting={FadeOutDown.duration(250)}
-            className="absolute bottom-[52px] self-center"
+            className="absolute bottom-[60px] self-center"
           >
             <TouchableOpacity
               onPress={handleMenuClose}

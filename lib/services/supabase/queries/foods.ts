@@ -119,7 +119,7 @@ export const incrementFoodLogCount = async (foodIds: string[]): Promise<void> =>
     );
 };
 //INSERT
-export const upsertExternalFood = async (item: FoodSearchResult): Promise<string> => {
+export const upsertExternalFood = async (item: FoodSearchResult, isDrink?: boolean): Promise<string> => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (uuidRegex.test(item.id)) return item.id;
     const normalizedBrand = item.brand || '';
@@ -143,6 +143,8 @@ export const upsertExternalFood = async (item: FoodSearchResult): Promise<string
             image_url: item.image_url,
             health_rating: item.health_rating,
             barcode: item.barcode,
+            category: isDrink ? 'Drink' : (item.category ?? null),
+            is_drink: isDrink ?? false,
         })
         .select('id')
         .single();

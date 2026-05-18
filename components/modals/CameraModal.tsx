@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 type CameraModalProps = {
   visible: boolean,
   onClose: () => void,
-  mode: 'barcode' | 'photo',
+  mode: 'barcode' | 'photo' | 'magic',
   onBarcodeScanned?: (data: string) => void,
   onCapture?: (uri: string) => void,
   isProcessing?: boolean,
@@ -77,13 +77,13 @@ const CameraModal: FC<CameraModalProps> = ({ visible, onClose, mode, onBarcodeSc
       <View className="flex-1 bg-black">
         <CameraView
           ref={cameraRef}
-          onBarcodeScanned={mode === 'barcode' ? handleBarcodeScanned : undefined}
-          barcodeScannerSettings={mode === 'barcode' ? { barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e"] } : undefined}
+          onBarcodeScanned={mode !== 'photo' ? handleBarcodeScanned : undefined}
+          barcodeScannerSettings={mode !== 'photo' ? { barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e"] } : undefined}
           enableTorch={torch}
           style={StyleSheet.absoluteFill}
         />
         <View className="absolute inset-0 items-center justify-center pointer-events-none">
-          {mode === 'barcode' ? (
+          {mode === 'barcode' && (
             <View className="w-72 h-48 border-2 border-yellow/50 rounded-[20px] items-center justify-center">
               <View className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-yellow rounded-tl-[20px]" />
               <View className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-yellow rounded-tr-[20px]" />
@@ -91,8 +91,18 @@ const CameraModal: FC<CameraModalProps> = ({ visible, onClose, mode, onBarcodeSc
               <View className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-yellow rounded-br-[20px]" />
               {isProcessing && <ActivityIndicator size="large" color="#C5E384" />}
             </View>
-          ) : (
+          )}
+          {mode === 'photo' && (
             <View className="w-80 h-80 border-2 border-white/20 rounded-[40px] items-center justify-center">
+              {isProcessing && <ActivityIndicator size="large" color="#C5E384" />}
+            </View>
+          )}
+          {mode === 'magic' && (
+            <View className="w-72 h-72 border-2 border-yellow/50 rounded-[30px] items-center justify-center">
+              <View className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-yellow rounded-tl-[30px]" />
+              <View className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-yellow rounded-tr-[30px]" />
+              <View className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-yellow rounded-bl-[30px]" />
+              <View className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-yellow rounded-br-[30px]" />
               {isProcessing && <ActivityIndicator size="large" color="#C5E384" />}
             </View>
           )}
@@ -124,7 +134,7 @@ const CameraModal: FC<CameraModalProps> = ({ visible, onClose, mode, onBarcodeSc
             )}
           </Icon>
         </View>
-        {mode === 'photo' && (
+        {mode !== 'barcode' && (
           <View
             style={{ paddingBottom: insets.bottom + 40 }}
             className="absolute bottom-0 left-0 right-0 items-center"

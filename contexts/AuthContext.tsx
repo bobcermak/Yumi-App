@@ -62,11 +62,16 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, authSession) => {
       if (!mounted) return;
       if (isSigningUpRef.current) return;
+      if (event === 'INITIAL_SESSION') return;
       if (authSession) {
         const { data: profile } = await getProfile(authSession.user.id);
+        if (!profile) {
+          await supabase.auth.signOut();
+          return;
+        }
         const onboarded = await AsyncStorage.getItem("v1_onboarding_done");
         if (mounted) {
-          setUserProfile(profile ?? null);
+          setUserProfile(profile);
           setHasOnboarded(onboarded === "true");
           setSession(authSession);
         }

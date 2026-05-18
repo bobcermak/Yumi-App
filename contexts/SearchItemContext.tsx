@@ -84,7 +84,7 @@ export const SearchItemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
             let effectiveItem = item;
             if (!uuidRegex.test(item.id)) {
-                const foodId = await upsertExternalFood(item);
+                const foodId = await upsertExternalFood(item, isDrink);
                 effectiveItem = { ...item, id: foodId };
                 setItem(effectiveItem);
             }
