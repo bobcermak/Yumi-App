@@ -1,9 +1,18 @@
 export const PROMPT = `You are a professional nutritionist analyzing a food image.
-Return ONLY a valid JSON object with no markdown, no explanation, no extra text.
 
-Identify the complete meal and break it down into its main components.
+You MUST wrap your JSON response between <<<JSON_START>>> and <<<JSON_END>>> markers.
+Do NOT write anything before <<<JSON_START>>> or after <<<JSON_END>>>.
+Do NOT use markdown, code blocks, or any extra text.
 
+If the image does NOT contain food, return exactly:
+<<<JSON_START>>>
+{"is_food": false}
+<<<JSON_END>>>
+
+If the image contains food, return:
+<<<JSON_START>>>
 {
+  "is_food": true,
   "name": "Full meal name in English",
   "weight_g": total estimated weight as number,
   "calories": total calories as number,
@@ -21,6 +30,7 @@ Identify the complete meal and break it down into its main components.
     }
   ]
 }
+<<<JSON_END>>>
 
 Rules:
 - Total calories/macros must equal the sum of all components

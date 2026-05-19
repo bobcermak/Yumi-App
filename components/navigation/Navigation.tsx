@@ -6,7 +6,7 @@ import { useRouter } from "expo-router";
 import { NotePencil, Plus, X } from "phosphor-react-native";
 import { type FC, useEffect, useRef, useState } from "react";
 import { Animated, Image, TouchableOpacity, View } from "react-native";
-import Reanimated, { FadeIn, FadeInDown, FadeOut, FadeOutDown } from "react-native-reanimated";
+import Reanimated, { FadeInDown, FadeOutDown, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import AnimatedTabIcon from "./AnimatedTabIcon";
 
 const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
@@ -18,6 +18,10 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
   const entranceAnim = useRef(new Animated.Value(0)).current;
   const plusRotation = useRef(new Animated.Value(0)).current;
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const menuOpacity = useSharedValue(0);
+  const menuOverlayStyle = useAnimatedStyle(() => ({
+    opacity: menuOpacity.value,
+  }));
 
   const PADDING_HORIZONTAL = 12;
   const INNER_WIDTH = tabBarWidth - PADDING_HORIZONTAL;
@@ -39,6 +43,9 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
       stiffness: 150,
     }).start();
   }, [isMenuOpen]);
+  useEffect(() => {
+    menuOpacity.value = withTiming(isMenuOpen ? 1 : 0, { duration: 250 });
+  }, [isMenuOpen, menuOpacity]);
   useEffect(() => {
     if (tabBarWidth === 0) return;
     const toValue = 8 + state.index * TAB_WIDTH + TAB_WIDTH / 2 - 20;
@@ -190,68 +197,68 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
           })}
         </View>
       </Animated.View>
-      {isMenuOpen && (
-        <Reanimated.View
-          entering={FadeIn.duration(250)}
-          exiting={FadeOut.duration(250)}
-          className="absolute top-0 left-0 right-0 bottom-0"
-          pointerEvents="auto"
-        >
-          <Image
-            source={require("../../assets/images/gradient.png")}
-            className="absolute top-0 left-0 right-0 bottom-0 w-full h-full"
-          />
-          <View className="absolute bottom-[148px] left-4 right-4 gap-4">
-            <Reanimated.View
-              entering={FadeInDown.delay(60).duration(250).springify()}
-              exiting={FadeOutDown.duration(250)}
-            >
-              <Button
-                className="rounded-[30px] mx-0 w-full py-5 bg-dark"
-                textClassName="text-xl text-white"
-                shadowColor="#000000"
-                onPress={() => {
-                  handleMenuClose();
-                  router.push("/quick-add");
-                }}
-                icon={<NotePencil size={24} color="#FFFFFF" weight="regular" />}
+      <Reanimated.View
+        style={[{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }, menuOverlayStyle]}
+        pointerEvents={isMenuOpen ? "auto" : "none"}
+      >
+        <Image
+          source={require("../../assets/images/gradient.png")}
+          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%" }}
+        />
+        {isMenuOpen && (
+          <>
+            <View className="absolute bottom-[148px] left-4 right-4 gap-4">
+              <Reanimated.View
+                entering={FadeInDown.delay(60).duration(250).springify()}
+                exiting={FadeOutDown.duration(250)}
               >
-                Quick Add
-              </Button>
-            </Reanimated.View>
-            <Reanimated.View
-              entering={FadeInDown.duration(250).springify()}
-              exiting={FadeOutDown.duration(250)}
-            >
-              <Button
-                className="rounded-[30px] mx-0 w-full py-5"
-                textClassName="text-xl"
-                shadowColor="#C5E384"
-                onPress={() => {
-                  handleMenuClose();
-                  router.push("/magic-scan");
-                }}
-                icon={<NotePencil size={24} color="#1D1D1D" weight="regular"/>}
+                <Button
+                  className="rounded-[30px] mx-0 w-full py-5 bg-dark"
+                  textClassName="text-xl text-white"
+                  shadowColor="#000000"
+                  onPress={() => {
+                    handleMenuClose();
+                    router.push("/quick-add");
+                  }}
+                  icon={<NotePencil size={24} color="#FFFFFF" weight="regular" />}
+                >
+                  Quick Add
+                </Button>
+              </Reanimated.View>
+              <Reanimated.View
+                entering={FadeInDown.duration(250).springify()}
+                exiting={FadeOutDown.duration(250)}
               >
-                Magic Scan
-              </Button>
-            </Reanimated.View>
-          </View>
-          <Reanimated.View
-            entering={FadeInDown.delay(30).duration(250).springify()}
-            exiting={FadeOutDown.duration(250)}
-            className="absolute bottom-[60px] self-center"
-          >
-            <TouchableOpacity
-              onPress={handleMenuClose}
-              activeOpacity={0.25}
-              className="w-[60px] h-[60px] rounded-full bg-white/10 border border-white/20 justify-center items-center"
+                <Button
+                  className="rounded-[30px] mx-0 w-full py-5"
+                  textClassName="text-xl"
+                  shadowColor="#C5E384"
+                  onPress={() => {
+                    handleMenuClose();
+                    router.push("/magic-scan");
+                  }}
+                  icon={<NotePencil size={24} color="#1D1D1D" weight="regular" />}
+                >
+                  Magic Scan
+                </Button>
+              </Reanimated.View>
+            </View>
+            <Reanimated.View
+              entering={FadeInDown.delay(30).duration(250).springify()}
+              exiting={FadeOutDown.duration(250)}
+              className="absolute bottom-[60px] self-center"
             >
-              <X size={28} color="#FFFFFF" weight="bold" />
-            </TouchableOpacity>
-          </Reanimated.View>
-        </Reanimated.View>
-      )}
+              <TouchableOpacity
+                onPress={handleMenuClose}
+                activeOpacity={0.25}
+                className="w-[60px] h-[60px] rounded-full bg-white/10 border border-white/20 justify-center items-center"
+              >
+                <X size={28} color="#FFFFFF" weight="bold" />
+              </TouchableOpacity>
+            </Reanimated.View>
+          </>
+        )}
+      </Reanimated.View>
     </View>
   );
 };

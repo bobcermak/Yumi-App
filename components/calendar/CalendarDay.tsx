@@ -61,7 +61,7 @@ const CalendarDay: FC<CalendarDayProps> = ({ date, isToday, isActive, isTargetDa
                 </Text>
             </View>
             <View className="h-2 absolute bottom-1 items-center justify-center">
-                {isActive && !isTargetDay && !isToday && (
+                {isActive && !isTargetDay && (
                     <View className="w-1.5 h-1.5 rounded-full bg-yellow"/>
                 )}
             </View>

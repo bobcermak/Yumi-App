@@ -5,9 +5,9 @@ import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withTiming } fr
 
 const ML_PER_GLASS = 250;
 const QUICK_ADD = [
-    { label: "Glass",  ml: 250,  icon: "🥛" },
-    { label: "Can",    ml: 330,  icon: "🥤" },
-    { label: "Bottle", ml: 500,  icon: "💧" },
+    { label: "Glass",  ml: 250 },
+    { label: "Can",    ml: 330 },
+    { label: "Bottle", ml: 500 },
 ] as const;
 const fmtL = (ml: number) => `${(ml / 1000).toFixed(2)} L`;
 type WaterTrackerProps = {
@@ -139,7 +139,7 @@ const WaterTracker: FC<WaterTrackerProps> = ({ waterMl, goalMl, onSetWater }) =>
                 </Text>
             </View>
             <View className="flex-row gap-2 items-center">
-                {QUICK_ADD.map(({ label, ml, icon }) => (
+                {QUICK_ADD.map(({ label, ml }) => (
                     <TouchableOpacity
                         key={label}
                         onPress={() => handleAdd(ml)}
@@ -152,7 +152,6 @@ const WaterTracker: FC<WaterTrackerProps> = ({ waterMl, goalMl, onSetWater }) =>
                             opacity: 1,
                         }}
                     >
-                        <Text style={{ fontSize: 14 }}>{icon}</Text>
                         <Text style={{ color: '#FFFFFF', fontFamily: 'Nunito_700Bold', fontSize: 12 }}>+{ml}ml</Text>
                     </TouchableOpacity>
                 ))}

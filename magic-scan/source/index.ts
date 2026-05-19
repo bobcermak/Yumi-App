@@ -15,23 +15,25 @@ serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
+    let result: Record<string, unknown>
+    let model: string
     try {
-      const result = await analyzeWithGemini(image)
-      return new Response(
-        JSON.stringify({ ...result, model: 'gemini' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      result = await analyzeWithGemini(image) as Record<string, unknown>
+      model = 'gemini'
     } catch (geminiError) {
-      console.error('Gemini failed, trying GPT:', geminiError)
+      console.error('Gemini failed, falling back to GPT:', geminiError instanceof Error ? geminiError.message : String(geminiError))
+      result = await analyzeWithGPT(image) as Record<string, unknown>
+      model = 'gpt'
     }
-    const result = await analyzeWithGPT(image)
     return new Response(
-      JSON.stringify({ ...result, model: 'gpt' }),
+      JSON.stringify({ ...result, model }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error('Magic scan failed:', msg)
     return new Response(
-      JSON.stringify({ error: 'Analysis failed', details: error.message }),
+      JSON.stringify({ error: 'Analysis failed', details: msg }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }

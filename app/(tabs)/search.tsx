@@ -71,7 +71,7 @@ const Search = () => {
       icon: <ForkKnife size={18} color="#C5E384" weight="regular" />,
       onPress: () => {
         setShowDotsMenu(false);
-        router.push("/create-meal/index");
+        router.push("/create-meal");
       },
     },
     {
@@ -162,8 +162,7 @@ const Search = () => {
                     onChangeText={setQuery}
                     isSubmitDisabled={
                       query.trim().length < 2 ||
-                      isSearching ||
-                      searchResults.length === 0
+                      isSearching
                     }
                     onSubmit={() => {
                       submitSearch();

@@ -24,7 +24,7 @@
 ## ✨ Klíčové funkce
 
 ### 🤖 Next-Gen AI Skenování
-* **Primární Engine:** Využíváme **Gemini 3.1 Flash Lite** pro bleskovou a levnou analýzu vizuálních dat (fotek jídla).
+* **Primární Engine:** Využíváme **Gemini 2.0 Flash** pro bleskovou a levnou analýzu vizuálních dat (fotek jídla).
 * **Smart Failover:** V případě výpadku nebo složitějších dotazů aplikace automaticky přepíná na záložní model **GPT-4o mini**, aby byla zajištěna 100% spolehlivost.
 * **Editace v reálném čase:** AI ti navrhne gramáž a kalorie, které můžeš jedním klikem upravit.
 * **Skener čárových kódů:** Integrace open-source API (OpenFoodFacts) pro okamžitý zápis balených potravin.

@@ -1,0 +1,49 @@
+import { searchFoodByBarcode } from "@/lib/services/food-search/barcode";
+import { analyzeFood, NotFoodError } from "@/lib/services/food-search/magic-scan";
+import type { ToastType } from "@/types/indexContextType";
+
+type ScanContext = {
+  isProcessing: boolean,
+  setIsProcessing: (v: boolean) => void,
+  navigateToItem: (id: string, item: string) => void,
+  navigateToMealLog: (scanResult: string) => void,
+  navigateBack: () => void,
+  showToast: (msg: string, dateStr?: string, type?: ToastType["type"]) => void
+};
+export const scanBarcode = async (data: string, ctx: ScanContext): Promise<void> => {
+  if (ctx.isProcessing) return;
+  ctx.setIsProcessing(true);
+  try {
+    const result = await searchFoodByBarcode(data);
+    if (result) {
+      ctx.navigateToItem(result.id, JSON.stringify(result));
+    } else {
+      ctx.showToast("Product not found 🥑", undefined, "error");
+      ctx.setIsProcessing(false);
+    }
+  } catch {
+    ctx.showToast("Something went wrong 🥑", undefined, "error");
+    ctx.setIsProcessing(false);
+  }
+}
+export const scanPhoto = async (_uri: string, base64: string | undefined, ctx: ScanContext): Promise<void> => {
+  if (ctx.isProcessing) return;
+  if (!base64) {
+    ctx.showToast("Photo capture failed, try again", undefined, "error");
+    return;
+  }
+  ctx.setIsProcessing(true);
+  try {
+    const result = await analyzeFood(base64);
+    ctx.navigateToMealLog(JSON.stringify(result));
+  } catch (err) {
+    if (err instanceof NotFoodError) {
+      ctx.showToast("That doesn't look like food", undefined, "error");
+    } else {
+      console.error("[MagicScan] Error:", err);
+      ctx.showToast("Could not identify food, try again", undefined, "error");
+    }
+    ctx.setIsProcessing(false);
+    ctx.navigateBack();
+  }
+}
