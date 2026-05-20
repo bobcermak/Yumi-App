@@ -12,7 +12,6 @@ import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AnimatedBackground, AppLoadingSkeleton, RootLayoutContent } from "@/components";
-import { preloadStaticProduce } from "@/lib/services/food-search/cache";
 import { useEffect, useRef } from "react";
 import { PostHogProvider } from "posthog-react-native";
 import "./globals.css";
@@ -33,11 +32,6 @@ const RootLayout = () => {
   const previousPathname = useRef<string | undefined>(undefined);
 
   useEffect(() => {
-    preloadStaticProduce();
-  }, []);
-
-  // Manual screen tracking for Expo Router
-  useEffect(() => {
     if (previousPathname.current !== pathname) {
       posthog.screen(pathname, {
         previous_screen: previousPathname.current ?? null,
@@ -46,7 +40,6 @@ const RootLayout = () => {
       previousPathname.current = pathname;
     }
   }, [pathname, params]);
-
   if (!fontsLoaded) return null;
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

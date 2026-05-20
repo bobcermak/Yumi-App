@@ -26,43 +26,40 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     let mounted = true;
-    const loadState = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
-        if (mounted && session) {
-          const { data: profile, error: profileError } = await getProfile(session.user.id);
-          if (profileError || !profile) {
-            console.warn("[Auth] Profile not found for session, signing out...");
-            await supabase.auth.signOut();
-            setSession(null);
-            setUserProfile(null);
-            await AsyncStorage.removeItem("v1_onboarding_done");
-            setHasOnboarded(false);
-          } else {
-            setSession(session);
-            setUserProfile(profile);
-            posthog.identify(session.user.id, {
-              $set: { username: profile.username ?? null },
-            });
-            const onboarded = await AsyncStorage.getItem("v1_onboarding_done");
-            setHasOnboarded(onboarded === "true");
-          }
-        } else if (mounted) {
-          const onboarded = await AsyncStorage.getItem("v1_onboarding_done");
-          setHasOnboarded(onboarded === "true");
-        }
-      } catch (e) {
-        console.error("Auth initialization error:", e);
-      } finally {
-        if (mounted) setIsReady(true);
-      }
-    };
-    loadState();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, authSession) => {
       if (!mounted) return;
       if (isSigningUpRef.current) return;
-      if (event === 'INITIAL_SESSION') return;
+      if (event === 'INITIAL_SESSION') {
+        try {
+          if (authSession) {
+            const { data: profile, error: profileError } = await getProfile(authSession.user.id);
+            if (profileError || !profile) {
+              console.warn("[Auth] Profile not found for session, signing out...");
+              await supabase.auth.signOut();
+              setSession(null);
+              setUserProfile(null);
+              await AsyncStorage.removeItem("v1_onboarding_done");
+              setHasOnboarded(false);
+            } else {
+              setSession(authSession);
+              setUserProfile(profile);
+              posthog.identify(authSession.user.id, {
+                $set: { username: profile.username ?? null },
+              });
+              const onboarded = await AsyncStorage.getItem("v1_onboarding_done");
+              setHasOnboarded(onboarded === "true");
+            }
+          } else {
+            const onboarded = await AsyncStorage.getItem("v1_onboarding_done");
+            setHasOnboarded(onboarded === "true");
+          }
+        } catch (e) {
+          console.error("Auth initialization error:", e);
+        } finally {
+          if (mounted) setIsReady(true);
+        }
+        return;
+      }
       if (authSession) {
         const { data: profile } = await getProfile(authSession.user.id);
         if (!profile) {

@@ -1,9 +1,16 @@
 import { Toast } from "@/components";
 import { useIndexContext } from "@/lib/hooks/useIndexContext";
+import { preloadStaticProduce } from "@/lib/services/food-search/cache";
 import { Stack } from "expo-router";
+import { useEffect } from "react";
 
 const RootLayoutContent = () => {
   const { toast } = useIndexContext();
+
+  useEffect(() => {
+    preloadStaticProduce();
+  }, []);
+
   return (
     <>
       <Toast toast={toast} />

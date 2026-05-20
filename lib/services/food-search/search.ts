@@ -8,11 +8,17 @@ type SearchParams = {
     foodType?: FoodType,
     maxResults?: number
 };
+const invokeWithRetry = async (fnName: string, body: object): Promise<{ data: any; error: any }> => {
+    const { data, error } = await supabase.functions.invoke(fnName, { body });
+    if (error?.name === 'FunctionsFetchError') {
+        await new Promise(r => setTimeout(r, 1500));
+        return supabase.functions.invoke(fnName, { body });
+    }
+    return { data, error };
+};
 export const searchExternalFoods = async ({ query, category = "all", foodType = "all", maxResults = 4 }: SearchParams): Promise<FoodSearchResult[]> => {
     try {
-        const { data, error } = await supabase.functions.invoke('food-search', {
-            body: { query, category, foodType, pageSize: maxResults },
-        });
+        const { data, error } = await invokeWithRetry('food-search', { query, category, foodType, pageSize: maxResults });
         if (error) {
             console.error(`[FoodSearch] Edge Function error:`, error);
             return [];
@@ -28,9 +34,7 @@ export const searchExternalFoods = async ({ query, category = "all", foodType = 
 };
 export const searchExternalFoodsExtended = async ({ query, category = "all", foodType = "all", maxResults = 6 }: SearchParams): Promise<FoodSearchResult[]> => {
     try {
-        const { data, error } = await supabase.functions.invoke('food-search-extended', {
-            body: { query, category, foodType, pageSize: maxResults },
-        });
+        const { data, error } = await invokeWithRetry('food-search-extended', { query, category, foodType, pageSize: maxResults });
         if (error) {
             console.error(`[FoodSearch] Edge Function error:`, error);
             return [];
