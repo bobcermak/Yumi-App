@@ -1,6 +1,7 @@
 import supabase from "@/lib/services/supabase/client";
 
 export type MagicScanComponent = {
+  emoji?: string;
   name: string;
   weight_g: number;
   calories: number;

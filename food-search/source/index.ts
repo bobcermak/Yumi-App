@@ -114,10 +114,24 @@ Deno.serve(async (req: Request) => {
         const { data: existingFoods } = await supabaseAdmin.from("foods").select("id, name, barcode").in("name", incomingNames);
         const existingMap = new Map<string, any>(existingFoods?.map((f: any) => [f.name, f]) || []);
         const toInsert: any[] = [];
-        const toUpdate: any[] = []; 
+        const toUpdate: any[] = [];
+        const uploadImage = async (imageUrl: string, name: string): Promise<string | null> => {
+          try {
+            const res = await fetch(imageUrl, { signal: AbortSignal.timeout(5000) });
+            if (!res.ok) return null;
+            const buffer = await res.arrayBuffer();
+            if (buffer.byteLength > 400_000) return null;
+            const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').slice(0, 40);
+            const path = `${slug}-${Date.now()}.jpg`;
+            const { error } = await supabaseAdmin.storage.from('foods').upload(path, new Uint8Array(buffer), { contentType: 'image/jpeg', upsert: false });
+            if (error) return null;
+            return supabaseAdmin.storage.from('foods').getPublicUrl(path).data.publicUrl;
+          } catch { return null; }
+        };
         for (const r of uniqueFinalResults as any[]) {
           const existing: any = existingMap.get(r.name);
           if (!existing) {
+            const storageUrl = r.image_url ? await uploadImage(r.image_url, r.name) : null;
             toInsert.push({
               created_by: userId,
               name: r.name,
@@ -126,10 +140,10 @@ Deno.serve(async (req: Request) => {
               protein_per_100g: r.protein_per_100g || 0,
               carbs_per_100g: r.carbs_per_100g || 0,
               fat_per_100g: r.fat_per_100g || 0,
-              image_url: r.image_url || null,
+              image_url: storageUrl || r.image_url || null,
               barcode: r.barcode || null,
               czech_name: r.czech_name || null,
-              category: r.foodCategory || r.category || null, 
+              category: r.foodCategory || r.category || null,
               is_public: true,
               health_rating: computeHealthRating(r)
             });

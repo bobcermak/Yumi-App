@@ -1,4 +1,5 @@
 import { Icon, MealCard } from "@/components";
+import { Alert } from "react-native";
 import { getMealTypeByTime } from "@/lib/helpers/dateHelpers";
 import { useIndexContext } from "@/lib/hooks/useIndexContext";
 import { differenceInCalendarDays, format, isToday, isYesterday } from "date-fns";
@@ -45,7 +46,7 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
           if (!grouped.has(key)) grouped.set(key, []);
           grouped.get(key)!.push(ing);
         }
-        return Array.from(grouped.values()).map(items => {
+        const items = Array.from(grouped.values()).map(items => {
           const first = items[0];
           const totalCal = items.reduce((sum, i) => sum + i.calories, 0);
           return {
@@ -57,6 +58,10 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
             baseCal: items.length > 1 ? first.calories : undefined,
           };
         });
+        if (items.length === 0 && (log.total_calories || 0) > 0) {
+          return [{ id: log.id, mealLogId: log.id, title: log.name, cal: log.total_calories || 0, count: undefined, baseCal: undefined }];
+        }
+        return items;
       });
       const totalCal = logsForType.reduce((sum, log) => sum + (log.total_calories || 0), 0);
       return { ...section, ingredients, totalCal };
@@ -92,16 +97,29 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
       setIsSheetLoading(false);
     }
   };
-  const handleIngredientDelete = async (mealLogId: string) => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    setIsSheetLoading(true);
-    try {
-      await deleteMeal(mealLogId);
-    } catch (error) {
-      showToast("Delete failed", undefined, 'error');
-    } finally {
-      setIsSheetLoading(false);
-    }
+  const handleIngredientDelete = (mealLogId: string) => {
+    Alert.alert(
+      "Remove meal",
+      "Are you sure you want to remove this meal?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: async () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            setIsSheetLoading(true);
+            try {
+              await deleteMeal(mealLogId);
+            } catch {
+              showToast("Delete failed", undefined, 'error');
+            } finally {
+              setIsSheetLoading(false);
+            }
+          },
+        },
+      ]
+    );
   };
   return (
     <BottomSheet

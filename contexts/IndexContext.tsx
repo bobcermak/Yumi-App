@@ -243,33 +243,31 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
     }, [setSelectedDate]);
     const refreshData = useCallback(async () => {
         if (userProfile?.id) {
-            const today = new Date();
+            const today = startOfDay(new Date());
+            const currentDash = dashboardDateRef.current ?? today;
+            const isTodayView = isSameDay(currentDash, today);
             const dateStr = format(today, "yyyy-MM-dd");
+            const dashStr = format(currentDash, "yyyy-MM-dd");
             const { data } = await getDailyLog(userProfile.id, dateStr);
-            const logs = await getMealLogsForDay(userProfile.id, dateStr);
-            setMealLogs(logs);
+            const dashLogs = await getMealLogsForDay(userProfile.id, dashStr);
+            setMealLogs(dashLogs);
             await incrementUserStreak(userProfile.id);
             await refreshProfile();
             const limit = userProfile.daily_calorie_limit || defaultCalLimit;
-            const currentOverview = overviewDataRef.current;
-            const hasDateChanged = currentOverview ? !isSameDay(today, currentOverview.date) : true;
-            const hasDataChanged = currentOverview ? (data?.calories_current || 0) !== currentOverview.calories.current : true;
-            if (hasDateChanged || hasDataChanged) {
-                setRefreshKey(prev => prev + 1);
-                setOverviewData({
-                    date: today,
-                    calories: { current: data?.calories_current || 0, max: limit },
-                    macros: {
-                        carbs: { current: data?.carbs_current || 0, max: Math.round((limit * 0.5) / 4) },
-                        fats: { current: data?.fats_current || 0, max: Math.round((limit * 0.3) / 9) },
-                        protein: { current: data?.protein_current || 0, max: Math.round((limit * 0.2) / 4) },
-                    }
-                });
-                setWaterMl(data?.water_ml || 0);
-                setDashboardDate(startOfDay(today));
-                await fetchMonthActiveDates(userProfile.id, today);
-            }
-            return hasDateChanged || hasDataChanged;
+            setRefreshKey(prev => prev + 1);
+            setOverviewData(prev => ({
+                ...prev,
+                date: isTodayView ? today : currentDash,
+                calories: { current: data?.calories_current || 0, max: limit },
+                macros: {
+                    carbs: { current: data?.carbs_current || 0, max: Math.round((limit * 0.5) / 4) },
+                    fats: { current: data?.fats_current || 0, max: Math.round((limit * 0.3) / 9) },
+                    protein: { current: data?.protein_current || 0, max: Math.round((limit * 0.2) / 4) },
+                }
+            }));
+            if (isTodayView) setWaterMl(data?.water_ml || 0);
+            await fetchMonthActiveDates(userProfile.id, today);
+            return true;
         }
         return false;
     }, [userProfile?.id, fetchMonthActiveDates, refreshProfile]);

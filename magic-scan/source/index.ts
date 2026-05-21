@@ -21,7 +21,9 @@ serve(async (req) => {
       result = await analyzeWithGemini(image) as Record<string, unknown>
       model = 'gemini'
     } catch (geminiError) {
-      console.error('Gemini failed, falling back to GPT:', geminiError instanceof Error ? geminiError.message : String(geminiError))
+      const msg = geminiError instanceof Error ? geminiError.message : String(geminiError)
+      const isRateLimit = msg.includes('429')
+      console.error(`Gemini failed (${isRateLimit ? 'rate limit' : 'error'}), falling back to GPT:`, msg)
       result = await analyzeWithGPT(image) as Record<string, unknown>
       model = 'gpt'
     }

@@ -1,5 +1,5 @@
 import { CaretRight } from "phosphor-react-native";
-import { FC } from "react";
+import { FC, useState } from "react";
 import { Text, TouchableOpacity, View, Image } from "react-native";
 
 type PopularMealProps = {
@@ -9,6 +9,7 @@ type PopularMealProps = {
     onPress: () => void,
 }
 const PopularMeal: FC<PopularMealProps> = ({ imgUrl, name, calories, onPress }) => {
+    const [imgError, setImgError] = useState<boolean>(false);
     return (
         <TouchableOpacity
             onPress={onPress}
@@ -23,7 +24,8 @@ const PopularMeal: FC<PopularMealProps> = ({ imgUrl, name, calories, onPress }) 
             }}
         >
             <Image
-                source={imgUrl ? { uri: imgUrl } : require("@/assets/images/not-found-meal.webp")}
+                source={imgUrl && !imgError ? { uri: imgUrl } : require("@/assets/images/not-found-meal.webp")}
+                onError={() => setImgError(true)}
                 resizeMode="cover"
                 className="w-full h-[90px]"
                 style={{ opacity: 0.8 }}

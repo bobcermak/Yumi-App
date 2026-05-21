@@ -24,7 +24,7 @@
 ## ✨ Klíčové funkce
 
 ### 🤖 Next-Gen AI Skenování
-* **Primární Engine:** Využíváme **Gemini 2.5 Flash-Lite** pro bleskovou a levnou analýzu vizuálních dat (fotek jídla).
+* **Primární Engine:** Využíváme **Gemini 2.0 Flash-Lite** pro bleskovou a levnou analýzu vizuálních dat (fotek jídla).
 * **Smart Failover:** V případě výpadku nebo složitějších dotazů aplikace automaticky přepíná na záložní model **GPT-4o mini**, aby byla zajištěna 100% spolehlivost.
 * **Editace v reálném čase:** AI ti navrhne gramáž a kalorie, které můžeš jedním klikem upravit.
 * **Skener čárových kódů:** Integrace open-source API (OpenFoodFacts) pro okamžitý zápis balených potravin.
@@ -47,12 +47,12 @@ Aplikace je navržena jako udržitelný **Freemium** model.
 
 **Jednotková ekonomika (Unit Economics):**
 
-*Aktuální model – Gemini 2.5 Flash-Lite (free tier: 1 000 req/den):*
+*Aktuální model – Gemini 2.0 Flash-Lite (free tier: 1 500 req/den):*
 * Náklad na 1 AI sken: cca **0,003 Kč**
 * Výnos z 1 video reklamy (Rewarded): cca **0,35 Kč**
 * *1 zhlédnutá video reklama zaplatí provoz pro ~130 AI skenů.*
 
-*Plánovaný upgrade – Gemini 3.1 Flash-Lite (GA od 7. 5. 2026):*
+*Plánovaný upgrade – Gemini 3.1 Flash-Lite (GA: TBD):*
 * Náklad na 1 AI sken: cca **0,009 Kč**
 * Výnos z 1 video reklamy (Rewarded): cca **0,35 Kč**
 * *1 zhlédnutá video reklama zaplatí provoz pro ~40 AI skenů.*
@@ -61,7 +61,7 @@ Aplikace je navržena jako udržitelný **Freemium** model.
 
 * **Frontend:** React Native + Expo (Cross-platform iOS/Android)
 * **Backend & DB:** Supabase (Auth, PostgreSQL, Edge Functions)
-* **AI Engine:** Gemini 2.5 Flash-Lite (Primární) & GPT-4o mini (Záložní)
+* **AI Engine:** Gemini 2.0 Flash-Lite (Primární) & GPT-4o mini (Záložní)
 * **Monetizace:** Google AdMob
 
 ## 🎨 Design System (Avocado Edition)

@@ -350,7 +350,7 @@ const Search = () => {
                       <Text className="title">My Meals</Text>
                       <Button
                         onPress={() => {}}
-                        icon={<Plus size={20} color="#1D1D1D" weight="bold" />}
+                        icon={<Plus size={20} color="#1D1D1D" weight="bold"/>}
                       >
                         Create
                       </Button>

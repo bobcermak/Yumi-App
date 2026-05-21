@@ -32,13 +32,13 @@ export const fetchFoodImages = async (query: string, pixabayKey: string, unsplas
   try {
     const res = await fetch(`https://pixabay.com/api/?key=${pixabayKey}&q=${pixQuery}&image_type=photo&orientation=horizontal&safesearch=true&per_page=30`);
     const data = await res.json();
-    if (data.hits) images.push(...data.hits.map((h: any) => h.largeImageURL || h.webformatURL));
+    if (data.hits) images.push(...data.hits.map((h: any) => h.webformatURL));
   } catch {}
   if (images.length < 10 && unsplashKey) {
     try {
       const res = await fetch(`https://api.unsplash.com/search/photos?query=${unsQuery}&client_id=${unsplashKey}&per_page=20&orientation=landscape`);
       const data = await res.json();
-      if (data.results) images.push(...data.results.map((r: any) => r.urls.regular));
+      if (data.results) images.push(...data.results.map((r: any) => r.urls.small));
     } catch {}
   }
   return images;
@@ -51,7 +51,7 @@ export const searchOFF = async (query: string, region: string, category: string)
     const data = await res.json();
     return (data.products || []).map((p: any) => {
       const rawCat = p.categories ? p.categories.split(",")[0].trim() : "";
-      const offImage = p.image_front_url || p.image_url || p.image_front_small_url || null;
+      const offImage = p.image_front_small_url || p.image_front_url || p.image_url || null;
       return {
         id: `off_${p.id || p.code}`,
         name: p.product_name_cs || p.product_name || p.product_name_en || "Neznámé",

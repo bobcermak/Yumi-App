@@ -3,8 +3,12 @@ import { PROMPT } from './prompt.ts';
 const extractJson = (text: string): Record<string, unknown> => {
   const start = text.indexOf('<<<JSON_START>>>')
   const end = text.indexOf('<<<JSON_END>>>')
-  if (start === -1 || end === -1) throw new Error('Missing JSON markers in GPT response')
-  return JSON.parse(text.slice(start + 16, end).trim())
+  if (start !== -1 && end !== -1) {
+    return JSON.parse(text.slice(start + 16, end).trim())
+  }
+  const match = text.match(/\{[\s\S]*\}/)
+  if (match) return JSON.parse(match[0])
+  throw new Error('Could not extract JSON from GPT response')
 }
 export const analyzeWithGPT = async (base64Image: string): Promise<Record<string, unknown>> => {
   const apiKey = Deno.env.get('OPENAI_API_KEY')
@@ -17,7 +21,7 @@ export const analyzeWithGPT = async (base64Image: string): Promise<Record<string
     },
     body: JSON.stringify({
       model: 'gpt-4o-mini',
-      max_tokens: 500,
+      max_tokens: 1024,
       messages: [{
         role: 'user',
         content: [

@@ -3,9 +3,9 @@ import BottomSheet from "@gorhom/bottom-sheet";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import { NotePencil, Plus, X } from "phosphor-react-native";
+import { NotePencil, Plus, Sparkle, X } from "phosphor-react-native";
 import { type FC, useEffect, useRef, useState } from "react";
-import { Animated, Image, TouchableOpacity, View } from "react-native";
+import { Animated, Image, Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
 import Reanimated, { FadeInDown, FadeOutDown, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import AnimatedTabIcon from "./AnimatedTabIcon";
 
@@ -205,6 +205,7 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
           source={require("../../assets/images/gradient.png")}
           style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%" }}
         />
+        {isMenuOpen && <Pressable style={StyleSheet.absoluteFill} onPress={handleMenuClose} />}
         {isMenuOpen && (
           <>
             <View className="absolute bottom-[148px] left-4 right-4 gap-4">
@@ -237,7 +238,7 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
                     handleMenuClose();
                     router.push("/magic-scan");
                   }}
-                  icon={<NotePencil size={24} color="#1D1D1D" weight="regular" />}
+                  icon={<Sparkle size={24} color="#1D1D1D" weight="regular"/>}
                 >
                   Magic Scan
                 </Button>

@@ -6,7 +6,7 @@ type ScanContext = {
   isProcessing: boolean,
   setIsProcessing: (v: boolean) => void,
   navigateToItem: (id: string, item: string) => void,
-  navigateToMealLog: (scanResult: string) => void,
+  navigateToMealLog: (scanResult: string, photoUri?: string) => void,
   navigateBack: () => void,
   showToast: (msg: string, dateStr?: string, type?: ToastType["type"]) => void
 };
@@ -26,7 +26,7 @@ export const scanBarcode = async (data: string, ctx: ScanContext): Promise<void>
     ctx.setIsProcessing(false);
   }
 }
-export const scanPhoto = async (_uri: string, base64: string | undefined, ctx: ScanContext): Promise<void> => {
+export const scanPhoto = async (uri: string, base64: string | undefined, ctx: ScanContext): Promise<void> => {
   if (ctx.isProcessing) return;
   if (!base64) {
     ctx.showToast("Photo capture failed, try again", undefined, "error");
@@ -35,7 +35,7 @@ export const scanPhoto = async (_uri: string, base64: string | undefined, ctx: S
   ctx.setIsProcessing(true);
   try {
     const result = await analyzeFood(base64);
-    ctx.navigateToMealLog(JSON.stringify(result));
+    ctx.navigateToMealLog(JSON.stringify(result), uri);
   } catch (err) {
     if (err instanceof NotFoodError) {
       ctx.showToast("That doesn't look like food", undefined, "error");

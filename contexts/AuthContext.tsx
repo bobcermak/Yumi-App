@@ -30,6 +30,9 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
       if (!mounted) return;
       if (isSigningUpRef.current) return;
       if (event === 'INITIAL_SESSION') {
+        const safetyTimer = setTimeout(() => {
+          if (mounted) setIsReady(true);
+        }, 8000);
         try {
           if (authSession) {
             const { data: profile, error: profileError } = await getProfile(authSession.user.id);
@@ -56,6 +59,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
         } catch (e) {
           console.error("Auth initialization error:", e);
         } finally {
+          clearTimeout(safetyTimer);
           if (mounted) setIsReady(true);
         }
         return;

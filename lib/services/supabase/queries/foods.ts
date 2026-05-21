@@ -118,6 +118,23 @@ export const incrementFoodLogCount = async (foodIds: string[]): Promise<void> =>
         })
     );
 };
+const isExternalUrl = (url?: string | null) => !!url && !url.includes('.supabase.co/storage/');
+
+const uploadFoodImage = async (foodId: string, imageUrl: string): Promise<void> => {
+  try {
+    const response = await fetch(imageUrl);
+    if (!response.ok) return;
+    const blob = await response.blob();
+    if (blob.size > 400_000) return;
+    const { error } = await supabase.storage
+      .from('foods')
+      .upload(`${foodId}.jpg`, blob, { contentType: 'image/jpeg', upsert: true });
+    if (error) return;
+    const { data } = supabase.storage.from('foods').getPublicUrl(`${foodId}.jpg`);
+    await supabase.from('foods').update({ image_url: data.publicUrl }).eq('id', foodId);
+  } catch {}
+};
+
 //INSERT
 export const upsertExternalFood = async (item: FoodSearchResult, isDrink?: boolean): Promise<string> => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -160,6 +177,9 @@ export const upsertExternalFood = async (item: FoodSearchResult, isDrink?: boole
         }
         console.error("[supabase/queries/foods] Error upserting external food:", insertError);
         throw insertError;
+    }
+    if (isExternalUrl(item.image_url)) {
+        uploadFoodImage(newFood.id, item.image_url!);
     }
     return newFood.id;
 };
