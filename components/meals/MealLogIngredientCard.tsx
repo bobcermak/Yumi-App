@@ -1,4 +1,4 @@
-import { PencilSimple, Trash } from "phosphor-react-native";
+import { Trash } from "phosphor-react-native";
 import { type FC, useState } from "react";
 import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
