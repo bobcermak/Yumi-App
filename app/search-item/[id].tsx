@@ -58,7 +58,7 @@ const SearchItem = () => {
     >
       <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); setIsDropdownOpen(false); }}>
         <View style={{ flex: 1 }}>
-          <View className="flex-row w-[380px] self-center justify-between items-center py-4 px-2 z-50 mt-[88px]">
+          <View className="flex-row w-[380px] self-center justify-between items-center py-4 px-2 z-50 mt-[56px]">
             <Icon onPress={() => router.back()} className="bg-yellow w-12 h-12">
               <CaretLeft size={24} color="#1D1D1D" weight="regular" />
             </Icon>

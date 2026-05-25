@@ -12,6 +12,7 @@ export const useFoodSearch = () => {
     const [query, setQuery] = useState<string>("");
     const [category, setCategory] = useState<FoodCategory>("all");
     const [foodType, setFoodType] = useState<FoodType>("all");
+    const [isPending, setIsPending] = useState<boolean>(false);
     //Refs
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const searchIdRef = useRef<number>(0);
@@ -61,17 +62,21 @@ export const useFoodSearch = () => {
         const currentTrimmed = query.trim();
         const currentSignature = `${currentTrimmed}-${category}-${foodType}`;
         if (category !== "all" && currentTrimmed.length === 0) {
+            setIsPending(false);
             isFullSearchRef.current = false;
             lastRequestSignature.current = currentSignature;
             performSearch();
             return;
         }
         if (!currentTrimmed) {
+            setIsPending(false);
             lastRequestSignature.current = "";
             reset();
             return;
         }
+        setIsPending(true);
         debounceRef.current = setTimeout(() => {
+            setIsPending(false);
             if (lastRequestSignature.current === currentSignature) {
                 return;
             }
@@ -85,6 +90,7 @@ export const useFoodSearch = () => {
     }, [query, category, foodType, performSearch, reset]);
     const submitSearch = useCallback(() => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
+        setIsPending(false);
         isFullSearchRef.current = true;
         const currentSignature = `${query.trim()}-${category}-${foodType}`;
         lastRequestSignature.current = currentSignature;
@@ -93,6 +99,7 @@ export const useFoodSearch = () => {
     return {
         query, setQuery,
         results, isLoading, source,
+        isPending,
         submitSearch,
         category, setCategory,
         foodType, setFoodType,

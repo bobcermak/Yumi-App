@@ -12,6 +12,7 @@ export type SearchContextType = {
     setQuery: (text: string) => void;
     searchResults: FoodSearchResult[];
     isSearching: boolean;
+    isSearchPending: boolean;
     searchSource: 'openfoodfacts' | 'usda' | null;
     submitSearch: () => void;
     category: FoodCategory;

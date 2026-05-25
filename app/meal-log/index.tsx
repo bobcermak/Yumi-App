@@ -4,9 +4,9 @@ import { MEAL_TYPES } from "@/lib/helpers/mealHelpers";
 import type { MagicScanResult } from "@/lib/services/food-search/magic-scan";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { CaretDown, CaretLeft, Heart, PencilSimple, Plus, Sparkle } from "phosphor-react-native";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import Animated, { FadeInDown, FadeInUp, FadeOutUp, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeInUp, FadeOutUp, LinearTransition, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const MealLog = () => {
@@ -26,13 +26,29 @@ const MealLog = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isFavoriteLoading] = useState(false);
-  const [components, setComponents] = useState(result?.components ?? []);
+  const [displayedComponents, setDisplayedComponents] = useState(
+    () => (result?.components ?? []).map((comp, i) => ({ ...comp, originalIndex: i }))
+  );
   const [mealData, setMealData] = useState<{
     grams: number;
     count: number;
     calories: number;
     waterMl: number;
   } | null>(null);
+  const baseWeight = result?.weight_g && result.weight_g > 0 ? result.weight_g : 100;
+  const scaledComponents = useMemo(() => {
+    if (!displayedComponents.length) return [];
+    const currentGrams = mealData?.grams ?? baseWeight;
+    const ratio = currentGrams / baseWeight;
+    return displayedComponents.map(comp => ({
+      ...comp,
+      weight_g: Math.round(comp.weight_g * ratio * 10) / 10,
+      calories: Math.round(comp.calories * ratio),
+      carbs_g: Math.round(comp.carbs_g * ratio * 10) / 10,
+      fat_g: Math.round(comp.fat_g * ratio * 10) / 10,
+      protein_g: Math.round(comp.protein_g * ratio * 10) / 10,
+    }));
+  }, [displayedComponents, mealData?.grams, baseWeight]);
   const arrowRotation = useSharedValue(0);
   const animatedArrowStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${arrowRotation.value}deg` }],
@@ -64,7 +80,7 @@ const MealLog = () => {
         keyboardShouldPersistTaps="handled"
       >
         <View
-          className="flex-row w-[380px] self-center justify-between items-center py-4 z-50"
+          className="flex-row w-[380px] self-center justify-between items-center pb-4 z-50"
           style={{ marginTop: insets.top + 16 }}
         >
           <Icon onPress={() => router.back()} className="bg-yellow w-12 h-12">
@@ -133,7 +149,7 @@ const MealLog = () => {
             )}
           </Icon>
         </View>
-        <Animated.View entering={FadeInDown.duration(250)} className="w-[362px] self-center mt-2 mb-5">
+        <Animated.View entering={FadeInDown.duration(250)} className="w-[362px] self-center mb-8">
           <Button
             className="rounded-[30px] mx-0 w-full py-5"
             textClassName="text-xl"
@@ -142,19 +158,21 @@ const MealLog = () => {
             Record
           </Button>
         </Animated.View>
-        <Animated.View entering={FadeInDown.delay(60).duration(250)} className="w-[362px] self-center mb-3">
-          <Text className="text-white font-nunito-800 text-xl mb-3">My Meal</Text>
-          <View className="flex-row items-center justify-between bg-dark rounded-[14px] px-4 py-3 border border-white/10 mb-3">
+        <Animated.View entering={FadeInDown.delay(60).duration(250)} className="w-[362px] self-center mb-8">
+          <Text className="title mb-4">My Meal</Text>
+          <TouchableOpacity
+            className="flex-row items-center justify-between bg-dark rounded-[14px] px-4 py-3 border border-white/10 mb-3"
+            activeOpacity={0.25}
+            onPress={() => {}}>
             <Text className="text-white/60 font-nunito-600 text-base">Not Right?</Text>
             <TouchableOpacity
-              activeOpacity={0.25}
-              onPress={() => router.back()}
-              className="flex-row items-center gap-1 bg-yellow rounded-[10px] px-3 py-2"
+              
+              className="flex-row items-center gap-2 bg-yellow rounded-[10px] px-4 py-3"
             >
-              <Sparkle size={16} color="#1D1D1D" weight="fill" />
-              <Text className="text-dark font-nunito-700 text-sm">Replace</Text>
+              <Sparkle size={16} color="#1D1D1D" weight="regular"/>
+              <Text className="text-dark font-nunito-700 text-base">Replace</Text>
             </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
           <ResultMeal
             imgSrc={photoUriParam || ""}
             title={result.name}
@@ -170,13 +188,13 @@ const MealLog = () => {
             onDataChange={setMealData}
           />
         </Animated.View>
-        {components.length > 0 && (
-          <Animated.View entering={FadeInDown.delay(120).duration(250)} className="w-[362px] self-center mt-4">
-            <Text className="font-nunito-700 text-[28px] text-white">What's inside?</Text>
-            <View className="gap-3">
-              {components.map((comp, i) => (
+        {scaledComponents.length > 1 && (
+          <Animated.View entering={FadeInDown.delay(120).duration(250)} className="w-[362px] self-center">
+            <Text className="title mb-4">What's inside?</Text>
+            <Animated.View className="gap-3" layout={LinearTransition.springify().damping(18)}>
+              {scaledComponents.map((comp, i) => (
                 <MealLogIngredientCard
-                  key={i}
+                  key={comp.originalIndex}
                   index={i}
                   emoji={comp.emoji}
                   name={comp.name}
@@ -185,11 +203,11 @@ const MealLog = () => {
                   carbs_g={comp.carbs_g}
                   fat_g={comp.fat_g}
                   protein_g={comp.protein_g}
-                  onDelete={() => setComponents((prev) => prev.filter((_, idx) => idx !== i))}
+                  onDelete={() => setDisplayedComponents(prev => prev.filter(c => c.originalIndex !== comp.originalIndex))}
                 />
               ))}
-            </View>
-            <Animated.View entering={FadeInDown.delay(components.length * 80 + 120).duration(250)} className="mt-8">
+            </Animated.View>
+            <Animated.View entering={FadeInDown.delay(scaledComponents.length * 80 + 120).duration(250)} className="mt-8">
               <Button
                 className="rounded-[30px] mx-0 w-full py-5 bg-yellow"
                 textClassName="text-xl"

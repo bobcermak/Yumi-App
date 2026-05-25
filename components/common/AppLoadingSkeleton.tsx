@@ -17,7 +17,7 @@ const AppLoadingSkeleton = () => {
   const W   = 362;
   return (
     <View style={{ flex: 1, backgroundColor: '#121212' }}>
-      <Animated.View style={{ opacity: pulse, marginTop: 88, alignItems: 'center' }}>
+      <Animated.View style={{ opacity: pulse, marginTop: 56, alignItems: 'center' }}>
         <View style={{ width: W + 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingVertical: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1, marginRight: 16 }}>
             <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: bg }} />

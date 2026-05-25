@@ -3,12 +3,14 @@ import { Profile, ProfileInsert, ProgressPhotoInsert, ProfileUpdate } from "@/ty
 import { PostgrestError } from "@supabase/supabase-js";
 
 //GET
-export const checkUsernameIfExists = async (username: string): Promise<boolean> => {
-  const { data } = await supabase
+export const checkUsernameIfExists = async (username: string, signal?: AbortSignal): Promise<boolean> => {
+  const query = supabase
     .from("profiles")
     .select("username")
-    .ilike("username", username.trim())
+    .eq("username", username.trim().toLowerCase())
     .limit(1);
+  if (signal) query.abortSignal(signal);
+  const { data } = await query;
   return !!data && data.length > 0;
 }
 export const getProfile = async (id: string): Promise<{ data: Profile | null, error: PostgrestError | null }> => {

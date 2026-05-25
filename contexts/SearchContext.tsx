@@ -14,7 +14,7 @@ type SearchProviderProps = {
 const SearchProvider: FC<SearchProviderProps> = ({ children }) => {
     //Contexts
     const { userProfile } = useAuth();
-    const { query, setQuery, results: searchResults, isLoading: isSearching, source: searchSource, submitSearch, category, setCategory, foodType, setFoodType } = useFoodSearch();
+    const { query, setQuery, results: searchResults, isLoading: isSearching, source: searchSource, submitSearch, isPending: isSearchPending, category, setCategory, foodType, setFoodType } = useFoodSearch();
     //Hooks
     const [filter, setFilter] = useState<'My' | 'All'>('My');
     const [hasManuallyChangedFilter, setHasManuallyChangedFilter] = useState<boolean>(false);
@@ -76,6 +76,7 @@ const SearchProvider: FC<SearchProviderProps> = ({ children }) => {
                 setQuery,
                 searchResults,
                 isSearching,
+                isSearchPending,
                 searchSource,
                 submitSearch: handleSubmitSearch,
                 category,

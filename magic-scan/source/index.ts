@@ -19,7 +19,13 @@ serve(async (req) => {
     let model: string
     try {
       result = await analyzeWithGemini(image) as Record<string, unknown>
-      model = 'gemini'
+      if (result.is_food === false) {
+        console.log('Gemini returned is_food: false, retrying with GPT')
+        result = await analyzeWithGPT(image) as Record<string, unknown>
+        model = 'gpt'
+      } else {
+        model = 'gemini'
+      }
     } catch (geminiError) {
       const msg = geminiError instanceof Error ? geminiError.message : String(geminiError)
       const isRateLimit = msg.includes('429')

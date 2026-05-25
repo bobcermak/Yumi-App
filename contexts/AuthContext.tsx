@@ -26,13 +26,13 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     let mounted = true;
+    const fallbackTimer = setTimeout(() => {
+      setIsReady(true);
+    }, 10000);
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, authSession) => {
       if (!mounted) return;
       if (isSigningUpRef.current) return;
       if (event === 'INITIAL_SESSION') {
-        const safetyTimer = setTimeout(() => {
-          if (mounted) setIsReady(true);
-        }, 8000);
         try {
           if (authSession) {
             const { data: profile, error: profileError } = await getProfile(authSession.user.id);
@@ -59,8 +59,8 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
         } catch (e) {
           console.error("Auth initialization error:", e);
         } finally {
-          clearTimeout(safetyTimer);
-          if (mounted) setIsReady(true);
+          clearTimeout(fallbackTimer);
+          setIsReady(true);
         }
         return;
       }
@@ -83,6 +83,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     });
     return () => {
       mounted = false;
+      clearTimeout(fallbackTimer);
       subscription.unsubscribe();
     };
   }, []);

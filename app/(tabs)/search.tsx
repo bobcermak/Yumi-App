@@ -24,7 +24,7 @@ const Search = () => {
   const { focus } = useLocalSearchParams<{ focus: string }>();
   const insets = useSafeAreaInsets();
   //Contexts
-  const { query, setQuery, searchResults, isSearching, searchSource, submitSearch, category, setCategory, foodType, setFoodType, popularMeals, refreshPopularMeals, setFilter,
+  const { query, setQuery, searchResults, isSearching, isSearchPending, searchSource, submitSearch, category, setCategory, foodType, setFoodType, popularMeals, refreshPopularMeals, setFilter,
   } = useSearchContext();
   //Hooks
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
@@ -111,7 +111,7 @@ const Search = () => {
       }}
     >
       <Animated.View style={animatedPageStyle}>
-        <View className="flex-1 mt-[88px] w-full">
+        <View className="flex-1 mt-[56px] w-full">
           <View className="flex-row w-[380px] self-center justify-center items-center py-4">
             <Icon
               onPress={() => router.back()}
@@ -132,7 +132,6 @@ const Search = () => {
             keyboardDismissMode="on-drag"
             onScrollBeginDrag={() => {
               Keyboard.dismiss();
-              setShowDropdown(false);
             }}
             nestedScrollEnabled={true}
             scrollEventThrottle={16}
@@ -277,7 +276,7 @@ const Search = () => {
                   >
                     <View className="flex-row items-center justify-between mb-1 px-4">
                       <Text className="text-white/60 font-nunito-700 text-lg">
-                        {isSearching || searchResults.length > 0
+                        {isSearching || isSearchPending || searchResults.length > 0
                           ? query.trim().length === 0 && category !== "all"
                             ? category === "fruits"
                               ? "Fruits"
@@ -285,7 +284,7 @@ const Search = () => {
                             : "Related Searches"
                           : "Not Found"}
                       </Text>
-                      {!isSearching &&
+                      {!isSearching && !isSearchPending &&
                         searchResults.length > 0 &&
                         searchSource && (
                           <Text className="text-white/30 font-nunito-600 text-sm">
@@ -295,7 +294,7 @@ const Search = () => {
                         )}
                     </View>
                     <View>
-                      {isSearching ? (
+                      {isSearching || isSearchPending ? (
                         Array.from({ length: 4 }).map((_, i) => (
                           <SearchResultSkeleton key={`skel-${i}`} />
                         ))

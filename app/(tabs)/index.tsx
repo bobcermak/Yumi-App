@@ -76,7 +76,7 @@ const Home = () => {
         <View className="flex-1">
             <Animated.View style={animatedPageStyle}>
                 <ScrollView 
-                    className="flex-1 mt-[88px] w-[380px] self-center" 
+                    className="flex-1 mt-[56px] w-[380px] self-center" 
                     showsVerticalScrollIndicator={false} 
                     contentContainerStyle={{ paddingBottom: TAB_BAR_HEIGHT + insets.bottom }}
                     refreshControl={

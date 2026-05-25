@@ -28,7 +28,7 @@ const OnboardingProvider: FC<OnboardingProviderProps> = ({ children }) => {
   const [dailyCalories, setDailyCaloriesRaw] = useState<number>(2000);
   const [goalDate, setGoalDateRaw] = useState<string | null>(null);
   //Fetch
-  const fetchUsernameStatus = useCallback(() => checkUsernameIfExists(username), [username]);
+  const fetchUsernameStatus = useCallback((signal?: AbortSignal) => checkUsernameIfExists(username, signal), [username]);
   const { data: usernameTakenResult, loading: isUsernameLoading, refetch: refetchUsername, reset: resetUsernameStatus } = useFetch(fetchUsernameStatus, false);
 
   //Calculations
@@ -113,7 +113,7 @@ const OnboardingProvider: FC<OnboardingProviderProps> = ({ children }) => {
   }, [pathname, currentKg, targetKg, activityLevel]);
   const usernameTaken = !!usernameTakenResult;
   useEffect(() => {
-    if (username.trim().length >= 2) {
+    if (username.trim().length >= 3) {
       resetUsernameStatus();
       setSuggestions([]);
       const t = setTimeout(refetchUsername, 300);

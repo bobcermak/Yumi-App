@@ -1,7 +1,7 @@
 import { Trash } from "phosphor-react-native";
-import { type FC, useState } from "react";
+import { type FC, useRef, useState } from "react";
 import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeOutLeft, LinearTransition } from "react-native-reanimated";
 
 type MealLogIngredientCardProps = {
     emoji?: string,
@@ -19,6 +19,7 @@ type MealLogIngredientCardProps = {
 };
 const MealLogIngredientCard: FC<MealLogIngredientCardProps> = ({ emoji = "🍽️", name, weight_g, calories, carbs_g, fat_g, protein_g, count = 1, index = 0, onEdit, onDelete, onCountChange }) => {
     //Hooks
+    const enteringAnim = useRef(FadeInDown.delay(index * 80).duration(250)).current;
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [calInput, setCalInput] = useState<string>(String(calories));
 
@@ -30,7 +31,9 @@ const MealLogIngredientCard: FC<MealLogIngredientCardProps> = ({ emoji = "🍽�
     };
     return (
         <Animated.View
-            entering={FadeInDown.delay(index * 80).duration(250)}
+            entering={enteringAnim}
+            exiting={FadeOutLeft.duration(200)}
+            layout={LinearTransition.springify().damping(18)}
             className="bg-dark rounded-[15px] p-4 border border-white/10"
             style={{
                 shadowColor: "#000000",
