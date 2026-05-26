@@ -1,13 +1,18 @@
 import { PROMPT } from './prompt.ts';
 
+const sanitizeJsonEmojis = (text: string): string => {
+  return text.replace(/"emoji"\s*:\s*(?!")([^,\}\n\r]+)/g, (_match, value) => {
+    return `"emoji": "${value.trim()}"`;
+  });
+};
 const extractJson = (text: string): Record<string, unknown> => {
   const start = text.indexOf('<<<JSON_START>>>')
   const end = text.indexOf('<<<JSON_END>>>')
   if (start !== -1 && end !== -1) {
-    return JSON.parse(text.slice(start + 16, end).trim())
+    return JSON.parse(sanitizeJsonEmojis(text.slice(start + 16, end).trim()))
   }
   const match = text.match(/\{[\s\S]*\}/)
-  if (match) return JSON.parse(match[0])
+  if (match) return JSON.parse(sanitizeJsonEmojis(match[0]))
   throw new Error('Could not extract JSON from GPT response')
 }
 export const analyzeWithGPT = async (base64Image: string): Promise<Record<string, unknown>> => {

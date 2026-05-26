@@ -163,6 +163,8 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
             const dateStr = format(dashboardDate, "yyyy-MM-dd");
             const logs = await getMealLogsForDay(userProfile.id, dateStr);
             setMealLogs(logs);
+            await incrementUserStreak(userProfile.id);
+            await refreshProfile();
             const { data } = await getDailyLog(userProfile.id, dateStr);
             setOverviewData(prev => ({
                 ...prev,

@@ -42,6 +42,12 @@ export const useResultMeal = ({ id, calories_per_100g, carbs_per_100g, protein_p
   const [isFavoriteLocal, setIsFavoriteLocal] = useState<boolean>(false);
   const [waterMl, setWaterMl] = useState<number>(initialGrams * initialCount);
 
+  useEffect(() => {
+    setGrams(initialGrams);
+  }, [initialGrams]);
+  useEffect(() => {
+    setCount(initialCount);
+  }, [initialCount]);
   const isFavorite = isFavoriteExternal ?? isFavoriteLocal;
 
   // Calculations
@@ -59,7 +65,6 @@ export const useResultMeal = ({ id, calories_per_100g, carbs_per_100g, protein_p
   const proteinDisplay = formatMacroDisplay(protein, isPercentaged, totalMacros);
   const fatDisplay = formatMacroDisplay(fat, isPercentaged, totalMacros);
   //Functions
-  // Auto-sync waterMl = grams × count (used as default when logging a drink)
   useEffect(() => {
     setWaterMl(grams * count);
   }, [grams, count]);

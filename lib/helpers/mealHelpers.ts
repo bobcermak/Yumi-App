@@ -57,6 +57,36 @@ export const getMacroRatio = (value: number, total: number) => {
   return total > 0 ? value / total : 0.33;
 };
 export const cleanNumericInput = (val: string) => val.replace(/[^0-9]/g, '');
+export const computeHealthRating = (food: {
+  calories_per_100g: number;
+  protein_per_100g: number;
+  fat_per_100g: number;
+  carbs_per_100g: number;
+}): number => {
+  const cal = food.calories_per_100g || 0;
+  const protein = food.protein_per_100g || 0;
+  const fat = food.fat_per_100g || 0;
+  const carbs = food.carbs_per_100g || 0;
+  if (cal === 0 && protein === 0 && fat === 0 && carbs === 0) return 5.0;
+  let score = 5.0;
+  if (cal <= 30) score += 2.0;
+  else if (cal <= 60) score += 1.5;
+  else if (cal <= 100) score += 1.0;
+  else if (cal <= 150) score += 0.5;
+  else if (cal <= 250) score += 0.0;
+  else if (cal <= 400) score -= 1.0;
+  else if (cal <= 500) score -= 2.0;
+  else score -= 3.0;
+  if (protein >= 20) score += 1.5;
+  else if (protein >= 10) score += 1.0;
+  else if (protein >= 5) score += 0.5;
+  if (fat >= 30) score -= 2.0;
+  else if (fat >= 20) score -= 1.0;
+  else if (fat >= 10) score -= 0.5;
+  if (carbs >= 60) score -= 1.0;
+  else if (carbs >= 40) score -= 0.5;
+  return Math.min(10, Math.max(0, Math.round(score * 10) / 10));
+};
 export const getRatingColor = (rating?: number | null): string => {
   if (rating === undefined || rating === null) return "#FFFFFF30";
   if (rating >= 8) return "#84C754";

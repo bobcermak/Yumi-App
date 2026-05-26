@@ -1,6 +1,7 @@
 import { Food } from "@/types/database/dbModels";
 import { FoodSearchResult } from "@/types/foodSearchResult";
 import supabase from "../client";
+import { uploadImage } from "./storage";
 
 //GET
 export const getPopularFoods = async (limit: number = 10): Promise<Food[]> => {
@@ -119,7 +120,6 @@ export const incrementFoodLogCount = async (foodIds: string[]): Promise<void> =>
     );
 };
 const isExternalUrl = (url?: string | null) => !!url && !url.includes('.supabase.co/storage/');
-
 const uploadFoodImage = async (foodId: string, imageUrl: string): Promise<void> => {
   try {
     const response = await fetch(imageUrl);
@@ -134,7 +134,6 @@ const uploadFoodImage = async (foodId: string, imageUrl: string): Promise<void> 
     await supabase.from('foods').update({ image_url: data.publicUrl }).eq('id', foodId);
   } catch {}
 };
-
 //INSERT
 export const upsertExternalFood = async (item: FoodSearchResult, isDrink?: boolean): Promise<string> => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -182,6 +181,39 @@ export const upsertExternalFood = async (item: FoodSearchResult, isDrink?: boole
         uploadFoodImage(newFood.id, item.image_url!);
     }
     return newFood.id;
+};
+export const insertScannedFood = async (
+  data: {
+    name: string;
+    calories_per_100g: number;
+    protein_per_100g: number;
+    fat_per_100g: number;
+    carbs_per_100g: number;
+    health_rating?: number | null;
+  },
+  photoUri?: string | null
+): Promise<string> => {
+  const { data: newFood, error } = await supabase
+    .from('foods')
+    .insert({
+      name: data.name,
+      calories_per_100g: data.calories_per_100g,
+      protein_per_100g: data.protein_per_100g,
+      fat_per_100g: data.fat_per_100g,
+      carbs_per_100g: data.carbs_per_100g,
+      health_rating: data.health_rating ?? null,
+    })
+    .select('id')
+    .single();
+  if (error) throw error;
+  if (photoUri) {
+    uploadImage(photoUri, `${newFood.id}.jpg`, 'foods')
+      .then(url => {
+        if (url) supabase.from('foods').update({ image_url: url }).eq('id', newFood.id);
+      })
+      .catch(() => {});
+  }
+  return newFood.id;
 };
 export const toggleFavoriteFood = async (userId: string, item: FoodSearchResult): Promise<{ isFavorite: boolean, newFoodId: string }> => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

@@ -1,32 +1,41 @@
 import { getRatingColor } from "@/lib/helpers/mealHelpers";
 import { useResultMeal } from "@/lib/hooks/useResultMeal";
 import { Minus as MinusIcon, PencilSimple, Plus, Star, Heart } from "phosphor-react-native";
-import { FC, useEffect } from "react";
+import { type Ref, useEffect, useImperativeHandle } from "react";
 import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Animated, { cancelAnimation, Easing, FadeInDown, FadeOutRight, LinearTransition, useAnimatedStyle, useSharedValue, withRepeat, withTiming, FadeInRight } from "react-native-reanimated";
 
+export type ResultMealHandle = {
+    focusCalories: () => void;
+};
 type ResultMealProps = {
-    id?: string,
-    imgSrc: string,
-    title: string,
-    calories_per_100g: number,
-    carbs_per_100g: number,
-    protein_per_100g: number,
-    fat_per_100g: number,
-    rating?: number | null,
-    initialGrams?: number,
-    initialCount?: number,
-    isFavorite?: boolean,
-    isFavoriteLoading?: boolean,
-    onToggleFavorite?: () => void,
-    onDataChange?: (data: { grams: number, count: number, calories: number, waterMl: number }) => void
-}
-const ResultMeal: FC<ResultMealProps> = ({ id, imgSrc, title, calories_per_100g, carbs_per_100g, protein_per_100g, fat_per_100g, rating, initialGrams = 100, initialCount = 1, isFavorite, isFavoriteLoading, onToggleFavorite, onDataChange
-}) => {
+    ref?: Ref<ResultMealHandle>;
+    id?: string;
+    imgSrc: string;
+    title: string;
+    calories_per_100g: number;
+    carbs_per_100g: number;
+    protein_per_100g: number;
+    fat_per_100g: number;
+    rating?: number | null;
+    initialGrams?: number;
+    initialCount?: number;
+    isFavorite?: boolean;
+    isFavoriteLoading?: boolean;
+    onToggleFavorite?: () => void;
+    onDataChange?: (data: { grams: number; count: number; calories: number; waterMl: number }) => void;
+};
+const ResultMeal = ({ ref, id, imgSrc, title, calories_per_100g, carbs_per_100g, protein_per_100g, fat_per_100g, rating, initialGrams = 100, initialCount = 1, isFavorite, isFavoriteLoading, onToggleFavorite, onDataChange }: ResultMealProps) => {
     const { state, refs, handlers } = useResultMeal({
         id, calories_per_100g, carbs_per_100g, protein_per_100g, fat_per_100g,
         initialGrams, initialCount, isFavoriteExternal: isFavorite, onToggleFavoriteExternal: onToggleFavorite, onDataChange
     });
+    useImperativeHandle(ref, () => ({
+        focusCalories: () => {
+            handlers.handleCalorieFocus();
+            refs.calorieInputRef.current?.focus();
+        }
+    }));
     const carbsAnim = useSharedValue(0);
     const fatAnim = useSharedValue(0);
     const proteinAnim = useSharedValue(0);

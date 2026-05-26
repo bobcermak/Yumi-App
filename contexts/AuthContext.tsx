@@ -1,18 +1,20 @@
+import { posthog } from "@/lib/config/posthog";
 import { completeOnboarding } from "@/lib/helpers/authHelpers";
 import supabase from "@/lib/services/supabase/client";
-import { getProfile, checkUsernameIfExists } from "@/lib/services/supabase/queries/setupUserAccount";
+import { checkUsernameIfExists, getProfile } from "@/lib/services/supabase/queries/setupUserAccount";
 import { AuthContextType } from "@/types/authContextType";
 import { Profile } from "@/types/database/dbModels";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Session } from "@supabase/supabase-js";
-import React, { createContext, useEffect, useState, type FC, useCallback, useRef } from "react";
-import { posthog } from "@/lib/config/posthog";
+import React, { createContext, useCallback, useEffect, useRef, useState, type FC } from "react";
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined,
+);
 
 type AuthProviderProps = {
-  children: React.ReactNode
-}
+  children: React.ReactNode;
+};
 export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   //Hooks
   const [isReady, setIsReady] = useState<boolean>(false);
@@ -26,44 +28,57 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     let mounted = true;
-    const fallbackTimer = setTimeout(() => {
-      setIsReady(true);
-    }, 10000);
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, authSession) => {
-      if (!mounted) return;
-      if (isSigningUpRef.current) return;
-      if (event === 'INITIAL_SESSION') {
-        try {
-          if (authSession) {
-            const { data: profile, error: profileError } = await getProfile(authSession.user.id);
-            if (profileError || !profile) {
-              console.warn("[Auth] Profile not found for session, signing out...");
-              await supabase.auth.signOut();
+
+    const initializeAuth = async () => {
+      try {
+        const {
+          data: { session: initialSession },
+        } = await supabase.auth.getSession();
+
+        if (initialSession) {
+          const { data: profile, error: profileError } = await getProfile(
+            initialSession.user.id,
+          );
+          if (profileError || !profile) {
+            console.warn(
+              "[Auth] Profile not found for session, signing out...",
+            );
+            await supabase.auth.signOut();
+            if (mounted) {
               setSession(null);
               setUserProfile(null);
               await AsyncStorage.removeItem("v1_onboarding_done");
               setHasOnboarded(false);
-            } else {
-              setSession(authSession);
-              setUserProfile(profile);
-              posthog.identify(authSession.user.id, {
-                $set: { username: profile.username ?? null },
-              });
-              const onboarded = await AsyncStorage.getItem("v1_onboarding_done");
-              setHasOnboarded(onboarded === "true");
             }
           } else {
-            const onboarded = await AsyncStorage.getItem("v1_onboarding_done");
-            setHasOnboarded(onboarded === "true");
+            if (mounted) {
+              setSession(initialSession);
+              setUserProfile(profile);
+              posthog.identify(initialSession.user.id, {
+                $set: { username: profile.username ?? null },
+              });
+              const onboarded =
+                await AsyncStorage.getItem("v1_onboarding_done");
+              setHasOnboarded(onboarded === "true");
+            }
           }
-        } catch (e) {
-          console.error("Auth initialization error:", e);
-        } finally {
-          clearTimeout(fallbackTimer);
-          setIsReady(true);
+        } else {
+          const onboarded = await AsyncStorage.getItem("v1_onboarding_done");
+          if (mounted) setHasOnboarded(onboarded === "true");
         }
-        return;
+      } catch (e) {
+        console.error("Auth initialization error:", e);
+      } finally {
+        if (mounted) setIsReady(true);
       }
+    };
+    initializeAuth();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, authSession) => {
+      if (!mounted || isSigningUpRef.current || event === "INITIAL_SESSION")
+        return;
+
       if (authSession) {
         const { data: profile } = await getProfile(authSession.user.id);
         if (!profile) {
@@ -77,89 +92,117 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
           setSession(authSession);
         }
       } else {
-        setSession(null);
-        setUserProfile(null);
+        if (mounted) {
+          setSession(null);
+          setUserProfile(null);
+        }
       }
     });
+
     return () => {
       mounted = false;
-      clearTimeout(fallbackTimer);
       subscription.unsubscribe();
     };
   }, []);
-  const signUp = useCallback(async (onboardingData?: {
-    fullName: string;
-    username: string;
-    photoUri: string | null;
-    progressPhotos: string[];
-    currentWeight: number;
-    targetWeight: number;
-    dailyCalories: number;
-    activityLevel: number;
-    weightUnit: "kg" | "lb";
-    goalDate: string | null;
-  }) => {
-    setIsLoading(true);
-    isSigningUpRef.current = true;
-    try {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
-      if (!emailRegex.test(email)) return { error: { message: "Please enter a valid email address." } };
-      if (!passwordRegex.test(password)) return { error: { message: "Password must be at least 8 chars long with a letter and a number." } };
-      if (onboardingData) {
-        const isTaken = await checkUsernameIfExists(onboardingData.username);
-        if (isTaken) return { error: { message: "This username is already taken. Please choose a different one." } };
-      }
-      const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
-      if (authError || !authData.user) return { error: authError ?? { message: "Sign up failed." } };
-      if (onboardingData) {
-        const { error: onboardingError } = await completeOnboarding(authData.user.id, onboardingData);
-        if (onboardingError) {
-          await supabase.auth.signOut();
-          return { error: onboardingError };
+  const signUp = useCallback(
+    async (onboardingData?: {
+      fullName: string;
+      username: string;
+      photoUri: string | null;
+      progressPhotos: string[];
+      currentWeight: number;
+      targetWeight: number;
+      dailyCalories: number;
+      activityLevel: number;
+      weightUnit: "kg" | "lb";
+      goalDate: string | null;
+    }) => {
+      setIsLoading(true);
+      isSigningUpRef.current = true;
+      try {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+        if (!emailRegex.test(email))
+          return { error: { message: "Please enter a valid email address." } };
+        if (!passwordRegex.test(password))
+          return {
+            error: {
+              message:
+                "Password must be at least 8 chars long with a letter and a number.",
+            },
+          };
+        if (onboardingData) {
+          const isTaken = await checkUsernameIfExists(onboardingData.username);
+          if (isTaken)
+            return {
+              error: {
+                message:
+                  "This username is already taken. Please choose a different one.",
+              },
+            };
         }
-      }
-      const { data: sessionData } = await supabase.auth.getSession();
-      const { data: profile } = await getProfile(authData.user.id);
-      setUserProfile(profile ?? null);
-      setHasOnboarded(true);
-      await AsyncStorage.setItem("v1_onboarding_done", "true");
-      if (sessionData.session) setSession(sessionData.session);
+        const { data: authData, error: authError } = await supabase.auth.signUp(
+          { email, password },
+        );
+        if (authError || !authData.user)
+          return { error: authError ?? { message: "Sign up failed." } };
+        if (onboardingData) {
+          const { error: onboardingError } = await completeOnboarding(
+            authData.user.id,
+            onboardingData,
+          );
+          if (onboardingError) {
+            await supabase.auth.signOut();
+            return { error: onboardingError };
+          }
+        }
+        const { data: sessionData } = await supabase.auth.getSession();
+        const { data: profile } = await getProfile(authData.user.id);
+        setUserProfile(profile ?? null);
+        setHasOnboarded(true);
+        await AsyncStorage.setItem("v1_onboarding_done", "true");
+        if (sessionData.session) setSession(sessionData.session);
 
-      posthog.identify(authData.user.id, {
-        $set: { username: onboardingData ? onboardingData.username : null },
-        $set_once: { signup_date: new Date().toISOString() },
-      });
-      posthog.capture('user_signed_up', {
-        has_onboarding_data: !!onboardingData,
-      });
-      if (onboardingData) {
-        posthog.capture('onboarding_completed', {
-          activity_level: onboardingData.activityLevel,
-          weight_unit: onboardingData.weightUnit,
-          daily_calories: onboardingData.dailyCalories,
-          has_goal_date: !!onboardingData.goalDate,
-          has_profile_photo: !!onboardingData.photoUri,
+        posthog.identify(authData.user.id, {
+          $set: { username: onboardingData ? onboardingData.username : null },
+          $set_once: { signup_date: new Date().toISOString() },
         });
-      }
+        posthog.capture("user_signed_up", {
+          has_onboarding_data: !!onboardingData,
+        });
+        if (onboardingData) {
+          posthog.capture("onboarding_completed", {
+            activity_level: onboardingData.activityLevel,
+            weight_unit: onboardingData.weightUnit,
+            daily_calories: onboardingData.dailyCalories,
+            has_goal_date: !!onboardingData.goalDate,
+            has_profile_photo: !!onboardingData.photoUri,
+          });
+        }
 
-      return { error: null };
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "An unexpected error occurred.";
-      return { error: { message } };
-    } finally {
-      isSigningUpRef.current = false;
-      setIsLoading(false);
-    }
-  }, [email, password]);
+        return { error: null };
+      } catch (e: unknown) {
+        const message =
+          e instanceof Error ? e.message : "An unexpected error occurred.";
+        return { error: { message } };
+      } finally {
+        isSigningUpRef.current = false;
+        setIsLoading(false);
+      }
+    },
+    [email, password],
+  );
   const signIn = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       if (!error && data.user) {
         posthog.identify(data.user.id);
-        posthog.capture('user_logged_in', {
-          method: 'password',
+        posthog.capture("user_logged_in", {
+          method: "password",
         });
       }
       return { error: error ? { message: error.message } : null };
@@ -170,7 +213,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const signOut = useCallback(async () => {
     setIsLoading(true);
     try {
-      posthog.capture('user_logged_out');
+      posthog.capture("user_logged_out");
       posthog.reset();
       await supabase.auth.signOut();
     } finally {
@@ -279,9 +322,19 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     },
     signUp,
     signIn,
-    signInWithGoogle: async () => ({ error: { message: "Google Sign-In not configured yet. See instructions in AuthContext.tsx" } }),
-    signInWithApple: async () => ({ error: { message: "Apple Sign-In not configured yet. See instructions in AuthContext.tsx" } }),
-    signOut
+    signInWithGoogle: async () => ({
+      error: {
+        message:
+          "Google Sign-In not configured yet. See instructions in AuthContext.tsx",
+      },
+    }),
+    signInWithApple: async () => ({
+      error: {
+        message:
+          "Apple Sign-In not configured yet. See instructions in AuthContext.tsx",
+      },
+    }),
+    signOut,
   };
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

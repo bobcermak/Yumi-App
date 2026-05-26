@@ -1,33 +1,44 @@
-import { Button, Icon, ResultMeal } from "@/components";
+import { Button, Icon } from "@/components";
 import MealLogIngredientCard from "@/components/meals/MealLogIngredientCard";
-import { MEAL_TYPES } from "@/lib/helpers/mealHelpers";
+import ResultMeal, { type ResultMealHandle } from "@/components/meals/ResultMeal";
+import { MEAL_TYPES, MEAL_TYPE_MAP, computeHealthRating } from "@/lib/helpers/mealHelpers";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { useIndexContext } from "@/lib/hooks/useIndexContext";
 import type { MagicScanResult } from "@/lib/services/food-search/magic-scan";
+import { addToFavorites, insertScannedFood } from "@/lib/services/supabase/queries/foods";
+import { logMeal } from "@/lib/services/supabase/queries/mealLogs";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { CaretDown, CaretLeft, Heart, PencilSimple, Plus, Sparkle } from "phosphor-react-native";
-import { useMemo, useState } from "react";
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useMemo, useRef, useState } from "react";
+import { KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Animated, { FadeInDown, FadeInUp, FadeOutUp, LinearTransition, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const MealLog = () => {
-  //Router
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  //Params
-  const { scanResult: scanResultParam, photoUri: photoUriParam } = useLocalSearchParams<{
-    scanResult: string;
-    photoUri: string;
-  }>();
+  const { showToast, refreshData } = useIndexContext();
+  const { userProfile } = useAuth();
+  const resultMealRef = useRef<ResultMealHandle>(null);
+  const scrollRef = useRef<ScrollView>(null);
+  const { scanResult: scanResultParam, photoUri: photoUriParam } =
+    useLocalSearchParams<{
+      scanResult: string;
+      photoUri: string;
+    }>();
   const result: MagicScanResult | null = scanResultParam
     ? (JSON.parse(scanResultParam) as MagicScanResult)
     : null;
-  //Hooks
   const [mealType, setMealType] = useState<string>(MEAL_TYPES[2]);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [isFavoriteLoading] = useState(false);
-  const [displayedComponents, setDisplayedComponents] = useState(
-    () => (result?.components ?? []).map((comp, i) => ({ ...comp, originalIndex: i }))
+  const [isRecording, setIsRecording] = useState(false);
+  const [displayedComponents, setDisplayedComponents] = useState(() =>
+    (result?.components ?? []).map((comp, i) => ({
+      ...comp,
+      originalIndex: i,
+      count: 1,
+    })),
   );
   const [mealData, setMealData] = useState<{
     grams: number;
@@ -35,12 +46,13 @@ const MealLog = () => {
     calories: number;
     waterMl: number;
   } | null>(null);
-  const baseWeight = result?.weight_g && result.weight_g > 0 ? result.weight_g : 100;
+  const baseWeight =
+    result?.weight_g && result.weight_g > 0 ? result.weight_g : 100;
   const scaledComponents = useMemo(() => {
     if (!displayedComponents.length) return [];
     const currentGrams = mealData?.grams ?? baseWeight;
     const ratio = currentGrams / baseWeight;
-    return displayedComponents.map(comp => ({
+    return displayedComponents.map((comp) => ({
       ...comp,
       weight_g: Math.round(comp.weight_g * ratio * 10) / 10,
       calories: Math.round(comp.calories * ratio),
@@ -53,16 +65,49 @@ const MealLog = () => {
   const animatedArrowStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${arrowRotation.value}deg` }],
   }));
-  //Functions
+  const closeDropdown = () => {
+    setIsDropdownOpen(false);
+    arrowRotation.value = withTiming(0, { duration: 250 });
+  };
   const toggleDropdown = () => {
     const next = !isDropdownOpen;
     setIsDropdownOpen(next);
     arrowRotation.value = withTiming(next ? 180 : 0, { duration: 250 });
   };
+  const handleToggleFavorite = async () => {
+    if (!userProfile?.id) return;
+    const next = !isFavorite;
+    setIsFavorite(next);
+    try {
+      if (next) {
+        const foodId = await insertScannedFood(
+          {
+            name: result?.name || "Unknown Food",
+            calories_per_100g: currentNutrition.cal100,
+            protein_per_100g: currentNutrition.protein100,
+            fat_per_100g: currentNutrition.fat100,
+            carbs_per_100g: currentNutrition.carbs100,
+            health_rating: healthRating,
+          },
+          photoUriParam || null,
+        );
+        await addToFavorites(userProfile.id, foodId);
+        showToast("Added to favorites");
+      } else {
+        showToast("Removed from favorites");
+      }
+    } catch (e) {
+      console.error(e);
+      setIsFavorite(!next);
+      showToast("Failed to save favorite", undefined, "error");
+    }
+  };
   if (!result) {
     return (
       <View className="flex-1 items-center justify-center">
-        <Text className="text-white font-nunito-700 text-xl">No scan result</Text>
+        <Text className="text-white font-nunito-700 text-xl">
+          No scan result
+        </Text>
       </View>
     );
   }
@@ -71,18 +116,132 @@ const MealLog = () => {
   const carbs100 = (result.carbs_g / safeWeight) * 100;
   const protein100 = (result.protein_g / safeWeight) * 100;
   const fat100 = (result.fat_g / safeWeight) * 100;
+  const currentNutrition = (() => {
+    if (!displayedComponents.length) {
+      return { cal100, carbs100, protein100, fat100, weight: safeWeight };
+    }
+    const totalWeight = displayedComponents.reduce(
+      (sum, c) => sum + c.weight_g * (c.count || 1),
+      0,
+    );
+    if (totalWeight === 0)
+      return { cal100, carbs100, protein100, fat100, weight: safeWeight };
+    return {
+      cal100:
+        (displayedComponents.reduce(
+          (s, c) => s + c.calories * (c.count || 1),
+          0,
+        ) /
+          totalWeight) *
+        100,
+      carbs100:
+        (displayedComponents.reduce(
+          (s, c) => s + c.carbs_g * (c.count || 1),
+          0,
+        ) /
+          totalWeight) *
+        100,
+      protein100:
+        (displayedComponents.reduce(
+          (s, c) => s + c.protein_g * (c.count || 1),
+          0,
+        ) /
+          totalWeight) *
+        100,
+      fat100:
+        (displayedComponents.reduce((s, c) => s + c.fat_g * (c.count || 1), 0) /
+          totalWeight) *
+        100,
+      weight: totalWeight,
+    };
+  })();
+  const healthRating = computeHealthRating({
+    calories_per_100g: currentNutrition.cal100,
+    protein_per_100g: currentNutrition.protein100,
+    fat_per_100g: currentNutrition.fat100,
+    carbs_per_100g: currentNutrition.carbs100,
+  });
+  const handleRecord = async () => {
+    if (!userProfile?.id || !mealData) return;
+    setIsRecording(true);
+    try {
+      const type = MEAL_TYPE_MAP[mealType] || "lunch";
+      const factor = mealData.grams / 100;
+      const count = mealData.count;
+      const foodId = await insertScannedFood(
+        {
+          name: result.name,
+          calories_per_100g: currentNutrition.cal100,
+          protein_per_100g: currentNutrition.protein100,
+          fat_per_100g: currentNutrition.fat100,
+          carbs_per_100g: currentNutrition.carbs100,
+          health_rating: healthRating,
+        },
+        photoUriParam || null,
+      );
+      const mealLogData = {
+        name: result.name,
+        type,
+        logged_at: new Date().toISOString(),
+        total_calories: mealData.calories,
+        total_carbs: Math.round(currentNutrition.carbs100 * factor * count),
+        total_fat: Math.round(currentNutrition.fat100 * factor * count),
+        total_protein: Math.round(currentNutrition.protein100 * factor * count),
+        image_url: null as string | null,
+        rating: healthRating,
+      };
+      const ingredients =
+        scaledComponents.length > 0
+          ? scaledComponents.map((comp) => ({
+              name: comp.name,
+              amount_g: Math.round(comp.weight_g * count),
+              calories: Math.round(comp.calories * count),
+              carbs: comp.carbs_g * count,
+              fat: comp.fat_g * count,
+              protein: comp.protein_g * count,
+              food_id: null as string | null,
+            }))
+          : [
+              {
+                name: result.name,
+                amount_g: Math.round(mealData.grams * count),
+                calories: mealData.calories,
+                carbs: Math.round(currentNutrition.carbs100 * factor * count),
+                fat: Math.round(currentNutrition.fat100 * factor * count),
+                protein: Math.round(
+                  currentNutrition.protein100 * factor * count,
+                ),
+                food_id: foodId,
+              },
+            ];
+      await logMeal(userProfile.id, mealLogData, ingredients);
+      if (isFavorite) {
+        await addToFavorites(userProfile.id, foodId);
+      }
+      await refreshData();
+      showToast("Meal recorded!");
+      router.back();
+    } catch (error) {
+      console.error("[MealLog] Error recording:", error);
+      showToast("Failed to record meal", undefined, "error");
+    } finally {
+      setIsRecording(false);
+    }
+  };
   return (
-    <View style={{ flex: 1 }} onTouchStart={() => isDropdownOpen && setIsDropdownOpen(false)}>
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ paddingBottom: 148 + insets.bottom }}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      onTouchStart={() => isDropdownOpen && closeDropdown()}
+    >
+      <View
+        style={{
+          zIndex: 50,
+          paddingTop: insets.top + 16,
+          paddingBottom: 16,
+        }}
       >
-        <View
-          className="flex-row w-[380px] self-center justify-between items-center pb-4 z-50"
-          style={{ marginTop: insets.top + 16 }}
-        >
+        <View className="flex-row w-[362px] self-center justify-between items-center">
           <Icon onPress={() => router.back()} className="bg-yellow w-12 h-12">
             <CaretLeft size={24} color="#1D1D1D" weight="regular" />
           </Icon>
@@ -92,7 +251,10 @@ const MealLog = () => {
               activeOpacity={0.25}
               className="flex-row items-center justify-center gap-2 w-full"
             >
-              <Text className="font-nunito-700 text-xl text-white" numberOfLines={1}>
+              <Text
+                className="font-nunito-700 text-xl text-white"
+                numberOfLines={1}
+              >
                 {mealType}
               </Text>
               <Animated.View style={animatedArrowStyle}>
@@ -103,15 +265,13 @@ const MealLog = () => {
               <Animated.View
                 entering={FadeInUp.duration(250)}
                 exiting={FadeOutUp.duration(250)}
-                className="absolute top-[44px] bg-dark rounded-[15px] w-[200px] border border-white/10 overflow-hidden z-[100]"
                 style={{
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 10 },
-                  shadowOpacity: 0.5,
-                  shadowRadius: 20,
-                  elevation: 20,
+                  zIndex: 100,
+                  position: "absolute",
+                  top: 44,
                   left: -20,
                 }}
+                className="bg-dark rounded-[15px] w-[200px] border border-white/10 overflow-hidden"
               >
                 {MEAL_TYPES.map((type) => (
                   <TouchableOpacity
@@ -119,12 +279,13 @@ const MealLog = () => {
                     activeOpacity={0.25}
                     onPress={() => {
                       setMealType(type);
-                      setIsDropdownOpen(false);
-                      arrowRotation.value = withTiming(0, { duration: 250 });
+                      closeDropdown();
                     }}
                     className={`py-4 px-4 border-b border-white/5 last:border-b-0 ${mealType === type ? "bg-yellow/30" : ""}`}
                   >
-                    <Text className={`font-nunito-700 text-lg ${mealType === type ? "text-yellow" : "text-white"}`}>
+                    <Text
+                      className={`font-nunito-700 text-lg ${mealType === type ? "text-yellow" : "text-white"}`}
+                    >
                       {type}
                     </Text>
                   </TouchableOpacity>
@@ -133,86 +294,155 @@ const MealLog = () => {
             )}
           </View>
           <Icon
-            onPress={() => setIsFavorite((v) => !v)}
+            onPress={handleToggleFavorite}
             className="bg-dark w-12 h-12"
             shadowColor="#000000"
-            disabled={isFavoriteLoading}
           >
-            {isFavoriteLoading ? (
-              <ActivityIndicator size="small" color="#C5E384"/>
-            ) : (
-              <Heart
-                size={24}
-                color={isFavorite ? "#C5E384" : "white"}
-                weight={isFavorite ? "fill" : "regular"}
-              />
-            )}
+            <Heart
+              size={24}
+              color={isFavorite ? "#C5E384" : "white"}
+              weight={isFavorite ? "fill" : "regular"}
+            />
           </Icon>
         </View>
-        <Animated.View entering={FadeInDown.duration(250)} className="w-[362px] self-center mb-8">
+        <View className="w-[362px] self-center mt-3">
           <Button
-            className="rounded-[30px] mx-0 w-full py-5"
+            className="rounded-[30px] mx-0 w-full py-4"
             textClassName="text-xl"
-            onPress={() => {}}
+            onPress={handleRecord}
+            disabled={isRecording || !mealData}
           >
-            Record
+            {isRecording ? "Recording..." : "Record"}
           </Button>
-        </Animated.View>
-        <Animated.View entering={FadeInDown.delay(60).duration(250)} className="w-[362px] self-center mb-8">
+        </View>
+      </View>
+      <ScrollView
+        ref={scrollRef}
+        className="flex-1"
+        contentContainerStyle={{
+          paddingBottom: 148 + insets.bottom,
+        }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Animated.View
+          entering={FadeInDown.delay(60).duration(250)}
+          className="w-[362px] self-center mb-8"
+        >
           <Text className="title mb-4">My Meal</Text>
           <TouchableOpacity
-            className="flex-row items-center justify-between bg-dark rounded-[14px] px-4 py-3 border border-white/10 mb-3"
             activeOpacity={0.25}
-            onPress={() => {}}>
-            <Text className="text-white/60 font-nunito-600 text-base">Not Right?</Text>
-            <TouchableOpacity
-              
-              className="flex-row items-center gap-2 bg-yellow rounded-[10px] px-4 py-3"
-            >
-              <Sparkle size={16} color="#1D1D1D" weight="regular"/>
-              <Text className="text-dark font-nunito-700 text-base">Replace</Text>
-            </TouchableOpacity>
+            className="flex-row items-center justify-between bg-dark rounded-[14px] px-4 py-3 border border-white/10 mb-3"
+            onPress={() => router.push("/magic-scan")}
+          >
+            <Text className="text-white/60 font-nunito-600 text-base">
+              Not Right?
+            </Text>
+            <View className="flex-row items-center gap-2 bg-yellow rounded-[10px] px-4 py-3">
+              <Sparkle size={16} color="#1D1D1D" weight="regular" />
+              <Text className="text-dark font-nunito-700 text-base">
+                Replace
+              </Text>
+            </View>
           </TouchableOpacity>
           <ResultMeal
+            ref={resultMealRef}
+            key={displayedComponents.length}
             imgSrc={photoUriParam || ""}
             title={result.name}
-            calories_per_100g={cal100}
-            carbs_per_100g={carbs100}
-            protein_per_100g={protein100}
-            fat_per_100g={fat100}
-            initialGrams={safeWeight}
+            calories_per_100g={currentNutrition.cal100}
+            carbs_per_100g={currentNutrition.carbs100}
+            protein_per_100g={currentNutrition.protein100}
+            fat_per_100g={currentNutrition.fat100}
+            initialGrams={currentNutrition.weight}
             initialCount={1}
+            rating={healthRating}
             isFavorite={isFavorite}
-            isFavoriteLoading={isFavoriteLoading}
-            onToggleFavorite={() => setIsFavorite((v) => !v)}
+            onToggleFavorite={handleToggleFavorite}
             onDataChange={setMealData}
           />
         </Animated.View>
-        {scaledComponents.length > 1 && (
-          <Animated.View entering={FadeInDown.delay(120).duration(250)} className="w-[362px] self-center">
+        {scaledComponents.length > 0 && (
+          <Animated.View
+            entering={FadeInDown.delay(120).duration(250)}
+            className="w-[362px] self-center"
+          >
             <Text className="title mb-4">What's inside?</Text>
-            <Animated.View className="gap-3" layout={LinearTransition.springify().damping(18)}>
+            <Animated.View
+              className="gap-3"
+              layout={LinearTransition.springify().damping(200)}
+            >
               {scaledComponents.map((comp, i) => (
-                <MealLogIngredientCard
+                <Animated.View
                   key={comp.originalIndex}
-                  index={i}
-                  emoji={comp.emoji}
-                  name={comp.name}
-                  weight_g={comp.weight_g}
-                  calories={comp.calories}
-                  carbs_g={comp.carbs_g}
-                  fat_g={comp.fat_g}
-                  protein_g={comp.protein_g}
-                  onDelete={() => setDisplayedComponents(prev => prev.filter(c => c.originalIndex !== comp.originalIndex))}
-                />
+                  layout={LinearTransition.springify().damping(200)}
+                  exiting={FadeOutUp}
+                >
+                  <MealLogIngredientCard
+                    index={i}
+                    emoji={comp.emoji}
+                    name={comp.name}
+                    weight_g={comp.weight_g}
+                    calories={comp.calories}
+                    carbs_g={comp.carbs_g}
+                    fat_g={comp.fat_g}
+                    protein_g={comp.protein_g}
+                    count={comp.count || 1}
+                    isLast={scaledComponents.length <= 1}
+                    onEdit={(newWeight) => {
+                      setDisplayedComponents((prev) =>
+                        prev.map((c) => {
+                          if (
+                            c.originalIndex === comp.originalIndex &&
+                            c.weight_g > 0
+                          ) {
+                            const ratio = newWeight / c.weight_g;
+                            return {
+                              ...c,
+                              weight_g: newWeight,
+                              calories: Math.round(c.calories * ratio),
+                              carbs_g: Math.round(c.carbs_g * ratio * 10) / 10,
+                              fat_g: Math.round(c.fat_g * ratio * 10) / 10,
+                              protein_g:
+                                Math.round(c.protein_g * ratio * 10) / 10,
+                            };
+                          }
+                          return c;
+                        }),
+                      );
+                    }}
+                    onCountChange={(newCount) => {
+                      setDisplayedComponents((prev) =>
+                        prev.map((c) => {
+                          if (c.originalIndex === comp.originalIndex) {
+                            return { ...c, count: newCount };
+                          }
+                          return c;
+                        }),
+                      );
+                    }}
+                    onDelete={() =>
+                      setDisplayedComponents((prev) =>
+                        prev.filter(
+                          (c) => c.originalIndex !== comp.originalIndex,
+                        ),
+                      )
+                    }
+                  />
+                </Animated.View>
               ))}
             </Animated.View>
-            <Animated.View entering={FadeInDown.delay(scaledComponents.length * 80 + 120).duration(250)} className="mt-8">
+            <Animated.View
+              entering={FadeInDown.delay(
+                scaledComponents.length * 80 + 120,
+              ).duration(250)}
+              className="mt-8"
+            >
               <Button
                 className="rounded-[30px] mx-0 w-full py-5 bg-yellow"
                 textClassName="text-xl"
                 onPress={() => router.push({ pathname: "/meal-log/add-item" })}
-                icon={<Plus size={24} color="#1D1D1D" weight="bold"/>}
+                icon={<Plus size={24} color="#1D1D1D" weight="bold" />}
               >
                 Add More
               </Button>
@@ -226,13 +456,16 @@ const MealLog = () => {
         style={{ bottom: insets.bottom + 20 }}
       >
         <Icon
-          onPress={() => {}}
+          onPress={() => {
+            scrollRef.current?.scrollTo({ y: 0, animated: true });
+            resultMealRef.current?.focusCalories();
+          }}
           className="bg-yellow w-14 h-14"
         >
           <PencilSimple size={24} color="#1D1D1D" weight="regular" />
         </Icon>
       </Animated.View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 export default MealLog;
