@@ -13,7 +13,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(
 );
 
 type AuthProviderProps = {
-  children: React.ReactNode;
+  children: React.ReactNode
 };
 export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   //Hooks
@@ -72,7 +72,10 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
         if (mounted) setIsReady(true);
       }
     };
-    initializeAuth();
+    const safetyTimer = setTimeout(() => {
+      if (mounted) setIsReady(true);
+    }, 8000);
+    initializeAuth().finally(() => clearTimeout(safetyTimer));
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, authSession) => {

@@ -1,20 +1,6 @@
 import { PROMPT } from './prompt.ts';
+import { extractAndParseJson } from './json-utils.ts';
 
-const sanitizeJsonEmojis = (text: string): string => {
-  return text.replace(/"emoji"\s*:\s*(?!")([^,\}\n\r]+)/g, (_match, value) => {
-    return `"emoji": "${value.trim()}"`;
-  });
-};
-const extractJson = (text: string): Record<string, unknown> => {
-  const start = text.indexOf('<<<JSON_START>>>')
-  const end = text.indexOf('<<<JSON_END>>>')
-  if (start !== -1 && end !== -1) {
-    return JSON.parse(sanitizeJsonEmojis(text.slice(start + 16, end).trim()))
-  }
-  const match = text.match(/\{[\s\S]*\}/)
-  if (match) return JSON.parse(sanitizeJsonEmojis(match[0]))
-  throw new Error('Could not extract JSON from Gemini response')
-}
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent`
 const callGemini = (base64Image: string, apiKey: string) =>
   fetch(`${GEMINI_URL}?key=${apiKey}`, {
@@ -35,5 +21,5 @@ export const analyzeWithGemini = async (base64Image: string): Promise<Record<str
   }
   const data = await response.json()
   const text = data.candidates[0].content.parts[0].text
-  return extractJson(text)
+  return extractAndParseJson(text, 'Gemini')
 }

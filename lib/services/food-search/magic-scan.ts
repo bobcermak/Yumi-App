@@ -18,6 +18,7 @@ export type MagicScanResult = {
   carbs_g: number;
   components: MagicScanComponent[];
   model: string;
+  is_drink?: boolean;
 };
 export class NotFoodError extends Error {
   constructor() {

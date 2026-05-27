@@ -10,14 +10,14 @@ import { logMeal } from "@/lib/services/supabase/queries/mealLogs";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { CaretDown, CaretLeft, Heart, PencilSimple, Plus, Sparkle } from "phosphor-react-native";
 import { useMemo, useRef, useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Animated, { FadeInDown, FadeInUp, FadeOutUp, LinearTransition, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const MealLog = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { showToast, refreshData } = useIndexContext();
+  const { showToast, refreshData, waterMl, handleSetWater } = useIndexContext();
   const { userProfile } = useAuth();
   const resultMealRef = useRef<ResultMealHandle>(null);
   const scrollRef = useRef<ScrollView>(null);
@@ -31,8 +31,10 @@ const MealLog = () => {
     : null;
   const [mealType, setMealType] = useState<string>(MEAL_TYPES[2]);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
+  const [isFavorite, setIsFavorite] = useState<boolean>(false);
+  const [isFavoriteLoading, setIsFavoriteLoading] = useState<boolean>(false);
+  const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [openCountIndex, setOpenCountIndex] = useState<number | null>(null);
   const [displayedComponents, setDisplayedComponents] = useState(() =>
     (result?.components ?? []).map((comp, i) => ({
       ...comp,
@@ -46,12 +48,13 @@ const MealLog = () => {
     calories: number;
     waterMl: number;
   } | null>(null);
-  const baseWeight =
-    result?.weight_g && result.weight_g > 0 ? result.weight_g : 100;
+  const [effectiveBaseWeight, setEffectiveBaseWeight] = useState(
+    () => (result?.weight_g && result.weight_g > 0 ? result.weight_g : 100),
+  );
   const scaledComponents = useMemo(() => {
     if (!displayedComponents.length) return [];
-    const currentGrams = mealData?.grams ?? baseWeight;
-    const ratio = currentGrams / baseWeight;
+    const currentGrams = mealData?.grams ?? effectiveBaseWeight;
+    const ratio = currentGrams / effectiveBaseWeight;
     return displayedComponents.map((comp) => ({
       ...comp,
       weight_g: Math.round(comp.weight_g * ratio * 10) / 10,
@@ -60,7 +63,7 @@ const MealLog = () => {
       fat_g: Math.round(comp.fat_g * ratio * 10) / 10,
       protein_g: Math.round(comp.protein_g * ratio * 10) / 10,
     }));
-  }, [displayedComponents, mealData?.grams, baseWeight]);
+  }, [displayedComponents, mealData?.grams, effectiveBaseWeight]);
   const arrowRotation = useSharedValue(0);
   const animatedArrowStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${arrowRotation.value}deg` }],
@@ -75,12 +78,14 @@ const MealLog = () => {
     arrowRotation.value = withTiming(next ? 180 : 0, { duration: 250 });
   };
   const handleToggleFavorite = async () => {
-    if (!userProfile?.id) return;
+    if (!userProfile?.id || isFavoriteLoading) return;
+    setIsFavoriteLoading(true);
     const next = !isFavorite;
     setIsFavorite(next);
     try {
       if (next) {
         const foodId = await insertScannedFood(
+          userProfile.id,
           {
             name: result?.name || "Unknown Food",
             calories_per_100g: currentNutrition.cal100,
@@ -88,6 +93,7 @@ const MealLog = () => {
             fat_per_100g: currentNutrition.fat100,
             carbs_per_100g: currentNutrition.carbs100,
             health_rating: healthRating,
+            is_drink: isDrink,
           },
           photoUriParam || null,
         );
@@ -100,6 +106,8 @@ const MealLog = () => {
       console.error(e);
       setIsFavorite(!next);
       showToast("Failed to save favorite", undefined, "error");
+    } finally {
+      setIsFavoriteLoading(false);
     }
   };
   if (!result) {
@@ -111,6 +119,7 @@ const MealLog = () => {
       </View>
     );
   }
+  const isDrink = result.is_drink ?? false;
   const safeWeight = result.weight_g > 0 ? result.weight_g : 100;
   const cal100 = (result.calories / safeWeight) * 100;
   const carbs100 = (result.carbs_g / safeWeight) * 100;
@@ -169,6 +178,7 @@ const MealLog = () => {
       const factor = mealData.grams / 100;
       const count = mealData.count;
       const foodId = await insertScannedFood(
+        userProfile.id,
         {
           name: result.name,
           calories_per_100g: currentNutrition.cal100,
@@ -176,6 +186,7 @@ const MealLog = () => {
           fat_per_100g: currentNutrition.fat100,
           carbs_per_100g: currentNutrition.carbs100,
           health_rating: healthRating,
+          is_drink: isDrink,
         },
         photoUriParam || null,
       );
@@ -215,6 +226,9 @@ const MealLog = () => {
               },
             ];
       await logMeal(userProfile.id, mealLogData, ingredients);
+      if (isDrink && mealData.waterMl) {
+        await handleSetWater(waterMl + mealData.waterMl);
+      }
       if (isFavorite) {
         await addToFavorites(userProfile.id, foodId);
       }
@@ -232,7 +246,10 @@ const MealLog = () => {
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      onTouchStart={() => isDropdownOpen && closeDropdown()}
+      onTouchStart={() => {
+        if (isDropdownOpen) closeDropdown();
+        if (openCountIndex !== null) setOpenCountIndex(null);
+      }}
     >
       <View
         style={{
@@ -297,12 +314,17 @@ const MealLog = () => {
             onPress={handleToggleFavorite}
             className="bg-dark w-12 h-12"
             shadowColor="#000000"
+            disabled={isFavoriteLoading}
           >
-            <Heart
-              size={24}
-              color={isFavorite ? "#C5E384" : "white"}
-              weight={isFavorite ? "fill" : "regular"}
-            />
+            {isFavoriteLoading ? (
+              <ActivityIndicator size="small" color="#C5E384" />
+            ) : (
+              <Heart
+                size={24}
+                color={isFavorite ? "#C5E384" : "white"}
+                weight={isFavorite ? "fill" : "regular"}
+              />
+            )}
           </Icon>
         </View>
         <View className="w-[362px] self-center mt-3">
@@ -358,6 +380,7 @@ const MealLog = () => {
             initialCount={1}
             rating={healthRating}
             isFavorite={isFavorite}
+            isFavoriteLoading={isFavoriteLoading}
             onToggleFavorite={handleToggleFavorite}
             onDataChange={setMealData}
           />
@@ -389,45 +412,44 @@ const MealLog = () => {
                     protein_g={comp.protein_g}
                     count={comp.count || 1}
                     isLast={scaledComponents.length <= 1}
-                    onEdit={(newWeight) => {
-                      setDisplayedComponents((prev) =>
-                        prev.map((c) => {
-                          if (
-                            c.originalIndex === comp.originalIndex &&
-                            c.weight_g > 0
-                          ) {
-                            const ratio = newWeight / c.weight_g;
-                            return {
-                              ...c,
-                              weight_g: newWeight,
-                              calories: Math.round(c.calories * ratio),
-                              carbs_g: Math.round(c.carbs_g * ratio * 10) / 10,
-                              fat_g: Math.round(c.fat_g * ratio * 10) / 10,
-                              protein_g:
-                                Math.round(c.protein_g * ratio * 10) / 10,
-                            };
-                          }
-                          return c;
-                        }),
-                      );
-                    }}
+                    isCountOpen={openCountIndex === comp.originalIndex}
+                    onCountOpenChange={(open) => setOpenCountIndex(open ? comp.originalIndex : null)}
                     onCountChange={(newCount) => {
-                      setDisplayedComponents((prev) =>
-                        prev.map((c) => {
-                          if (c.originalIndex === comp.originalIndex) {
-                            return { ...c, count: newCount };
-                          }
-                          return c;
-                        }),
+                      const newDisplayed = scaledComponents.map((c) =>
+                        c.originalIndex === comp.originalIndex
+                          ? { ...c, count: newCount }
+                          : c,
+                      );
+                      const newBase =
+                        Math.round(
+                          newDisplayed.reduce(
+                            (sum, c) => sum + c.weight_g * (c.count || 1),
+                            0,
+                          ),
+                        ) || 100;
+                      setDisplayedComponents(newDisplayed);
+                      setEffectiveBaseWeight(newBase);
+                      setMealData((prev) =>
+                        prev ? { ...prev, grams: newBase } : prev,
                       );
                     }}
-                    onDelete={() =>
-                      setDisplayedComponents((prev) =>
-                        prev.filter(
-                          (c) => c.originalIndex !== comp.originalIndex,
-                        ),
-                      )
-                    }
+                    onDelete={() => {
+                      const remainingScaled = scaledComponents.filter(
+                        (c) => c.originalIndex !== comp.originalIndex,
+                      );
+                      const newBase =
+                        Math.round(
+                          remainingScaled.reduce(
+                            (sum, c) => sum + c.weight_g * (c.count || 1),
+                            0,
+                          ),
+                        ) || 100;
+                      setDisplayedComponents(remainingScaled);
+                      setEffectiveBaseWeight(newBase);
+                      setMealData((prev) =>
+                        prev ? { ...prev, grams: newBase } : prev,
+                      );
+                    }}
                   />
                 </Animated.View>
               ))}

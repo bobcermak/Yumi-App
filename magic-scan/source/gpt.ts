@@ -1,20 +1,6 @@
 import { PROMPT } from './prompt.ts';
+import { extractAndParseJson } from './json-utils.ts';
 
-const sanitizeJsonEmojis = (text: string): string => {
-  return text.replace(/"emoji"\s*:\s*(?!")([^,\}\n\r]+)/g, (_match, value) => {
-    return `"emoji": "${value.trim()}"`;
-  });
-};
-const extractJson = (text: string): Record<string, unknown> => {
-  const start = text.indexOf('<<<JSON_START>>>')
-  const end = text.indexOf('<<<JSON_END>>>')
-  if (start !== -1 && end !== -1) {
-    return JSON.parse(sanitizeJsonEmojis(text.slice(start + 16, end).trim()))
-  }
-  const match = text.match(/\{[\s\S]*\}/)
-  if (match) return JSON.parse(sanitizeJsonEmojis(match[0]))
-  throw new Error('Could not extract JSON from GPT response')
-}
 export const analyzeWithGPT = async (base64Image: string): Promise<Record<string, unknown>> => {
   const apiKey = Deno.env.get('OPENAI_API_KEY')
   if (!apiKey) throw new Error('OPENAI_API_KEY not set')
@@ -45,5 +31,5 @@ export const analyzeWithGPT = async (base64Image: string): Promise<Record<string
   }
   const data = await response.json()
   const text = data.choices[0].message.content
-  return extractJson(text)
+  return extractAndParseJson(text, 'GPT')
 }

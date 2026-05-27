@@ -15,6 +15,7 @@ If the image contains food, return:
 <<<JSON_START>>>
 {
   "is_food": true,
+  "is_drink": false,
   "name": "Full meal name in English",
   "weight_g": total estimated weight as number,
   "calories": total calories as number,
@@ -36,6 +37,7 @@ If the image contains food, return:
 <<<JSON_END>>>
 
 Rules:
+- Set is_drink: true if the image shows a beverage (water, juice, coffee, tea, smoothie, soda, beer, wine, milkshake, protein shake, etc.) or a drink product (can, bottle, cup of liquid). Set is_drink: false for solid food
 - Total calories/macros must equal the sum of all components
 - Estimate realistic portion sizes based on visual cues
 - Include ALL visible components (sauces, sides, garnishes)

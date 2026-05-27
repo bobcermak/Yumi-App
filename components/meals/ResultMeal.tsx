@@ -1,9 +1,9 @@
 import { getRatingColor } from "@/lib/helpers/mealHelpers";
 import { useResultMeal } from "@/lib/hooks/useResultMeal";
 import { Minus as MinusIcon, PencilSimple, Plus, Star, Heart } from "phosphor-react-native";
-import { type Ref, useEffect, useImperativeHandle } from "react";
-import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
-import Animated, { cancelAnimation, Easing, FadeInDown, FadeOutRight, LinearTransition, useAnimatedStyle, useSharedValue, withRepeat, withTiming, FadeInRight } from "react-native-reanimated";
+import { type Ref, useImperativeHandle, useEffect } from "react";
+import { ActivityIndicator, Image, Text, TextInput, TouchableOpacity, View } from "react-native";
+import Animated, { Easing, FadeInDown, FadeOutRight, LinearTransition, useAnimatedStyle, useSharedValue, withTiming, FadeInRight } from "react-native-reanimated";
 
 export type ResultMealHandle = {
     focusCalories: () => void;
@@ -48,16 +48,6 @@ const ResultMeal = ({ ref, id, imgSrc, title, calories_per_100g, carbs_per_100g,
     const carbsBarStyle = useAnimatedStyle(() => ({ flex: carbsAnim.value }));
     const fatBarStyle = useAnimatedStyle(() => ({ flex: fatAnim.value }));
     const proteinBarStyle = useAnimatedStyle(() => ({ flex: proteinAnim.value }));
-    const favPulse = useSharedValue(0.25);
-    const favPulseStyle = useAnimatedStyle(() => ({ opacity: favPulse.value }));
-    useEffect(() => {
-        if (isFavoriteLoading) {
-            favPulse.value = withRepeat(withTiming(0.8, { duration: 600 }), -1, true);
-        } else {
-            cancelAnimation(favPulse);
-            favPulse.value = 0.25;
-        }
-    }, [isFavoriteLoading]);
     return (
         <Animated.View
             className="self-center justify-center items-center gap-6 rounded-[20px] overflow-hidden bg-dark border border-white/10 pb-5 w-[362px]"
@@ -91,7 +81,7 @@ const ResultMeal = ({ ref, id, imgSrc, title, calories_per_100g, carbs_per_100g,
                 disabled={isFavoriteLoading}
             >
                 {isFavoriteLoading ? (
-                    <Animated.View style={favPulseStyle} className="w-6 h-6 rounded-full bg-white/40" />
+                    <ActivityIndicator size="small" color="#C5E384" />
                 ) : (
                     <Heart
                         size={24}

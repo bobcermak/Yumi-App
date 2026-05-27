@@ -31,6 +31,7 @@ export const takeCameraPhoto = async (
     const photo = await cameraRef.current.takePictureAsync({
       quality: 0.8,
       base64: mode === "magic",
+      shutterSound: false,
     });
     if (photo?.uri) {
       onCapture(photo.uri, photo.base64 ?? undefined);

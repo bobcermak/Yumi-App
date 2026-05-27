@@ -1,7 +1,7 @@
-import { Trash } from "phosphor-react-native";
-import { type FC, useRef, useState } from "react";
-import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
-import Animated, { FadeInDown, FadeOut, LinearTransition } from "react-native-reanimated";
+import { Minus as MinusIcon, Plus, Trash } from "phosphor-react-native";
+import { memo, type FC, useRef } from "react";
+import { Alert, Text, TouchableOpacity, View } from "react-native";
+import Animated, { FadeInDown, FadeInRight, FadeOut, FadeOutRight, LinearTransition } from "react-native-reanimated";
 
 type MealLogIngredientCardProps = {
   emoji?: string,
@@ -14,39 +14,16 @@ type MealLogIngredientCardProps = {
   count?: number,
   index?: number,
   isLast?: boolean,
-  onEdit?: (newWeight: number) => void,
+  isCountOpen?: boolean,
+  onCountOpenChange?: (open: boolean) => void,
   onDelete?: () => void,
   onCountChange?: (newCount: number) => void
 };
-const MealLogIngredientCard: FC<MealLogIngredientCardProps> = ({ emoji = "🍽️", name, weight_g, calories, carbs_g, fat_g, protein_g, count = 1, index = 0, isLast = false, onEdit, onDelete, onCountChange }) => {
-  //Hooks
+const MealLogIngredientCard: FC<MealLogIngredientCardProps> = ({ emoji = "🍽️", name, weight_g, calories, carbs_g, fat_g, protein_g, count = 1, index = 0, isLast = false, isCountOpen = false, onCountOpenChange, onDelete, onCountChange }) => {
   const enteringAnim = useRef(
     FadeInDown.delay(index * 80).duration(250),
   ).current;
-  const [isEditingWeight, setIsEditingWeight] = useState<boolean>(false);
-  const [weightInput, setWeightInput] = useState<string>(String(weight_g));
-  const [isEditingCount, setIsEditingCount] = useState<boolean>(false);
-  const [countInput, setCountInput] = useState<string>(String(count));
-
-  //Functions
-  const handleEditConfirm = () => {
-    const val = Number(weightInput);
-    if (!isNaN(val) && val > 0 && val !== weight_g) {
-      onEdit?.(val);
-    } else {
-      setWeightInput(String(weight_g));
-    }
-    setIsEditingWeight(false);
-  };
-  const handleCountConfirm = () => {
-    const val = parseInt(countInput);
-    if (!isNaN(val) && val > 0 && val !== count) {
-      onCountChange?.(val);
-    } else {
-      setCountInput(String(count));
-    }
-    setIsEditingCount(false);
-  };
+  const safeEmoji = emoji && !/^[\x00-\x7F]+$/.test(emoji) ? emoji : "🍽️";
   return (
     <Animated.View
       entering={enteringAnim}
@@ -61,9 +38,16 @@ const MealLogIngredientCard: FC<MealLogIngredientCardProps> = ({ emoji = "🍽�
         elevation: 3,
       }}
     >
+      {isCountOpen && (
+        <TouchableOpacity
+          activeOpacity={0.25}
+          onPress={() => onCountOpenChange?.(false)}
+          className="absolute inset-0 z-10"
+        />
+      )}
       <View className="flex-row items-center gap-3">
         <View className="w-10 h-10 rounded-[12px] bg-white/8 items-center justify-center">
-          <Text style={{ fontSize: 26, fontFamily: undefined }}>{emoji}</Text>
+          <Text style={{ fontSize: 26, fontFamily: undefined }}>{safeEmoji}</Text>
         </View>
         <View className="flex-1">
           <Text
@@ -72,73 +56,45 @@ const MealLogIngredientCard: FC<MealLogIngredientCardProps> = ({ emoji = "🍽�
           >
             {name}
           </Text>
-          <TouchableOpacity
-            onPress={() => {
-              setWeightInput(String(weight_g));
-              setIsEditingWeight(true);
-            }}
-            activeOpacity={0.25}
-          >
-            {isEditingWeight ? (
-              <View className="flex-row items-center mt-[-2px]">
-                <TextInput
-                  className="text-white font-nunito-700 text-base p-0 w-12 border-b border-white/30"
-                  value={weightInput}
-                  onChangeText={setWeightInput}
-                  keyboardType="numeric"
-                  autoFocus
-                  onSubmitEditing={handleEditConfirm}
-                  onBlur={handleEditConfirm}
-                  selectTextOnFocus
-                />
-                <Text className="text-white font-nunito-700 text-base">
-                  <Text className="text-white/50">g ·</Text> {calories}{" "}
-                  <Text className="text-white/50">cal</Text>
-                </Text>
-              </View>
-            ) : (
-              <Text className="text-white font-nunito-700 text-base -mt-0.5">
-                {weight_g} <Text className="text-white/50">g ·</Text> {calories}{" "}
-                <Text className="text-white/50">cal</Text>
-              </Text>
-            )}
-          </TouchableOpacity>
+          <Text className="text-white font-nunito-700 text-base -mt-0.5">
+            {weight_g} <Text className="text-white/50">g ·</Text> {calories}{" "}
+            <Text className="text-white/50">cal</Text>
+          </Text>
         </View>
-        <View className="flex-row items-center gap-2">
-          <TouchableOpacity
-            onPress={() => {
-              setCountInput(String(count));
-              setIsEditingCount(true);
-            }}
-            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-          >
-            <View className="rounded-[10px] px-2 py-1 bg-[#2B2B2B] border border-white/10">
-              {isEditingCount ? (
-                <View className="flex-row items-center">
-                  <Text className="text-white/60 font-nunito-500 text-xl">
-                    x
-                  </Text>
-                  <TextInput
-                    className="text-white font-nunito-700 text-xl p-0 w-8 text-center"
-                    value={countInput}
-                    onChangeText={setCountInput}
-                    keyboardType="numeric"
-                    autoFocus
-                    onSubmitEditing={handleCountConfirm}
-                    onBlur={handleCountConfirm}
-                    selectTextOnFocus
-                  />
-                </View>
-              ) : (
-                <Text className="text-white/60 font-nunito-500 text-xl">
-                  x
-                  <Text className="text-white font-nunito-700 text-xl">
-                    {count}
-                  </Text>
-                </Text>
-              )}
-            </View>
-          </TouchableOpacity>
+        <View className="flex-row items-center gap-2 z-20">
+          <View className="items-end">
+            {isCountOpen && (
+              <Animated.View
+                entering={FadeInRight.springify()}
+                exiting={FadeOutRight.duration(250)}
+                className="absolute -top-14 right-0 flex-row items-center bg-[#2B2B2B] border border-white/10 rounded-[15px] px-2 gap-1"
+                style={{ shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 8, elevation: 8 }}
+              >
+                <TouchableOpacity
+                  onPress={() => onCountChange?.(Math.max(1, count - 1))}
+                  className="p-3"
+                  disabled={count <= 1}
+                >
+                  <MinusIcon size={20} color={count <= 1 ? "#FFFFFF30" : "white"} weight="bold" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => onCountChange?.(count + 1)}
+                  className="p-3"
+                >
+                  <Plus size={20} color="white" weight="bold" />
+                </TouchableOpacity>
+              </Animated.View>
+            )}
+            <TouchableOpacity
+              onPress={() => onCountOpenChange?.(!isCountOpen)}
+              activeOpacity={0.25}
+              className={`justify-center items-center rounded-[10px] px-3 py-2 border border-white/10 ${isCountOpen ? 'bg-yellow' : 'bg-[#2B2B2B]'}`}
+            >
+              <Text className={`font-nunito-500 text-base ${isCountOpen ? 'text-dark' : 'text-white/50'}`}>
+                x<Text className={`font-nunito-700 text-lg ${isCountOpen ? 'text-dark' : 'text-white'}`}>{count}</Text>
+              </Text>
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity
             onPress={() => {
               if (isLast) return;
@@ -185,4 +141,16 @@ const MealLogIngredientCard: FC<MealLogIngredientCardProps> = ({ emoji = "🍽�
     </Animated.View>
   );
 };
-export default MealLogIngredientCard;
+export default memo(MealLogIngredientCard, (prev, next) =>
+  prev.emoji === next.emoji &&
+  prev.name === next.name &&
+  prev.weight_g === next.weight_g &&
+  prev.calories === next.calories &&
+  prev.carbs_g === next.carbs_g &&
+  prev.fat_g === next.fat_g &&
+  prev.protein_g === next.protein_g &&
+  prev.count === next.count &&
+  prev.isLast === next.isLast &&
+  prev.index === next.index &&
+  prev.isCountOpen === next.isCountOpen
+);

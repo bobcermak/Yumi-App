@@ -1,35 +1,24 @@
-import { Platform } from "react-native";
 import supabase from "../client";
 
 export const uploadImage = async (uri: string, path: string, bucket: string): Promise<string | null> => {
-  console.log(`[Storage] Starting upload to bucket: "${bucket}", path: "${path}"`);
   try {
     const cleanPath = path.trim().replace(/^\/+/, '');
     const cleanBucket = bucket.trim();
     if (!cleanPath) throw new Error("Storage path is empty after cleaning");
     if (!cleanBucket) throw new Error("Bucket name is empty");
-    const formData = new FormData();
-    const fileName = cleanPath.split('/').pop() || "image.webp";
-    const finalUri = Platform.OS === 'ios' ? uri.replace('file://', '') : uri;
-    formData.append('file', {
-      uri: finalUri,
-      name: fileName,
-      type: 'image/webp',
-    } as unknown as Blob);
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const response = await fetch(uri);
+    if (!response.ok) throw new Error(`Failed to fetch image: HTTP ${response.status}`);
+    const blob = await response.blob();
+    const { error: uploadError } = await supabase.storage
       .from(cleanBucket)
-      .upload(cleanPath, formData, {
-        contentType: 'image/webp',
-        upsert: true
+      .upload(cleanPath, blob, {
+        contentType: 'image/jpeg',
+        upsert: true,
       });
     if (uploadError) {
-      console.error("[Storage] Supabase Upload Error Details:", uploadError);
-      throw new Error(`Upload failed: ${uploadError.message} (${uploadError.name || 'Unknown error'})`);
+      throw new Error(`Upload failed: ${uploadError.message} (${uploadError.name || 'StorageError'})`);
     }
-    console.log("[Storage] Upload successful:", uploadData);
-    const { data } = supabase.storage
-      .from(cleanBucket)
-      .getPublicUrl(cleanPath);
+    const { data } = supabase.storage.from(cleanBucket).getPublicUrl(cleanPath);
     return data?.publicUrl || null;
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "An unknown error occurred";
