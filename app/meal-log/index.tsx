@@ -1,6 +1,5 @@
-import { Button, Icon } from "@/components";
-import MealLogIngredientCard from "@/components/meals/MealLogIngredientCard";
-import ResultMeal, { type ResultMealHandle } from "@/components/meals/ResultMeal";
+import { Button, Icon, MealLogIngredientCard, ResultMeal } from "@/components";
+import { type ResultMealHandle } from "@/components/meals/ResultMeal";
 import { MEAL_TYPES, MEAL_TYPE_MAP, computeHealthRating } from "@/lib/helpers/mealHelpers";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useIndexContext } from "@/lib/hooks/useIndexContext";
@@ -188,7 +187,7 @@ const MealLog = () => {
           health_rating: healthRating,
           is_drink: isDrink,
         },
-        photoUriParam || null,
+        null,
       );
       const mealLogData = {
         name: result.name,
@@ -201,30 +200,40 @@ const MealLog = () => {
         image_url: null as string | null,
         rating: healthRating,
       };
-      const ingredients =
-        scaledComponents.length > 0
-          ? scaledComponents.map((comp) => ({
-              name: comp.name,
-              amount_g: Math.round(comp.weight_g * count),
-              calories: Math.round(comp.calories * count),
-              carbs: comp.carbs_g * count,
-              fat: comp.fat_g * count,
-              protein: comp.protein_g * count,
-              food_id: null as string | null,
-            }))
-          : [
-              {
-                name: result.name,
-                amount_g: Math.round(mealData.grams * count),
-                calories: mealData.calories,
-                carbs: Math.round(currentNutrition.carbs100 * factor * count),
-                fat: Math.round(currentNutrition.fat100 * factor * count),
-                protein: Math.round(
-                  currentNutrition.protein100 * factor * count,
-                ),
-                food_id: foodId,
-              },
-            ];
+      let ingredients;
+      if (scaledComponents.length > 0) {
+        let remainingCalories = mealLogData.total_calories;
+        ingredients = scaledComponents.map((comp, index) => {
+          const isLast = index === scaledComponents.length - 1;
+          let cal = Math.round(comp.calories * count);
+          if (isLast) {
+            cal = remainingCalories;
+          } else {
+            remainingCalories -= cal;
+          }
+          return {
+            name: comp.name,
+            amount_g: Math.round(comp.weight_g * count),
+            calories: cal,
+            carbs: Math.round(comp.carbs_g * count),
+            fat: Math.round(comp.fat_g * count),
+            protein: Math.round(comp.protein_g * count),
+            food_id: null as string | null,
+          };
+        });
+      } else {
+        ingredients = [
+          {
+            name: result.name,
+            amount_g: Math.round(mealData.grams * count),
+            calories: mealData.calories,
+            carbs: mealLogData.total_carbs,
+            fat: mealLogData.total_fat,
+            protein: mealLogData.total_protein,
+            food_id: foodId,
+          },
+        ];
+      }
       await logMeal(userProfile.id, mealLogData, ingredients);
       if (isDrink && mealData.waterMl) {
         await handleSetWater(waterMl + mealData.waterMl);
@@ -248,7 +257,6 @@ const MealLog = () => {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       onTouchStart={() => {
         if (isDropdownOpen) closeDropdown();
-        if (openCountIndex !== null) setOpenCountIndex(null);
       }}
     >
       <View
@@ -342,10 +350,11 @@ const MealLog = () => {
         ref={scrollRef}
         className="flex-1"
         contentContainerStyle={{
-          paddingBottom: 148 + insets.bottom,
+          paddingBottom: 40,
         }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        onScrollBeginDrag={() => { if (openCountIndex !== null) setOpenCountIndex(null); }}
       >
         <Animated.View
           entering={FadeInDown.delay(60).duration(250)}

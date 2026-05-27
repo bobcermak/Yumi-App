@@ -8,10 +8,10 @@ export const uploadImage = async (uri: string, path: string, bucket: string): Pr
     if (!cleanBucket) throw new Error("Bucket name is empty");
     const response = await fetch(uri);
     if (!response.ok) throw new Error(`Failed to fetch image: HTTP ${response.status}`);
-    const blob = await response.blob();
+    const arrayBuffer = await response.arrayBuffer();
     const { error: uploadError } = await supabase.storage
       .from(cleanBucket)
-      .upload(cleanPath, blob, {
+      .upload(cleanPath, arrayBuffer, {
         contentType: 'image/jpeg',
         upsert: true,
       });

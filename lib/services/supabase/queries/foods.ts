@@ -137,10 +137,10 @@ export const upsertExternalFood = async (item: FoodSearchResult, isDrink?: boole
         .insert({
             name: item.name || 'Unknown Food',
             brand: normalizedBrand,
-            calories_per_100g: item.calories_per_100g || 0,
-            carbs_per_100g: item.carbs_per_100g || 0,
-            protein_per_100g: item.protein_per_100g || 0,
-            fat_per_100g: item.fat_per_100g || 0,
+            calories_per_100g: Math.round(item.calories_per_100g || 0),
+            carbs_per_100g: Math.round(item.carbs_per_100g || 0),
+            protein_per_100g: Math.round(item.protein_per_100g || 0),
+            fat_per_100g: Math.round(item.fat_per_100g || 0),
             image_url: item.image_url,
             health_rating: item.health_rating,
             barcode: item.barcode,
@@ -164,7 +164,6 @@ export const upsertExternalFood = async (item: FoodSearchResult, isDrink?: boole
     }
     return newFood.id;
 };
-const r2 = (n: number) => Math.round(n * 100) / 100;
 export const insertScannedFood = async (
   userId: string,
   data: {
@@ -180,12 +179,19 @@ export const insertScannedFood = async (
 ): Promise<string> => {
   const { data: existing } = await supabase
     .from('foods')
-    .select('id')
+    .select('id, image_url')
     .eq('name', data.name)
     .eq('created_by', userId)
     .limit(1)
     .maybeSingle();
-  if (existing) return existing.id;
+  if (existing) {
+    if (photoUri && !existing.image_url) {
+      uploadImage(photoUri, `${existing.id}.jpg`, 'foods')
+        .then(url => { if (url) return supabase.from('foods').update({ image_url: url }).eq('id', existing.id); })
+        .catch(err => console.error('[foods] Image upload failed for existing food:', err));
+    }
+    return existing.id;
+  }
   const { data: newFood, error } = await supabase
     .from('foods')
     .insert({
@@ -195,10 +201,10 @@ export const insertScannedFood = async (
       category: data.is_drink ? 'Drink' : 'Meal',
       is_drink: data.is_drink ?? false,
       created_by: userId,
-      calories_per_100g: r2(data.calories_per_100g),
-      protein_per_100g: r2(data.protein_per_100g),
-      fat_per_100g: r2(data.fat_per_100g),
-      carbs_per_100g: r2(data.carbs_per_100g),
+      calories_per_100g: Math.round(data.calories_per_100g),
+      protein_per_100g: Math.round(data.protein_per_100g),
+      fat_per_100g: Math.round(data.fat_per_100g),
+      carbs_per_100g: Math.round(data.carbs_per_100g),
       health_rating: data.health_rating ?? null,
     })
     .select('id')
@@ -206,9 +212,7 @@ export const insertScannedFood = async (
   if (error) throw error;
   if (photoUri) {
     uploadImage(photoUri, `${newFood.id}.jpg`, 'foods')
-      .then(url => {
-        if (url) supabase.from('foods').update({ image_url: url }).eq('id', newFood.id);
-      })
+      .then(url => { if (url) return supabase.from('foods').update({ image_url: url }).eq('id', newFood.id); })
       .catch(err => console.error('[foods] Image upload failed:', err));
   }
   return newFood.id;

@@ -28,14 +28,15 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     let mounted = true;
-
     const initializeAuth = async () => {
       try {
+        const onboarded = await AsyncStorage.getItem("v1_onboarding_done");
+        if (mounted) setHasOnboarded(onboarded === "true");
         const {
           data: { session: initialSession },
         } = await supabase.auth.getSession();
-
         if (initialSession) {
+          if (mounted) setSession(initialSession);
           const { data: profile, error: profileError } = await getProfile(
             initialSession.user.id,
           );
@@ -52,19 +53,12 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
             }
           } else {
             if (mounted) {
-              setSession(initialSession);
               setUserProfile(profile);
               posthog.identify(initialSession.user.id, {
                 $set: { username: profile.username ?? null },
               });
-              const onboarded =
-                await AsyncStorage.getItem("v1_onboarding_done");
-              setHasOnboarded(onboarded === "true");
             }
           }
-        } else {
-          const onboarded = await AsyncStorage.getItem("v1_onboarding_done");
-          if (mounted) setHasOnboarded(onboarded === "true");
         }
       } catch (e) {
         console.error("Auth initialization error:", e);
@@ -101,7 +95,6 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
         }
       }
     });
-
     return () => {
       mounted = false;
       subscription.unsubscribe();

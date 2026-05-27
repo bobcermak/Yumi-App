@@ -12,7 +12,6 @@ type DayProps = {
     onPress?: (date: DateData) => void;
     onLongPress?: (date: DateData) => void;
 }
-
 type CustomCalendarProps = {
     selectedDate: Date;
     onDateSelect: (date: Date) => void;
@@ -76,7 +75,7 @@ const CustomCalendar: FC<CustomCalendarProps> = ({ selectedDate, onDateSelect, a
                 </View>
                 <View className="h-1 mt-0.5 items-center justify-center">
                     {showStreak && isActive && !isTarget && (
-                        <View className={`w-1 h-1 rounded-full ${isTodayDay ? 'bg-dark/40' : 'bg-yellow'}`} />
+                        <View className={`w-1 h-1 rounded-full bg-yellow`} />
                     )}
                 </View>
             </Pressable>
@@ -85,6 +84,7 @@ const CustomCalendar: FC<CustomCalendarProps> = ({ selectedDate, onDateSelect, a
     return (
         <View className="rounded-[20px] overflow-hidden bg-dark">
             <Calendar
+                key={activeDates.join(',')}
                 current={format(selectedDate, "yyyy-MM-dd")}
                 minDate={minDate || undefined}
                 maxDate={!allowFuture ? format(today, "yyyy-MM-dd") : undefined}

@@ -248,9 +248,8 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
             const today = startOfDay(new Date());
             const currentDash = dashboardDateRef.current ?? today;
             const isTodayView = isSameDay(currentDash, today);
-            const dateStr = format(today, "yyyy-MM-dd");
             const dashStr = format(currentDash, "yyyy-MM-dd");
-            const { data } = await getDailyLog(userProfile.id, dateStr);
+            const { data: dashData } = await getDailyLog(userProfile.id, dashStr);
             const dashLogs = await getMealLogsForDay(userProfile.id, dashStr);
             setMealLogs(dashLogs);
             await incrementUserStreak(userProfile.id);
@@ -260,14 +259,14 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
             setOverviewData(prev => ({
                 ...prev,
                 date: isTodayView ? today : currentDash,
-                calories: { current: data?.calories_current || 0, max: limit },
+                calories: { current: dashData?.calories_current || 0, max: limit },
                 macros: {
-                    carbs: { current: data?.carbs_current || 0, max: Math.round((limit * 0.5) / 4) },
-                    fats: { current: data?.fats_current || 0, max: Math.round((limit * 0.3) / 9) },
-                    protein: { current: data?.protein_current || 0, max: Math.round((limit * 0.2) / 4) },
+                    carbs: { current: dashData?.carbs_current || 0, max: Math.round((limit * 0.5) / 4) },
+                    fats: { current: dashData?.fats_current || 0, max: Math.round((limit * 0.3) / 9) },
+                    protein: { current: dashData?.protein_current || 0, max: Math.round((limit * 0.2) / 4) },
                 }
             }));
-            if (isTodayView) setWaterMl(data?.water_ml || 0);
+            setWaterMl(dashData?.water_ml || 0);
             await fetchMonthActiveDates(userProfile.id, today);
             return true;
         }

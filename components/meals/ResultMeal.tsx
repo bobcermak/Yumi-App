@@ -2,28 +2,28 @@ import { getRatingColor } from "@/lib/helpers/mealHelpers";
 import { useResultMeal } from "@/lib/hooks/useResultMeal";
 import { Minus as MinusIcon, PencilSimple, Plus, Star, Heart } from "phosphor-react-native";
 import { type Ref, useImperativeHandle, useEffect } from "react";
-import { ActivityIndicator, Image, Text, TextInput, TouchableOpacity, View } from "react-native";
-import Animated, { Easing, FadeInDown, FadeOutRight, LinearTransition, useAnimatedStyle, useSharedValue, withTiming, FadeInRight } from "react-native-reanimated";
+import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
+import Animated, { Easing, withRepeat, cancelAnimation, FadeInDown, FadeOutRight, LinearTransition, useAnimatedStyle, useSharedValue, withTiming, FadeInRight } from "react-native-reanimated";
 
 export type ResultMealHandle = {
     focusCalories: () => void;
 };
 type ResultMealProps = {
-    ref?: Ref<ResultMealHandle>;
-    id?: string;
-    imgSrc: string;
-    title: string;
-    calories_per_100g: number;
-    carbs_per_100g: number;
-    protein_per_100g: number;
-    fat_per_100g: number;
-    rating?: number | null;
-    initialGrams?: number;
-    initialCount?: number;
-    isFavorite?: boolean;
-    isFavoriteLoading?: boolean;
-    onToggleFavorite?: () => void;
-    onDataChange?: (data: { grams: number; count: number; calories: number; waterMl: number }) => void;
+    ref?: Ref<ResultMealHandle>,
+    id?: string,
+    imgSrc: string,
+    title: string,
+    calories_per_100g: number,
+    carbs_per_100g: number,
+    protein_per_100g: number,
+    fat_per_100g: number,
+    rating?: number | null,
+    initialGrams?: number,
+    initialCount?: number,
+    isFavorite?: boolean,
+    isFavoriteLoading?: boolean,
+    onToggleFavorite?: () => void,
+    onDataChange?: (data: { grams: number; count: number; calories: number; waterMl: number }) => void
 };
 const ResultMeal = ({ ref, id, imgSrc, title, calories_per_100g, carbs_per_100g, protein_per_100g, fat_per_100g, rating, initialGrams = 100, initialCount = 1, isFavorite, isFavoriteLoading, onToggleFavorite, onDataChange }: ResultMealProps) => {
     const { state, refs, handlers } = useResultMeal({
@@ -39,15 +39,25 @@ const ResultMeal = ({ ref, id, imgSrc, title, calories_per_100g, carbs_per_100g,
     const carbsAnim = useSharedValue(0);
     const fatAnim = useSharedValue(0);
     const proteinAnim = useSharedValue(0);
+    const carbsBarStyle = useAnimatedStyle(() => ({ flex: carbsAnim.value }));
+    const fatBarStyle = useAnimatedStyle(() => ({ flex: fatAnim.value }));
+    const proteinBarStyle = useAnimatedStyle(() => ({ flex: proteinAnim.value }));
+    const favPulse = useSharedValue(0.25);
+    const favPulseStyle = useAnimatedStyle(() => ({ opacity: favPulse.value }));
     useEffect(() => {
         const cfg = { duration: 700, easing: Easing.out(Easing.cubic) };
         carbsAnim.value = withTiming(state.carbsRatio, cfg);
         fatAnim.value = withTiming(state.fatRatio, cfg);
         proteinAnim.value = withTiming(state.proteinRatio, cfg);
     }, [state.carbsRatio, state.fatRatio, state.proteinRatio]);
-    const carbsBarStyle = useAnimatedStyle(() => ({ flex: carbsAnim.value }));
-    const fatBarStyle = useAnimatedStyle(() => ({ flex: fatAnim.value }));
-    const proteinBarStyle = useAnimatedStyle(() => ({ flex: proteinAnim.value }));
+    useEffect(() => {
+        if (isFavoriteLoading) {
+            favPulse.value = withRepeat(withTiming(0.8, { duration: 600 }), -1, true);
+        } else {
+            cancelAnimation(favPulse);
+            favPulse.value = 0.25;
+        }
+    }, [isFavoriteLoading]);
     return (
         <Animated.View
             className="self-center justify-center items-center gap-6 rounded-[20px] overflow-hidden bg-dark border border-white/10 pb-5 w-[362px]"
@@ -81,7 +91,7 @@ const ResultMeal = ({ ref, id, imgSrc, title, calories_per_100g, carbs_per_100g,
                 disabled={isFavoriteLoading}
             >
                 {isFavoriteLoading ? (
-                    <ActivityIndicator size="small" color="#C5E384" />
+                    <Animated.View style={favPulseStyle} className="w-6 h-6 rounded-full bg-white/40" />
                 ) : (
                     <Heart
                         size={24}

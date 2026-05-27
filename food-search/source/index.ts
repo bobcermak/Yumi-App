@@ -111,7 +111,7 @@ Deno.serve(async (req: Request) => {
         const supabaseAdmin = createClient(supabaseUrl, supabaseAdminKey);
         const uniqueFinalResults = Array.from(new Map(finalResults.map((r: any) => [r.name, r])).values());
         const incomingNames = uniqueFinalResults.map((r: any) => r.name);
-        const { data: existingFoods } = await supabaseAdmin.from("foods").select("id, name, barcode").in("name", incomingNames);
+        const { data: existingFoods } = await supabaseAdmin.from("foods").select("id, name, barcode, image_url").in("name", incomingNames);
         const existingMap = new Map<string, any>(existingFoods?.map((f: any) => [f.name, f]) || []);
         const toInsert: any[] = [];
         const toUpdate: any[] = [];
@@ -121,9 +121,10 @@ Deno.serve(async (req: Request) => {
             if (!res.ok) return null;
             const buffer = await res.arrayBuffer();
             if (buffer.byteLength > 400_000) return null;
+            // Deterministic path — no timestamp, so the same food never creates duplicate files
             const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').slice(0, 40);
-            const path = `${slug}-${Date.now()}.jpg`;
-            const { error } = await supabaseAdmin.storage.from('foods').upload(path, new Uint8Array(buffer), { contentType: 'image/jpeg', upsert: false });
+            const path = `${slug}.jpg`;
+            const { error } = await supabaseAdmin.storage.from('foods').upload(path, new Uint8Array(buffer), { contentType: 'image/jpeg', upsert: true });
             if (error) return null;
             return supabaseAdmin.storage.from('foods').getPublicUrl(path).data.publicUrl;
           } catch { return null; }
@@ -147,8 +148,14 @@ Deno.serve(async (req: Request) => {
               is_public: true,
               health_rating: computeHealthRating(r)
             });
-          } else if (!existing.barcode && r.barcode) {
-            toUpdate.push({ id: existing.id, barcode: r.barcode });
+          } else {
+            const updates: Record<string, any> = {};
+            if (!existing.barcode && r.barcode) updates.barcode = r.barcode;
+            if (!existing.image_url && r.image_url) {
+              const storageUrl = await uploadImage(r.image_url, r.name);
+              if (storageUrl) updates.image_url = storageUrl;
+            }
+            if (Object.keys(updates).length > 0) toUpdate.push({ id: existing.id, ...updates });
           }
         }
         if (toInsert.length > 0) {
@@ -156,8 +163,8 @@ Deno.serve(async (req: Request) => {
           if (insertError) console.error("[DB Insert Error]:", insertError);
         }
         if (toUpdate.length > 0) {
-          for (const updateData of toUpdate) {
-            const { error: updateError } = await supabaseAdmin.from("foods").update({ barcode: updateData.barcode }).eq("id", updateData.id);
+          for (const { id, ...fields } of toUpdate) {
+            const { error: updateError } = await supabaseAdmin.from("foods").update(fields).eq("id", id);
             if (updateError) console.error("[DB Update Error]:", updateError);
           }
         }
