@@ -13,7 +13,6 @@ export const recalculateUserRating = async (userId: string): Promise<void> => {
     .from("meal_logs")
     .select("rating, logged_at, type")
     .eq("user_id", userId)
-    .not("rating", "is", null)
     .gte("logged_at", `${thirtyDaysAgo}T00:00:00`)
     .lte("logged_at", `${todayStr}T23:59:59`);
   if (!meals || meals.length === 0) return;
@@ -21,12 +20,13 @@ export const recalculateUserRating = async (userId: string): Promise<void> => {
   let totalWeight = 0;
   let weightedSum = 0;
   for (const meal of meals) {
-    if (meal.rating === null || !meal.logged_at) continue;
+    if (!meal.logged_at) continue;
+    const effectiveRating = meal.rating ?? 5.0;
     const mealDate = new Date(meal.logged_at);
     const daysAgo = (now - mealDate.getTime()) / (1000 * 60 * 60 * 24);
     const recencyWeight = Math.exp(-0.05 * daysAgo);
     const timingFactor = getMealTimingFactor(meal.type, mealDate.getHours());
-    weightedSum += meal.rating * timingFactor * recencyWeight;
+    weightedSum += effectiveRating * timingFactor * recencyWeight;
     totalWeight += recencyWeight;
   }
   if (totalWeight === 0) return;

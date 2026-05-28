@@ -275,7 +275,7 @@ const Search = () => {
                     }}
                   >
                     <View className="flex-row items-center justify-between mb-1 px-4">
-                      <Text className="text-white/60 font-nunito-700 text-lg">
+                      <Text className="text-white/60 font-nunito-700 text-lg flex-1 mr-2" numberOfLines={1}>
                         {isSearching || isSearchPending || searchResults.length > 0
                           ? query.trim().length === 0 && category !== "all"
                             ? category === "fruits"
@@ -287,7 +287,7 @@ const Search = () => {
                       {!isSearching && !isSearchPending &&
                         searchResults.length > 0 &&
                         searchSource && (
-                          <Text className="text-white/30 font-nunito-600 text-sm">
+                          <Text className="text-white/30 font-nunito-600 text-sm flex-shrink-0">
                             via{" "}
                             {searchSource === "usda" ? "Homemade" : "Packaged"}
                           </Text>
@@ -299,7 +299,7 @@ const Search = () => {
                           <SearchResultSkeleton key={`skel-${i}`} />
                         ))
                       ) : searchResults.length > 0 ? (
-                        searchResults.map((item) => {
+                        searchResults.slice(0, 4).map((item) => {
                           const isFav = (popularMeals || []).some(
                             (p) =>
                               p?.name?.toLowerCase() ===

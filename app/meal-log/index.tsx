@@ -5,7 +5,7 @@ import { getMealTypeByTime } from "@/lib/helpers/dateHelpers";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useIndexContext } from "@/lib/hooks/useIndexContext";
 import type { MagicScanResult } from "@/lib/services/food-search/magic-scan";
-import { addToFavorites, insertScannedFood } from "@/lib/services/supabase/queries/foods";
+import { addToFavorites, insertScannedFood, removeFromFavorites } from "@/lib/services/supabase/queries/foods";
 import { logMeal } from "@/lib/services/supabase/queries/mealLogs";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { CaretDown, CaretLeft, Heart, PencilSimple, Plus, Sparkle } from "phosphor-react-native";
@@ -33,6 +33,7 @@ const MealLog = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
   const [isFavoriteLoading, setIsFavoriteLoading] = useState<boolean>(false);
+  const [insertedFoodId, setInsertedFoodId] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [openCountIndex, setOpenCountIndex] = useState<number | null>(null);
   const [displayedComponents, setDisplayedComponents] = useState(() =>
@@ -84,7 +85,7 @@ const MealLog = () => {
     setIsFavorite(next);
     try {
       if (next) {
-        const foodId = await insertScannedFood(
+        const { id: foodId } = await insertScannedFood(
           userProfile.id,
           {
             name: result?.name || "Unknown Food",
@@ -97,9 +98,24 @@ const MealLog = () => {
           },
           photoUriParam || null,
         );
+        setInsertedFoodId(foodId);
         await addToFavorites(userProfile.id, foodId);
         showToast("Added to favorites");
       } else {
+        const idToRemove = insertedFoodId ?? (await insertScannedFood(
+          userProfile.id,
+          {
+            name: result?.name || "Unknown Food",
+            calories_per_100g: currentNutrition.cal100,
+            protein_per_100g: currentNutrition.protein100,
+            fat_per_100g: currentNutrition.fat100,
+            carbs_per_100g: currentNutrition.carbs100,
+            health_rating: healthRating,
+            is_drink: isDrink,
+          },
+          null,
+        )).id;
+        await removeFromFavorites(userProfile.id, idToRemove);
         showToast("Removed from favorites");
       }
     } catch (e) {
@@ -177,7 +193,7 @@ const MealLog = () => {
       const type = MEAL_TYPE_MAP[mealType] || "lunch";
       const factor = mealData.grams / 100;
       const count = mealData.count;
-      const foodId = await insertScannedFood(
+      const { id: foodId, imageUrl: mealImageUrl } = await insertScannedFood(
         userProfile.id,
         {
           name: result.name,
@@ -188,7 +204,7 @@ const MealLog = () => {
           health_rating: healthRating,
           is_drink: isDrink,
         },
-        null,
+        photoUriParam || null,
       );
       const mealLogData = {
         name: result.name,
@@ -198,7 +214,7 @@ const MealLog = () => {
         total_carbs: Math.round(currentNutrition.carbs100 * factor * count),
         total_fat: Math.round(currentNutrition.fat100 * factor * count),
         total_protein: Math.round(currentNutrition.protein100 * factor * count),
-        image_url: null as string | null,
+        image_url: mealImageUrl,
         rating: healthRating,
       };
       let ingredients;
@@ -231,7 +247,7 @@ const MealLog = () => {
             carbs: mealLogData.total_carbs,
             fat: mealLogData.total_fat,
             protein: mealLogData.total_protein,
-            food_id: foodId,
+            food_id: foodId as string,
           },
         ];
       }
@@ -240,7 +256,7 @@ const MealLog = () => {
         await handleSetWater(waterMl + mealData.waterMl);
       }
       if (isFavorite) {
-        await addToFavorites(userProfile.id, foodId);
+        await addToFavorites(userProfile.id, foodId as string);
       }
       await refreshData();
       showToast("Meal recorded!");

@@ -1,5 +1,4 @@
 import { CameraModal } from "@/components";
-import { pickImageHelper } from "@/lib/helpers/imageHelpers";
 import { useIndexContext } from "@/lib/hooks/useIndexContext";
 import { searchFoodByBarcode } from "@/lib/services/food-search/barcode";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -106,19 +105,6 @@ const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...",
   const handlePress = (callback?: () => void) => {
     callback?.();
   };
-  const handleDefaultCameraPress = async () => {
-    if (onCameraPress) {
-      onCameraPress();
-      return;
-    }
-    const photos = await pickImageHelper('camera', { isProfile: false });
-    if (photos && photos.length > 0) {
-      router.push({
-        pathname: "/magic-scan",
-        params: { photoUri: photos[0] },
-      });
-    }
-  };
   const Content = (
     <View
       className="flex-row items-center justify-between bg-white/5 border border-white/10 h-16 pl-5 pr-2 rounded-[20px] w-full"
@@ -138,7 +124,7 @@ const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...",
           <MagnifyingGlass size={24} color="#FFFFFF80" weight="regular" />
           <TextInput
             ref={inputRef}
-            className="text-white text-base font-nunito-600 flex-1 h-full py-2"
+            className="text-white text-base font-nunito-600 flex-1 h-full py-2 pr-[60px]"
             placeholder={placeholder}
             placeholderTextColor="#FFFFFF66"
             autoFocus={autoFocus}

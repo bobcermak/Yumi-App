@@ -56,6 +56,8 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
           } else {
             if (mounted) {
               setUserProfile(profile);
+              setHasOnboarded(true);
+              await AsyncStorage.setItem("v1_onboarding_done", "true");
               posthog.identify(initialSession.user.id, {
                 $set: { username: profile?.username ?? null },
               });
@@ -85,9 +87,10 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
           return;
         }
         const onboarded = await AsyncStorage.getItem("v1_onboarding_done");
+        if (!onboarded) await AsyncStorage.setItem("v1_onboarding_done", "true");
         if (mounted) {
           setUserProfile(profile);
-          setHasOnboarded(onboarded === "true");
+          setHasOnboarded(true);
           setSession(authSession);
         }
       } else {

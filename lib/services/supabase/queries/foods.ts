@@ -126,12 +126,17 @@ export const upsertExternalFood = async (item: FoodSearchResult, isDrink?: boole
     const normalizedBrand = item.brand || '';
     const { data: existingFood } = await supabase
         .from('foods')
-        .select('id')
+        .select('id, image_url')
         .eq('name', item.name || '')
         .eq('brand', normalizedBrand)
         .limit(1)
         .maybeSingle();
-    if (existingFood) return existingFood.id;
+    if (existingFood) {
+        if (!existingFood.image_url && item.image_url) {
+            await supabase.from('foods').update({ image_url: item.image_url }).eq('id', existingFood.id);
+        }
+        return existingFood.id;
+    }
     const { data: newFood, error: insertError } = await supabase
         .from('foods')
         .insert({
@@ -141,7 +146,7 @@ export const upsertExternalFood = async (item: FoodSearchResult, isDrink?: boole
             carbs_per_100g: Math.round(item.carbs_per_100g || 0),
             protein_per_100g: Math.round(item.protein_per_100g || 0),
             fat_per_100g: Math.round(item.fat_per_100g || 0),
-            image_url: item.image_url,
+            image_url: item.image_url ?? null,
             health_rating: item.health_rating,
             barcode: item.barcode,
             category: isDrink ? 'Drink' : (item.category ?? null),
@@ -176,7 +181,7 @@ export const insertScannedFood = async (
     is_drink?: boolean;
   },
   photoUri?: string | null
-): Promise<string> => {
+): Promise<{ id: string; imageUrl: string | null }> => {
   const { data: existing } = await supabase
     .from('foods')
     .select('id, image_url')
@@ -185,12 +190,17 @@ export const insertScannedFood = async (
     .limit(1)
     .maybeSingle();
   if (existing) {
+    let imageUrl = existing.image_url ?? null;
     if (photoUri && !existing.image_url) {
-      uploadImage(photoUri, `${existing.id}.jpg`, 'foods')
-        .then(url => { if (url) return supabase.from('foods').update({ image_url: url }).eq('id', existing.id); })
-        .catch(err => console.error('[foods] Image upload failed for existing food:', err));
+      try {
+        imageUrl = await uploadImage(photoUri, `${existing.id}.jpg`, 'foods');
+        if (imageUrl) await supabase.from('foods').update({ image_url: imageUrl }).eq('id', existing.id);
+      } catch (err) {
+        console.error('[foods] Image upload failed for existing food:', err);
+        imageUrl = null;
+      }
     }
-    return existing.id;
+    return { id: existing.id, imageUrl };
   }
   const { data: newFood, error } = await supabase
     .from('foods')
@@ -210,12 +220,16 @@ export const insertScannedFood = async (
     .select('id')
     .single();
   if (error) throw error;
+  let imageUrl: string | null = null;
   if (photoUri) {
-    uploadImage(photoUri, `${newFood.id}.jpg`, 'foods')
-      .then(url => { if (url) return supabase.from('foods').update({ image_url: url }).eq('id', newFood.id); })
-      .catch(err => console.error('[foods] Image upload failed:', err));
+    try {
+      imageUrl = await uploadImage(photoUri, `${newFood.id}.jpg`, 'foods');
+      if (imageUrl) await supabase.from('foods').update({ image_url: imageUrl }).eq('id', newFood.id);
+    } catch (err) {
+      console.error('[foods] Image upload failed:', err);
+    }
   }
-  return newFood.id;
+  return { id: newFood.id, imageUrl };
 };
 export const toggleFavoriteFood = async (userId: string, item: FoodSearchResult): Promise<{ isFavorite: boolean, newFoodId: string }> => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

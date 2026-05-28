@@ -20,12 +20,12 @@ const SearchResults = () => {
         </Icon>
         <Text className="font-nunito-700 text-[28px] text-white">Results</Text>
       </View>
-      <View className="flex-row items-center justify-between px-6 mb-4 mt-8">
-        <Text className="text-white/50 font-nunito-700 text-lg">
+      <View className="flex-row items-center justify-between px-8 mb-4 mt-8">
+        <Text className="text-white/50 font-nunito-700 text-lg flex-1 mr-3" numberOfLines={1} ellipsizeMode="tail">
           {query ? `Results for "${query}"` : "Search Results"}
         </Text>
         {!isSearching && searchResults.length > 0 && searchSource && (
-          <Text className="text-white/30 font-nunito-600 text-sm">
+          <Text className="text-white/30 font-nunito-600 text-sm flex-shrink-0">
             via {searchSource === 'usda' ? "Homemade" : "Packaged"}
           </Text>
         )}

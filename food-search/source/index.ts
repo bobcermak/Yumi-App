@@ -1,9 +1,32 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { corsHeaders } from "./cors.ts";
-import { DEFAULTS_EN, DEFAULTS_CS, HARDCODED_IMAGES } from "./constants.ts";
+import { DEFAULTS_EN, DEFAULTS_CS, HARDCODED_IMAGES, STATIC_FOOD_NAMES } from "./constants.ts";
 import { scoreResult, computeHealthRating } from "./utils.ts";
 import { translateQuery, fetchSingleQuery, fetchFoodImages } from "./api.ts";
 
+const isBucketUrl = (url: string | null | undefined): boolean =>
+  !!url && url.includes("/storage/v1/object/public/");
+const uploadToFoodsBucket = async (
+  imageUrl: string,
+  foodName: string,
+  supabaseAdmin: any,
+): Promise<string | null> => {
+  try {
+    const res = await fetch(imageUrl);
+    if (!res.ok) return null;
+    const buf = await res.arrayBuffer();
+    const fileName = `${foodName.toLowerCase()}.jpg`;
+    const { error } = await supabaseAdmin.storage
+      .from("foods")
+      .upload(fileName, buf, { contentType: "image/jpeg", upsert: true });
+    if (error) { console.error("[Storage] upload error:", error); return null; }
+    const { data } = supabaseAdmin.storage.from("foods").getPublicUrl(fileName);
+    return data?.publicUrl || null;
+  } catch (e) {
+    console.error("[Storage] uploadToFoodsBucket failed:", e);
+    return null;
+  }
+};
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -55,11 +78,12 @@ Deno.serve(async (req: Request) => {
           const t = tasks[i];
           const scored = partResults[i].map((f: any) => ({ ...f, _score: scoreResult(f, t.en, t.cat) })).filter(f => f._score > 0).sort((a: any, b: any) => b._score - a._score);
           const best = scored[0];
-          if (best && !seen.has(best.id)) { 
-            seen.add(best.id); 
-            best._imgTerm = HARDCODED_IMAGES[t.en] || t.en; 
-            best.czech_name = t.cs; 
-            results.push(best); 
+          if (best && !seen.has(best.id)) {
+            seen.add(best.id);
+            best._imgTerm = HARDCODED_IMAGES[t.en] || t.en;
+            best._staticKey = t.en;
+            best.czech_name = t.cs;
+            results.push(best);
           }
         }
       }
@@ -113,26 +137,34 @@ Deno.serve(async (req: Request) => {
         const incomingNames = uniqueFinalResults.map((r: any) => r.name);
         const { data: existingFoods } = await supabaseAdmin.from("foods").select("id, name, barcode, image_url").in("name", incomingNames);
         const existingMap = new Map<string, any>(existingFoods?.map((f: any) => [f.name, f]) || []);
+        const staticBucketUrls = new Map<string, string>();
+        for (const r of uniqueFinalResults as any[]) {
+          if (!r._staticKey || !STATIC_FOOD_NAMES.has(r._staticKey)) continue;
+          const existing = existingMap.get(r.name);
+          if (existing?.image_url && isBucketUrl(existing.image_url)) {
+            staticBucketUrls.set(r._staticKey, existing.image_url);
+          }
+        }
+        await Promise.all(
+          (uniqueFinalResults as any[])
+            .filter((r: any) => r._staticKey && STATIC_FOOD_NAMES.has(r._staticKey) && !staticBucketUrls.has(r._staticKey) && r.image_url)
+            .map(async (r: any) => {
+              const url = await uploadToFoodsBucket(r.image_url, r._staticKey, supabaseAdmin);
+              if (url) staticBucketUrls.set(r._staticKey, url);
+            })
+        );
+        finalResults = finalResults.map((r: any) => {
+          const { _staticKey, ...rest } = r;
+          const bucket = staticBucketUrls.get(_staticKey);
+          return bucket ? { ...rest, image_url: bucket } : rest;
+        });
         const toInsert: any[] = [];
         const toUpdate: any[] = [];
-        const uploadImage = async (imageUrl: string, name: string): Promise<string | null> => {
-          try {
-            const res = await fetch(imageUrl, { signal: AbortSignal.timeout(5000) });
-            if (!res.ok) return null;
-            const buffer = await res.arrayBuffer();
-            if (buffer.byteLength > 400_000) return null;
-            // Deterministic path — no timestamp, so the same food never creates duplicate files
-            const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').slice(0, 40);
-            const path = `${slug}.jpg`;
-            const { error } = await supabaseAdmin.storage.from('foods').upload(path, new Uint8Array(buffer), { contentType: 'image/jpeg', upsert: true });
-            if (error) return null;
-            return supabaseAdmin.storage.from('foods').getPublicUrl(path).data.publicUrl;
-          } catch { return null; }
-        };
         for (const r of uniqueFinalResults as any[]) {
           const existing: any = existingMap.get(r.name);
+          const bucketUrl = staticBucketUrls.get(r._staticKey);
+          const effectiveImageUrl = bucketUrl ?? r.image_url ?? null;
           if (!existing) {
-            const storageUrl = r.image_url ? await uploadImage(r.image_url, r.name) : null;
             toInsert.push({
               created_by: userId,
               name: r.name,
@@ -141,7 +173,7 @@ Deno.serve(async (req: Request) => {
               protein_per_100g: r.protein_per_100g || 0,
               carbs_per_100g: r.carbs_per_100g || 0,
               fat_per_100g: r.fat_per_100g || 0,
-              image_url: storageUrl || r.image_url || null,
+              image_url: effectiveImageUrl,
               barcode: r.barcode || null,
               czech_name: r.czech_name || null,
               category: r.foodCategory || r.category || null,
@@ -151,9 +183,10 @@ Deno.serve(async (req: Request) => {
           } else {
             const updates: Record<string, any> = {};
             if (!existing.barcode && r.barcode) updates.barcode = r.barcode;
-            if (!existing.image_url && r.image_url) {
-              const storageUrl = await uploadImage(r.image_url, r.name);
-              if (storageUrl) updates.image_url = storageUrl;
+            if (bucketUrl && existing.image_url !== bucketUrl) {
+              updates.image_url = bucketUrl;
+            } else if (!existing.image_url && r.image_url) {
+              updates.image_url = r.image_url;
             }
             if (Object.keys(updates).length > 0) toUpdate.push({ id: existing.id, ...updates });
           }

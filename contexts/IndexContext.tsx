@@ -123,6 +123,9 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
         if (userProfile?.id) {
             fetchDailyLog(userProfile.id, overviewData.date);
             fetchMonthActiveDates(userProfile.id, overviewData.date);
+            recalculateUserRating(userProfile.id)
+                .then(() => refreshProfile())
+                .catch(e => console.warn("[IndexContext] Initial rating recalc failed:", e));
         }
     }, [userProfile?.id]);
     useEffect(() => {
