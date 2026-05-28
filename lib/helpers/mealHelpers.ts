@@ -1,6 +1,32 @@
 import { MealType } from "@/types/database/dbModels";
 import { FoodSearchResult } from "@/types/foodSearchResult";
 
+export const getMealTimingFactor = (type: string, hour: number): number => {
+  switch (type) {
+    case "breakfast":
+      if (hour >= 5 && hour < 10) return 1.0;
+      if (hour >= 10 && hour < 12) return 0.9;
+      return 0.75;
+    case "morning_snack":
+      if (hour >= 9 && hour < 13) return 1.0;
+      if (hour >= 7 && hour < 15) return 0.9;
+      return 0.8;
+    case "lunch":
+      if (hour >= 11 && hour < 15) return 1.0;
+      if (hour >= 10 && hour < 17) return 0.9;
+      return 0.8;
+    case "afternoon_snack":
+      if (hour >= 14 && hour < 19) return 1.0;
+      if (hour >= 12 && hour < 21) return 0.9;
+      return 0.8;
+    case "dinner":
+      if (hour >= 17 && hour < 21) return 1.0;
+      if (hour >= 15 && hour < 23) return 0.85;
+      return 0.65;
+    default:
+      return 1.0;
+  }
+};
 export const MEAL_TYPES = [
   "Breakfast",
   "Morning Snack",
@@ -29,6 +55,12 @@ export const prepareMealLogData = (
     fat: (item.fat_per_100g || 0) * factor,
     protein: (item.protein_per_100g || 0) * factor,
   };
+  const rating = item.health_rating ?? computeHealthRating({
+    calories_per_100g: item.calories_per_100g || 0,
+    protein_per_100g: item.protein_per_100g || 0,
+    fat_per_100g: item.fat_per_100g || 0,
+    carbs_per_100g: item.carbs_per_100g || 0,
+  });
   const foodId =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
       item.id,
@@ -54,6 +86,7 @@ export const prepareMealLogData = (
       total_fat: Math.round(singleMacros.fat * count),
       total_protein: Math.round(singleMacros.protein * count),
       image_url: item.image_url,
+      rating,
     },
     ingredients: [totalIngredient],
   };

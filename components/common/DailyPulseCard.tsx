@@ -13,13 +13,15 @@ type DailyPulseCardProps = {
     carbs: MacroData;
     fats: MacroData;
     protein: MacroData;
+    rating?: number | null;
 };
-const DailyPulseCard: FC<DailyPulseCardProps> = ({ streak, carbs, fats, protein }) => {
-    const isOverFats = fats.current > (fats.max * 1.1);
-    const isOverCarbs = carbs.current > (carbs.max * 1.1);
-    const isWayTooMuchFat = fats.current > (protein.current * 1.5) && fats.current > 35;
-    const isWayTooMuchCarb = carbs.current > (protein.current * 4) && carbs.current > 150;
-    const isSad = isOverFats || isOverCarbs || isWayTooMuchFat || isWayTooMuchCarb;
+const DailyPulseCard: FC<DailyPulseCardProps> = ({ streak, carbs, fats, protein, rating }) => {
+    const hasRating = rating !== null && rating !== undefined;
+    const isHighRating = hasRating && rating >= 7;
+    const isLowRating = hasRating && rating < 5;
+    const isOverFats = fats.current > (fats.max * 1.3);
+    const isOverCarbs = carbs.current > (carbs.max * 1.3);
+    const isSad = !isHighRating && (isLowRating || isOverFats || isOverCarbs);
     const floatAnim = useSharedValue(0);
     const floatingStyle = useAnimatedStyle(() => ({
         transform: [

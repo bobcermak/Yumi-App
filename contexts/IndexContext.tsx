@@ -2,7 +2,7 @@ import { dateStringFromToday, daysFromCalories } from "@/lib/helpers/onBoardingH
 import { useAuth } from "@/lib/hooks/useAuth";
 import { getActiveDates, getDailyLog, updateWaterIntake } from "@/lib/services/supabase/queries/dailyLogs";
 import { deleteMealLog, getMealLogsForDay, updateMealLog } from "@/lib/services/supabase/queries/mealLogs";
-import { incrementUserStreak } from "@/lib/services/supabase/queries/profiles";
+import { incrementUserStreak, recalculateUserRating } from "@/lib/services/supabase/queries/profiles";
 import { updateCalorieLimitAndTargetDate } from "@/lib/services/supabase/queries/setupUserAccount";
 import { MealLog, MealLogWithIngredients } from "@/types/database/dbModels";
 import { IndexContextProps, OverviewData, ToastType } from "@/types/indexContextType";
@@ -164,6 +164,7 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
             const logs = await getMealLogsForDay(userProfile.id, dateStr);
             setMealLogs(logs);
             await incrementUserStreak(userProfile.id);
+            await recalculateUserRating(userProfile.id);
             await refreshProfile();
             const { data } = await getDailyLog(userProfile.id, dateStr);
             setOverviewData(prev => ({
@@ -253,6 +254,7 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
             const dashLogs = await getMealLogsForDay(userProfile.id, dashStr);
             setMealLogs(dashLogs);
             await incrementUserStreak(userProfile.id);
+            await recalculateUserRating(userProfile.id);
             await refreshProfile();
             const limit = userProfile.daily_calorie_limit || defaultCalLimit;
             setRefreshKey(prev => prev + 1);

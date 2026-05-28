@@ -2,7 +2,7 @@ import { scanBarcode, scanPhoto } from "@/lib/helpers/magicScan";
 import { useIndexContext } from "@/lib/hooks/useIndexContext";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import { useRouter } from "expo-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dimensions, Image as RNImage } from "react-native";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
@@ -46,14 +46,22 @@ export const useMagicScan = () => {
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
   const [pendingPhoto, setPendingPhoto] = useState<{ uri: string; base64?: string } | null>(null);
   const pendingRef = useRef<{ uri: string; base64?: string } | null>(null);
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    return () => { isMountedRef.current = false; };
+  }, []);
   const ctx = {
     isProcessing,
-    setIsProcessing,
-    navigateToItem: (id: string, item: string) =>
-      router.replace({ pathname: "/search-item/[id]", params: { id, item } }),
-    navigateToMealLog: (scanResult: string, photoUri?: string) =>
-      router.replace({ pathname: "/meal-log", params: { scanResult, photoUri: photoUri ?? "" } }),
-    navigateBack: () => router.canGoBack() ? router.back() : router.replace("/(tabs)"),
+    setIsProcessing: (v: boolean) => { if (isMountedRef.current) setIsProcessing(v); },
+    navigateToItem: (id: string, item: string) => {
+      if (isMountedRef.current) router.replace({ pathname: "/search-item/[id]", params: { id, item } });
+    },
+    navigateToMealLog: (scanResult: string, photoUri?: string) => {
+      if (isMountedRef.current) router.replace({ pathname: "/meal-log", params: { scanResult, photoUri: photoUri ?? "" } });
+    },
+    navigateBack: () => {
+      if (isMountedRef.current) router.canGoBack() ? router.back() : router.replace("/(tabs)");
+    },
     showToast,
   };
   const handleConfirm = async (scale: number, translateX: number, translateY: number) => {
@@ -70,7 +78,7 @@ export const useMagicScan = () => {
     }
     setPendingPhoto(null);
     pendingRef.current = null;
-    setCapturedUri(finalUri);
+    setCapturedUri(photo.uri);
     scanPhoto(finalUri, finalBase64, ctx);
   };
   const handleRetake = () => {

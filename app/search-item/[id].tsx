@@ -146,6 +146,7 @@ const SearchItem = () => {
                     fat_per_100g={item.fat_per_100g || 0}
                     rating={item.health_rating}
                     initialGrams={100}
+                    isDrink={isDrink}
                     isFavorite={isFavorite}
                     isFavoriteLoading={isFavoriteLoading}
                     onToggleFavorite={handleToggleFavorite}

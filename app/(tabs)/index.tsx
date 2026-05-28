@@ -18,7 +18,7 @@ const Home = () => {
     const journeyCalendarRef = useRef<BottomSheet>(null);
     //Contexts
     const { userProfile } = useAuth();
-    const { overviewData, dashboardDate, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, refreshData, refreshKey, waterMl, waterGoalMl, handleSetWater } = useIndexContext();
+    const { overviewData, dashboardDate, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, refreshData, refreshKey, waterMl, waterGoalMl, handleSetWater, mealLogs } = useIndexContext();
     
     useFocusEffect(
         useCallback(() => {
@@ -169,11 +169,17 @@ const Home = () => {
                     </Animated.View>
                     <Animated.View key={`pulse-${refreshKey}`} entering={FadeInDown.duration(250).delay(400)} className="w-[362px] self-center mt-8">
                         <Text className="title mb-4">Daily Pulse</Text>
-                        <DailyPulseCard 
+                        <DailyPulseCard
                             streak={getEffectiveStreak(userProfile?.streak_count, userProfile?.last_log_date)}
                             protein={overviewData.macros.protein}
                             carbs={overviewData.macros.carbs}
                             fats={overviewData.macros.fats}
+                            rating={(() => {
+                                const rated = mealLogs.filter(m => m.rating !== null && m.rating !== undefined);
+                                return rated.length > 0
+                                    ? Math.round((rated.reduce((s, m) => s + m.rating!, 0) / rated.length) * 10) / 10
+                                    : null;
+                            })()}
                         />
                     </Animated.View>
                 </ScrollView>

@@ -40,7 +40,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
           const { data: profile, error: profileError } = await getProfile(
             initialSession.user.id,
           );
-          if (profileError || !profile) {
+          if (!profileError && !profile) {
             console.warn(
               "[Auth] Profile not found for session, signing out...",
             );
@@ -51,11 +51,13 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
               await AsyncStorage.removeItem("v1_onboarding_done");
               setHasOnboarded(false);
             }
+          } else if (profileError) {
+            console.warn("[Auth] Profile fetch error (keeping session):", profileError.message);
           } else {
             if (mounted) {
               setUserProfile(profile);
               posthog.identify(initialSession.user.id, {
-                $set: { username: profile.username ?? null },
+                $set: { username: profile?.username ?? null },
               });
             }
           }

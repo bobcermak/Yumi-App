@@ -2,7 +2,40 @@ import supabase from "../client";
 import { PostgrestError } from "@supabase/supabase-js";
 import { format, parseISO, differenceInCalendarDays, subDays } from "date-fns";
 import { getActiveDates } from "./dailyLogs";
+import { getMealTimingFactor } from "@/lib/helpers/mealHelpers";
 
+//UPDATE
+export const recalculateUserRating = async (userId: string): Promise<void> => {
+  const today = new Date();
+  const thirtyDaysAgo = format(subDays(today, 30), "yyyy-MM-dd");
+  const todayStr = format(today, "yyyy-MM-dd");
+  const { data: meals } = await supabase
+    .from("meal_logs")
+    .select("rating, logged_at, type")
+    .eq("user_id", userId)
+    .not("rating", "is", null)
+    .gte("logged_at", `${thirtyDaysAgo}T00:00:00`)
+    .lte("logged_at", `${todayStr}T23:59:59`);
+  if (!meals || meals.length === 0) return;
+  const now = today.getTime();
+  let totalWeight = 0;
+  let weightedSum = 0;
+  for (const meal of meals) {
+    if (meal.rating === null || !meal.logged_at) continue;
+    const mealDate = new Date(meal.logged_at);
+    const daysAgo = (now - mealDate.getTime()) / (1000 * 60 * 60 * 24);
+    const recencyWeight = Math.exp(-0.05 * daysAgo);
+    const timingFactor = getMealTimingFactor(meal.type, mealDate.getHours());
+    weightedSum += meal.rating * timingFactor * recencyWeight;
+    totalWeight += recencyWeight;
+  }
+  if (totalWeight === 0) return;
+  const newRating = Math.round((weightedSum / totalWeight) * 10) / 10;
+  await supabase
+    .from("profiles")
+    .update({ total_rating: newRating })
+    .eq("id", userId);
+};
 export const recalculateStreakFromLogs = async (userId: string): Promise<number> => {
   const now = new Date();
   const endDate = format(now, "yyyy-MM-dd");
@@ -29,7 +62,6 @@ export const recalculateStreakFromLogs = async (userId: string): Promise<number>
   }
   return streak;
 };
-//UPDATE
 export const incrementUserStreak = async (userId: string): Promise<{ error: PostgrestError | null }> => {
   const { data: profile } = await supabase
     .from("profiles")

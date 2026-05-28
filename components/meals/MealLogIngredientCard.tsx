@@ -14,12 +14,13 @@ type MealLogIngredientCardProps = {
   count?: number,
   index?: number,
   isLast?: boolean,
+  isDrink?: boolean,
   isCountOpen?: boolean,
   onCountOpenChange?: (open: boolean) => void,
   onDelete?: () => void,
   onCountChange?: (newCount: number) => void
 };
-const MealLogIngredientCard: FC<MealLogIngredientCardProps> = ({ emoji = "🍽️", name, weight_g, calories, carbs_g, fat_g, protein_g, count = 1, index = 0, isLast = false, isCountOpen = false, onCountOpenChange, onDelete, onCountChange }) => {
+const MealLogIngredientCard: FC<MealLogIngredientCardProps> = ({ emoji = "🍽️", name, weight_g, calories, carbs_g, fat_g, protein_g, count = 1, index = 0, isLast = false, isDrink = false, isCountOpen = false, onCountOpenChange, onDelete, onCountChange }) => {
   const enteringAnim = useRef(
     FadeInDown.delay(index * 80).duration(250),
   ).current;
@@ -57,7 +58,12 @@ const MealLogIngredientCard: FC<MealLogIngredientCardProps> = ({ emoji = "🍽�
             {name}
           </Text>
           <Text className="text-white font-nunito-700 text-base -mt-0.5">
-            {weight_g} <Text className="text-white/50">g ·</Text> {calories}{" "}
+            {isDrink
+              ? (weight_g >= 1000
+                ? <Text>{(weight_g / 1000).toFixed(1).replace(/\.0$/, "")}<Text className="text-white/50"> L ·</Text></Text>
+                : <Text>{weight_g}<Text className="text-white/50"> ml ·</Text></Text>)
+              : <Text>{weight_g}<Text className="text-white/50"> g ·</Text></Text>
+            }{" "}{calories}{" "}
             <Text className="text-white/50">cal</Text>
           </Text>
         </View>
@@ -152,5 +158,6 @@ export default memo(MealLogIngredientCard, (prev, next) =>
   prev.count === next.count &&
   prev.isLast === next.isLast &&
   prev.index === next.index &&
+  prev.isDrink === next.isDrink &&
   prev.isCountOpen === next.isCountOpen
 );

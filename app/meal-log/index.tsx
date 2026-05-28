@@ -1,6 +1,7 @@
 import { Button, Icon, MealLogIngredientCard, ResultMeal } from "@/components";
 import { type ResultMealHandle } from "@/components/meals/ResultMeal";
 import { MEAL_TYPES, MEAL_TYPE_MAP, computeHealthRating } from "@/lib/helpers/mealHelpers";
+import { getMealTypeByTime } from "@/lib/helpers/dateHelpers";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useIndexContext } from "@/lib/hooks/useIndexContext";
 import type { MagicScanResult } from "@/lib/services/food-search/magic-scan";
@@ -28,7 +29,7 @@ const MealLog = () => {
   const result: MagicScanResult | null = scanResultParam
     ? (JSON.parse(scanResultParam) as MagicScanResult)
     : null;
-  const [mealType, setMealType] = useState<string>(MEAL_TYPES[2]);
+  const [mealType, setMealType] = useState<string>(getMealTypeByTime());
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
   const [isFavoriteLoading, setIsFavoriteLoading] = useState<boolean>(false);
@@ -243,7 +244,7 @@ const MealLog = () => {
       }
       await refreshData();
       showToast("Meal recorded!");
-      router.back();
+      router.replace("/(tabs)");
     } catch (error) {
       console.error("[MealLog] Error recording:", error);
       showToast("Failed to record meal", undefined, "error");
@@ -255,10 +256,14 @@ const MealLog = () => {
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      onTouchStart={() => {
-        if (isDropdownOpen) closeDropdown();
-      }}
     >
+      {isDropdownOpen && (
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={closeDropdown}
+          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 45 }}
+        />
+      )}
       <View
         style={{
           zIndex: 50,
@@ -387,6 +392,7 @@ const MealLog = () => {
             fat_per_100g={currentNutrition.fat100}
             initialGrams={currentNutrition.weight}
             initialCount={1}
+            isDrink={isDrink}
             rating={healthRating}
             isFavorite={isFavorite}
             isFavoriteLoading={isFavoriteLoading}
@@ -407,7 +413,6 @@ const MealLog = () => {
               {scaledComponents.map((comp, i) => (
                 <Animated.View
                   key={comp.originalIndex}
-                  layout={LinearTransition.springify().damping(200)}
                   exiting={FadeOutUp}
                 >
                   <MealLogIngredientCard
@@ -421,43 +426,30 @@ const MealLog = () => {
                     protein_g={comp.protein_g}
                     count={comp.count || 1}
                     isLast={scaledComponents.length <= 1}
+                    isDrink={isDrink}
                     isCountOpen={openCountIndex === comp.originalIndex}
                     onCountOpenChange={(open) => setOpenCountIndex(open ? comp.originalIndex : null)}
                     onCountChange={(newCount) => {
-                      const newDisplayed = scaledComponents.map((c) =>
-                        c.originalIndex === comp.originalIndex
-                          ? { ...c, count: newCount }
-                          : c,
-                      );
-                      const newBase =
-                        Math.round(
-                          newDisplayed.reduce(
-                            (sum, c) => sum + c.weight_g * (c.count || 1),
-                            0,
-                          ),
-                        ) || 100;
-                      setDisplayedComponents(newDisplayed);
-                      setEffectiveBaseWeight(newBase);
-                      setMealData((prev) =>
-                        prev ? { ...prev, grams: newBase } : prev,
-                      );
+                      const idx = comp.originalIndex;
+                      setDisplayedComponents(prev => {
+                        const updated = prev.map(c =>
+                          c.originalIndex === idx ? { ...c, count: newCount } : c
+                        );
+                        const newBase = Math.round(updated.reduce((s, c) => s + c.weight_g * (c.count || 1), 0)) || 100;
+                        setEffectiveBaseWeight(newBase);
+                        setMealData(m => m ? { ...m, grams: newBase } : m);
+                        return updated;
+                      });
                     }}
                     onDelete={() => {
-                      const remainingScaled = scaledComponents.filter(
-                        (c) => c.originalIndex !== comp.originalIndex,
-                      );
-                      const newBase =
-                        Math.round(
-                          remainingScaled.reduce(
-                            (sum, c) => sum + c.weight_g * (c.count || 1),
-                            0,
-                          ),
-                        ) || 100;
-                      setDisplayedComponents(remainingScaled);
-                      setEffectiveBaseWeight(newBase);
-                      setMealData((prev) =>
-                        prev ? { ...prev, grams: newBase } : prev,
-                      );
+                      const idx = comp.originalIndex;
+                      setDisplayedComponents(prev => {
+                        const remaining = prev.filter(c => c.originalIndex !== idx);
+                        const newBase = Math.round(remaining.reduce((s, c) => s + c.weight_g * (c.count || 1), 0)) || 100;
+                        setEffectiveBaseWeight(newBase);
+                        setMealData(m => m ? { ...m, grams: newBase } : m);
+                        return remaining;
+                      });
                     }}
                   />
                 </Animated.View>
