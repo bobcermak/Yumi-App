@@ -1,5 +1,4 @@
 import { CameraView } from "expo-camera";
-import * as Notifications from "expo-notifications";
 import { Alert } from "react-native";
 import type { RefObject } from "react";
 
@@ -13,12 +12,7 @@ export const requestCameraAccess = async (
     if (!granted) {
       Alert.alert("Permission Required", "Camera access is needed.");
       onClose();
-      return;
     }
-  }
-  const { status } = await Notifications.getPermissionsAsync();
-  if (status === "undetermined") {
-    await Notifications.requestPermissionsAsync();
   }
 }
 export const takeCameraPhoto = async (

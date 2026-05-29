@@ -5,12 +5,14 @@ import { useIndexContext } from "@/lib/hooks/useIndexContext";
 import { differenceInCalendarDays, format, isToday, isYesterday } from "date-fns";
 import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import * as Haptics from "expo-haptics";
+import { useRouter } from "expo-router";
 import { Cookie, CookingPot, EggCrack, Orange, Pizza, Plus } from "phosphor-react-native";
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withRepeat, withTiming, Easing } from "react-native-reanimated";
 
 const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
+  const router = useRouter();
   //Context
   const { mealLogs, deleteMeal, updateMeal, showToast, dashboardDate } = useIndexContext();
   //Hooks
@@ -187,16 +189,14 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
         onScroll={({ nativeEvent }) => { scrollOffsetRef.current = nativeEvent.contentOffset.y; }}
       >
         <View className="px-5">
-          <TouchableOpacity
-            activeOpacity={0.25}
-            onPress={() => internalRef.current?.snapToIndex(3)}
-            className="flex-row justify-between items-center mt-10 pb-5"
-          >
-            <Text className="text-white text-xl font-nunito-800">{dateLabel}</Text>
-            <Icon className="w-[36px] h-[36px]" onPress={() => { }}>
+          <View className="flex-row justify-between items-center mt-10 pb-5">
+            <TouchableOpacity activeOpacity={0.25} onPress={() => internalRef.current?.snapToIndex(3)} className="flex-1 mr-3">
+              <Text className="text-white text-xl font-nunito-800">{dateLabel}</Text>
+            </TouchableOpacity>
+            <Icon className="w-[36px] h-[36px]" onPress={() => router.push({ pathname: "/(tabs)/quick-add", params: { mealType: currentMealType } })}>
               <Plus size={24} color="#1D1D1D" weight="regular" />
             </Icon>
-          </TouchableOpacity>
+          </View>
           <View className="mt-1 gap-4 pb-10">
             {mealSections.map((section) => (
               <MealCard
@@ -207,6 +207,8 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
                 isDayTime={isToday(dashboardDate) && currentMealType === section.title}
                 expanded={expandedMeal === section.title}
                 onToggle={() => setExpandedMeal(expandedMeal === section.title ? null : section.title)}
+                onAddPress={() => router.push({ pathname: "/(tabs)/quick-add", params: { mealType: section.title } })}
+                onSectionPress={() => router.push({ pathname: "/(tabs)/quick-add", params: { mealType: section.title } })}
                 ingredients={section.ingredients}
                 onIngredientEdit={(id, newCal) => {
                   const ing = section.ingredients.find(i => i.id === id);

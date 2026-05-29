@@ -26,9 +26,10 @@ type CameraModalProps = {
   onRetake?: () => void,
   title?: string,
   overlayText?: string,
-  asModal?: boolean
+  asModal?: boolean,
+  hideHeader?: boolean,
 };
-const CameraModal: FC<CameraModalProps> = ({ visible, onClose, mode, onBarcodeScanned, onCapture, isProcessing = false, capturedImageUri, pendingPhotoUri, onConfirm, onRetake, title, overlayText, asModal = true }) => {
+const CameraModal: FC<CameraModalProps> = ({ visible, onClose, mode, onBarcodeScanned, onCapture, isProcessing = false, capturedImageUri, pendingPhotoUri, onConfirm, onRetake, title, overlayText, asModal = true, hideHeader = false }) => {
   const insets = useSafeAreaInsets();
   const { toast } = useIndexContext();
   const [permission, requestPermission] = useCameraPermissions();
@@ -36,6 +37,8 @@ const CameraModal: FC<CameraModalProps> = ({ visible, onClose, mode, onBarcodeSc
   const [isCapturing, setIsCapturing] = useState<boolean>(false);
   const scannedRef = useRef<boolean>(false);
   const cameraRef = useRef<CameraView>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   const scale = useSharedValue(1);
   const savedScale = useSharedValue(1);
   const translateX = useSharedValue(0);
@@ -53,7 +56,6 @@ const CameraModal: FC<CameraModalProps> = ({ visible, onClose, mode, onBarcodeSc
       savedCameraZoom.value = cameraZoom.value;
     });
   const animatedCameraProps = useAnimatedProps(() => ({ zoom: cameraZoom.value }));
-
   const pinchGesture = Gesture.Pinch()
     .onUpdate((e) => {
       scale.value = Math.max(1, Math.min(savedScale.value * e.scale, 6));
@@ -111,9 +113,9 @@ const CameraModal: FC<CameraModalProps> = ({ visible, onClose, mode, onBarcodeSc
   useEffect(() => {
     if (visible) {
       scannedRef.current = false;
-      requestCameraAccess(permission, requestPermission, onClose);
+      requestCameraAccess(permission, requestPermission, onCloseRef.current);
     }
-  }, [visible, permission, requestPermission, onClose]);
+  }, [visible, permission?.granted]);
   if (!permission?.granted && visible) return null;
   const bottomText = overlayText ?? (mode === "barcode" ? "Align barcode within the frame" : "Center item in the frame");
   const content = (
@@ -247,7 +249,7 @@ const CameraModal: FC<CameraModalProps> = ({ visible, onClose, mode, onBarcodeSc
           </View>
         </Animated.View>
       )}
-      {!isConfirming && !isScanning && (
+      {!isConfirming && !isScanning && !hideHeader && (
         <View
           style={{ paddingTop: insets.top + 12 }}
           className="absolute top-0 left-0 right-0 flex-row justify-between px-6 items-center"
@@ -256,6 +258,20 @@ const CameraModal: FC<CameraModalProps> = ({ visible, onClose, mode, onBarcodeSc
             <CaretLeft size={24} color="white" />
           </Icon>
           {title && <Text className="font-nunito-800 text-xl text-white">{title}</Text>}
+          <Icon
+            className={`w-12 h-12 border border-white/10 ${torch ? "bg-yellow" : "bg-black/50"}`}
+            onPress={() => setTorch((v) => !v)}
+            shadowColor={torch ? "#C5E384" : "#000000"}
+          >
+            {torch ? <Lightning size={24} color="#1D1D1D" weight="fill" /> : <LightningSlash size={24} color="white" />}
+          </Icon>
+        </View>
+      )}
+      {!isConfirming && !isScanning && hideHeader && (
+        <View
+          style={{ paddingTop: insets.top + 12, position: "absolute", top: 0, right: 0 }}
+          className="px-6"
+        >
           <Icon
             className={`w-12 h-12 border border-white/10 ${torch ? "bg-yellow" : "bg-black/50"}`}
             onPress={() => setTorch((v) => !v)}

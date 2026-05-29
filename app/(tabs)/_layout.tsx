@@ -14,6 +14,7 @@ const _Layout = () => {
       <Tabs.Screen name="add-food" options={{ title: "Add Food" }}/>
       <Tabs.Screen name="groups" options={{ title: "Groups" }}/>
       <Tabs.Screen name="profile" options={{ title: "Profile" }}/>
+      <Tabs.Screen name="quick-add" options={{ href: null }}/>
     </Tabs>
   );
 };

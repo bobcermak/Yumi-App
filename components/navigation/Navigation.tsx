@@ -9,6 +9,7 @@ import { Animated, Image, Pressable, StyleSheet, TouchableOpacity, View } from "
 import Reanimated, { FadeInDown, FadeOutDown, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import AnimatedTabIcon from "./AnimatedTabIcon";
 
+const VISIBLE_TAB_NAMES = ["index", "search", "add-food", "groups", "profile"];
 const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
   const router = useRouter();
   const [tabBarWidth, setTabBarWidth] = useState<number>(0);
@@ -22,11 +23,14 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
   const menuOverlayStyle = useAnimatedStyle(() => ({
     opacity: menuOpacity.value,
   }));
-
   const PADDING_HORIZONTAL = 12;
   const INNER_WIDTH = tabBarWidth - PADDING_HORIZONTAL;
-  const TAB_WIDTH = INNER_WIDTH / state.routes.length;
-
+  const visibleRoutes = state.routes.filter(r => VISIBLE_TAB_NAMES.includes(r.name));
+  const currentRouteName = state.routes[state.index]?.name;
+  const visibleIndex = visibleRoutes.findIndex(r => r.name === currentRouteName);
+  const addFoodIndex = visibleRoutes.findIndex(r => r.name === "add-food");
+  const effectiveIndex = visibleIndex >= 0 ? visibleIndex : currentRouteName === "quick-add" ? addFoodIndex : 0;
+  const TAB_WIDTH = INNER_WIDTH / visibleRoutes.length;
   useEffect(() => {
     Animated.spring(entranceAnim, {
       toValue: 1,
@@ -48,7 +52,7 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
   }, [isMenuOpen, menuOpacity]);
   useEffect(() => {
     if (tabBarWidth === 0) return;
-    const toValue = 8 + state.index * TAB_WIDTH + TAB_WIDTH / 2 - 20;
+    const toValue = 8 + effectiveIndex * TAB_WIDTH + TAB_WIDTH / 2 - 20;
     Animated.parallel([
       Animated.spring(indicatorX, {
         toValue,
@@ -69,7 +73,7 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
         }),
       ]),
     ]).start();
-  }, [state.index, tabBarWidth]);
+  }, [effectiveIndex, tabBarWidth]);
   const handleMenuOpen = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setIsMenuOpen(true);
@@ -141,8 +145,8 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
               shadowRadius: 4,
             }}
           />
-          {state.routes.map((route, index) => {
-            const focused = state.index === index;
+          {visibleRoutes.map((route, index) => {
+            const focused = route.name === state.routes[state.index]?.name;
             const isCenter = route.name === "add-food";
             const onPress = () => {
               if (isCenter) {
@@ -236,7 +240,7 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
                   shadowColor="#C5E384"
                   onPress={() => {
                     handleMenuClose();
-                    router.push("/magic-scan");
+                    router.push({ pathname: "/(tabs)/quick-add", params: { startTab: "magicScan" } });
                   }}
                   icon={<Sparkle size={24} color="#1D1D1D" weight="regular"/>}
                 >

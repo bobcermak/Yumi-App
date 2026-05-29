@@ -12,13 +12,15 @@ type MealCardProps = {
     allCal: number,
     isDayTime?: boolean,
     onPress?: () => void,
+    onAddPress?: () => void,
+    onSectionPress?: () => void,
     ingredients?: IngredientData[],
     expanded?: boolean,
     onToggle?: () => void,
     onIngredientEdit?: (id: string | number, newCal: number) => void,
     onIngredientDelete?: (id: string | number) => void
 }
-const MealCard: FC<MealCardProps> = ({ icon, title, allCal, isDayTime, onPress, ingredients, expanded, onToggle, onIngredientEdit, onIngredientDelete }) => {
+const MealCard: FC<MealCardProps> = ({ icon, title, allCal, isDayTime, onPress, onAddPress, onSectionPress, ingredients, expanded, onToggle, onIngredientEdit, onIngredientDelete }) => {
     //Hooks
     const hasIngredients = ingredients && ingredients.length > 0;
     const [localExpanded, setLocalExpanded] = useState<boolean>(false);
@@ -54,8 +56,8 @@ const MealCard: FC<MealCardProps> = ({ icon, title, allCal, isDayTime, onPress, 
                     elevation: 5,
                 }}>
                 <Pressable
-                    onPress={toggleExpand}
-                    disabled={!hasIngredients}
+                    onPress={onSectionPress ?? toggleExpand}
+                    disabled={!onSectionPress && !hasIngredients}
                     className={`flex-row items-center justify-between ${isExpanded && hasIngredients ? 'pb-4 border-b border-white/80' : ""}`}
                 >
                     <View className="flex-row items-center gap-1 flex-1 mr-4">
@@ -87,7 +89,7 @@ const MealCard: FC<MealCardProps> = ({ icon, title, allCal, isDayTime, onPress, 
                     </Animated.View>
                 )}
             </Animated.View>
-            <Icon className="w-[28px] h-[28px] bg-green" shadowColor="#84C754" onPress={() => { }}>
+            <Icon className="w-[28px] h-[28px] bg-green" shadowColor="#84C754" onPress={onAddPress}>
                 <Plus size={16} color="#FFFFFF" weight="regular" />
             </Icon>
         </View>

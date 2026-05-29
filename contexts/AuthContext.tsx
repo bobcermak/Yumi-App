@@ -28,62 +28,67 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     let mounted = true;
-    const initializeAuth = async () => {
-      try {
-        const onboarded = await AsyncStorage.getItem("v1_onboarding_done");
-        if (mounted) setHasOnboarded(onboarded === "true");
-        const {
-          data: { session: initialSession },
-        } = await supabase.auth.getSession();
-        if (initialSession) {
-          if (mounted) setSession(initialSession);
-          const { data: profile, error: profileError } = await getProfile(
-            initialSession.user.id,
-          );
-          if (!profileError && !profile) {
-            console.warn(
-              "[Auth] Profile not found for session, signing out...",
-            );
-            await supabase.auth.signOut();
-            if (mounted) {
+    const safetyTimer = setTimeout(() => {
+      if (mounted) setIsReady(true);
+    }, 8000);
+    AsyncStorage.getItem("v1_onboarding_done").then((onboarded) => {
+      if (mounted) setHasOnboarded(onboarded === "true");
+    });
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, authSession) => {
+      if (!mounted) return;
+      if (event === "INITIAL_SESSION") {
+        try {
+          if (authSession) {
+            setSession(authSession);
+            const { data: profile, error: profileError } = await getProfile(authSession.user.id);
+            if (!mounted) return;
+            if (!profileError && !profile) {
+              console.warn("[Auth] No profile found, signing out...");
+              await supabase.auth.signOut();
               setSession(null);
               setUserProfile(null);
               await AsyncStorage.removeItem("v1_onboarding_done");
               setHasOnboarded(false);
-            }
-          } else if (profileError) {
-            console.warn("[Auth] Profile fetch error (keeping session):", profileError.message);
-          } else {
-            if (mounted) {
+            } else if (profileError) {
+              console.warn("[Auth] Profile fetch failed on init (keeping session):", profileError.message);
+            } else {
               setUserProfile(profile);
               setHasOnboarded(true);
               await AsyncStorage.setItem("v1_onboarding_done", "true");
-              posthog.identify(initialSession.user.id, {
+              posthog.identify(authSession.user.id, {
                 $set: { username: profile?.username ?? null },
               });
             }
+          } else {
+            setSession(null);
+            setUserProfile(null);
+          }
+        } catch (e) {
+          console.error("[Auth] INITIAL_SESSION error:", e);
+        } finally {
+          if (mounted) {
+            clearTimeout(safetyTimer);
+            setIsReady(true);
           }
         }
-      } catch (e) {
-        console.error("Auth initialization error:", e);
-      } finally {
-        if (mounted) setIsReady(true);
-      }
-    };
-    const safetyTimer = setTimeout(() => {
-      if (mounted) setIsReady(true);
-    }, 8000);
-    initializeAuth().finally(() => clearTimeout(safetyTimer));
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, authSession) => {
-      if (!mounted || isSigningUpRef.current || event === "INITIAL_SESSION")
         return;
-
+      }
+      if (event === "TOKEN_REFRESHED") {
+        if (authSession && mounted) setSession(authSession);
+        return;
+      }
+      if (isSigningUpRef.current) return;
       if (authSession) {
-        const { data: profile } = await getProfile(authSession.user.id);
-        if (!profile) {
+        const { data: profile, error: profileError } = await getProfile(authSession.user.id);
+        if (!mounted) return;
+        if (!profileError && !profile) {
           await supabase.auth.signOut();
+          return;
+        }
+        if (profileError) {
+          if (mounted) setSession(authSession);
           return;
         }
         const onboarded = await AsyncStorage.getItem("v1_onboarding_done");
@@ -102,6 +107,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     });
     return () => {
       mounted = false;
+      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);
@@ -163,7 +169,6 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
         setHasOnboarded(true);
         await AsyncStorage.setItem("v1_onboarding_done", "true");
         if (sessionData.session) setSession(sessionData.session);
-
         posthog.identify(authData.user.id, {
           $set: { username: onboardingData ? onboardingData.username : null },
           $set_once: { signup_date: new Date().toISOString() },
@@ -180,7 +185,6 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
             has_profile_photo: !!onboardingData.photoUri,
           });
         }
-
         return { error: null };
       } catch (e: unknown) {
         const message =
