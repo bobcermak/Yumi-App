@@ -2,7 +2,7 @@ import { TouchableOpacity } from "react-native";
 import { type FC } from "react";
 
 type IconProps = {
-    onPress: () => void,
+    onPress?: () => void,
     className?: string,
     shadowColor?: string,
     disabled?: boolean,
@@ -16,7 +16,7 @@ const Icon: FC<IconProps> = ({ onPress, className, shadowColor = "#C5E384", disa
     //Functions
     const handlePress = () => {
         if (disabled) return;
-        onPress();
+        onPress?.();
     };
     return (
         <TouchableOpacity onPress={handlePress} disabled={disabled} className={finalClassName.trim()} 

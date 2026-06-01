@@ -3,7 +3,7 @@ import { useIndexContext } from "@/lib/hooks/useIndexContext";
 import { searchFoodByBarcode } from "@/lib/services/food-search/barcode";
 import { useFocusEffect, useRouter } from "expo-router";
 import { ArrowRight, Barcode, MagnifyingGlass, X } from "phosphor-react-native";
-import { type FC, useCallback, useRef, useState } from "react";
+import { type FC, useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 
@@ -19,9 +19,10 @@ type SearchInputProps = {
   onChangeText?: (text: string) => void,
   onSubmit?: () => void,
   onClear?: () => void,
+  onFocus?: () => void,
   isSubmitDisabled?: boolean
 }
-const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...", showCamera = true, onSearchPress, onCameraPress, className = "", isInput = false, autoFocus = false, value, onChangeText, onSubmit, onClear, isSubmitDisabled = false }) => {
+const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...", showCamera = true, onSearchPress, onCameraPress, className = "", isInput = false, autoFocus = false, value, onChangeText, onSubmit, onClear, onFocus, isSubmitDisabled = false }) => {
   //Router
   const router = useRouter();
   //Hooks
@@ -41,6 +42,11 @@ const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...",
   const [scanned, setScanned] = useState<boolean>(false);
   const [isSearching, setIsSearching] = useState<boolean>(false);
 
+  useEffect(() => {
+    const textEntered = (value?.length ?? 0) > 0;
+    arrowOpacity.value = textEntered ? 1 : 0;
+    arrowTranslateX.value = textEntered ? 0 : 8;
+  }, [value]);
   //Functions
   const handleChangeText = useCallback((text: string) => {
     onChangeText?.(text);
@@ -131,6 +137,7 @@ const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...",
             value={value}
             onChangeText={handleChangeText}
             onSubmitEditing={onSubmit}
+            onFocus={onFocus}
             returnKeyType="search"
             style={{ textAlignVertical: 'center' }}
           />

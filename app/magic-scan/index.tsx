@@ -12,8 +12,8 @@ const MagicScan = () => {
   //Router
   const router = useRouter();
   
-  const { isProcessing, capturedUri, pendingPhoto, handleBarcodeScanned, handleCapture, handleConfirm, handleRetake } = useMagicScan();
   const [mealType, setMealType] = useState<string>(getMealTypeByTime());
+  const { isProcessing, capturedUri, pendingPhoto, handleBarcodeScanned, handleCapture, handleConfirm, handleRetake } = useMagicScan(mealType, true);
   const [isMealDropdownOpen, setIsMealDropdownOpen] = useState<boolean>(false);
 
   const isConfirming = !!pendingPhoto && !isProcessing;

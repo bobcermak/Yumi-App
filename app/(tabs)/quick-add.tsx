@@ -4,7 +4,7 @@ import { MEAL_TYPES } from "@/lib/helpers/mealHelpers";
 import { useMagicScan } from "@/lib/hooks/useMagicScan";
 import { useSearchContext } from "@/lib/hooks/useSearchContext";
 import type { FoodCategory, FoodType } from "@/types/searchFilters";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { CaretDown, CaretLeft, MagnifyingGlass, Plus } from "phosphor-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FlatList, Keyboard, Modal, RefreshControl, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
@@ -25,19 +25,13 @@ type ActiveTab = "quickAdd" | "magicScan";
 const QuickAdd = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { mealType: mealTypeParam, startTab } = useLocalSearchParams<{ mealType: string; startTab: string }>();
-  const {
-    query, setQuery, searchResults, isSearching, isSearchPending,
-    searchSource, submitSearch, category, setCategory, foodType,
-    setFoodType, popularMeals, refreshPopularMeals, setFilter,
-  } = useSearchContext();
-  const {
-    isProcessing, capturedUri, pendingPhoto,
-    handleBarcodeScanned, handleCapture, handleConfirm, handleRetake,
-  } = useMagicScan();
-
+  const { mealType: mealTypeParam, startTab, _t } = useLocalSearchParams<{ mealType: string; startTab: string; _t?: string }>();
+  //Contexts
+  const { query, setQuery, searchResults, isSearching, isSearchPending, searchSource, submitSearch, category, setCategory, foodType, setFoodType, popularMeals, refreshPopularMeals, setFilter } = useSearchContext();
+  //Hooks
   const [activeTab, setActiveTab] = useState<ActiveTab>(startTab === "magicScan" ? "magicScan" : "quickAdd");
   const [mealType, setMealType] = useState(mealTypeParam || getMealTypeByTime());
+  const { isProcessing, capturedUri, pendingPhoto, handleBarcodeScanned, handleCapture, handleConfirm, handleRetake } = useMagicScan(mealType);
   const [isMealDropdownOpen, setIsMealDropdownOpen] = useState<boolean>(false);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -54,19 +48,22 @@ const QuickAdd = () => {
   useEffect(() => {
     if (mealTypeParam) setMealType(mealTypeParam);
   }, [mealTypeParam]);
-
   useEffect(() => {
     const tab: ActiveTab = startTab === "magicScan" ? "magicScan" : "quickAdd";
     setActiveTab(tab);
     tabPosition.value = tab === "magicScan" ? 1 : 0;
-  }, [startTab]);
-
+  }, [startTab, _t]); // eslint-disable-line react-hooks/exhaustive-deps
+  useFocusEffect(useCallback(() => {
+    const tab: ActiveTab = startTab === "magicScan" ? "magicScan" : "quickAdd";
+    setActiveTab(tab);
+    tabPosition.value = tab === "magicScan" ? 1 : 0;
+  }, [startTab]));
   useEffect(() => {
     if (isSearchActive) setShowDropdown(true);
   }, [query, category, foodType]);
   const switchTab = (tab: ActiveTab) => {
     setActiveTab(tab);
-    tabPosition.value = withTiming(tab === "magicScan" ? 1 : 0, { duration: 220 });
+    tabPosition.value = withTiming(tab === "magicScan" ? 1 : 0, { duration: 250 });
   };
   const closeMealDropdown = () => {
     setIsMealDropdownOpen(false);
@@ -131,13 +128,13 @@ const QuickAdd = () => {
       </View>
       <View className="w-[362px] self-center" style={{ position: "relative" }}>
         <View className="flex-row">
-          <TouchableOpacity className="flex-1 items-center py-3" activeOpacity={0.7} onPress={() => switchTab("quickAdd")}>
-            <Text style={{ fontFamily: "Nunito_700Bold", fontSize: 16, color: activeTab === "quickAdd" ? "#FFFFFF" : "rgba(255,255,255,0.35)" }}>
+          <TouchableOpacity className="flex-1 items-center py-3" activeOpacity={0.25} onPress={() => switchTab("quickAdd")}>
+            <Text className="font-nunito-700 text-lg" style={{ color: activeTab === "quickAdd" ? "#FFFFFF" : "rgba(255,255,255,0.35)" }}>
               Quick Add
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity className="flex-1 items-center py-3" activeOpacity={0.7} onPress={() => switchTab("magicScan")}>
-            <Text style={{ fontFamily: "Nunito_700Bold", fontSize: 16, color: activeTab === "magicScan" ? "#FFFFFF" : "rgba(255,255,255,0.35)" }}>
+          <TouchableOpacity className="flex-1 items-center py-3" activeOpacity={0.25} onPress={() => switchTab("magicScan")}>
+            <Text className="font-nunito-700 text-lg" style={{ color: activeTab === "magicScan" ? "#FFFFFF" : "rgba(255,255,255,0.35)" }}>
               Magic Scan
             </Text>
           </TouchableOpacity>
@@ -169,23 +166,24 @@ const QuickAdd = () => {
               }
               ListHeaderComponent={
                 <View className="z-20">
-                  <Animated.View entering={FadeInDown.duration(200).delay(60)} className="w-[362px] self-center mt-4" style={{ zIndex: 150 }}>
+                  <Animated.View entering={FadeInDown.duration(250).delay(60)} className="w-[362px] self-center mt-4" style={{ zIndex: 150 }}>
                     <SearchInput
                       isInput placeholder="Maybe pizza?..." showCamera={false}
                       value={query} onChangeText={setQuery}
                       isSubmitDisabled={query.trim().length < 2}
                       onSubmit={() => { submitSearch(); router.push("/search-results"); }}
                       onClear={() => {}}
+                      onFocus={() => { if (isSearchActive) setShowDropdown(true); }}
                     />
                   </Animated.View>
-                  <Animated.View entering={FadeInDown.duration(250).delay(150)} className="w-[362px] self-center mt-3">
+                  <Animated.View entering={FadeInDown.duration(250).delay(250)} className="w-[362px] self-center mt-3">
                     <FlatList ref={catListRef} data={CATEGORY_OPTIONS} horizontal showsHorizontalScrollIndicator={false}
                       keyExtractor={(item) => item.value} nestedScrollEnabled directionalLockEnabled scrollEventThrottle={16}
                       contentContainerStyle={{ gap: 8 }}
                       renderItem={({ item }) => <FilterChip label={item.label} isActive={category === item.value} onPress={() => setCategory(item.value)} />} />
                   </Animated.View>
                   {category === "all" && (
-                    <Animated.View entering={FadeInDown.duration(250).delay(200)} className="w-[362px] self-center mt-3">
+                    <Animated.View entering={FadeInDown.duration(250).delay(250)} className="w-[362px] self-center mt-3">
                       <FlatList ref={foodTypeListRef} data={FOOD_TYPE_OPTIONS} horizontal showsHorizontalScrollIndicator={false}
                         keyExtractor={(item) => item.value} nestedScrollEnabled directionalLockEnabled scrollEventThrottle={16}
                         contentContainerStyle={{ gap: 8 }}
@@ -222,7 +220,7 @@ const QuickAdd = () => {
                                 return (
                                   <SearchResultItem key={item.id} item={item} onPress={() => {
                                     Keyboard.dismiss();
-                                    router.push({ pathname: "/search-item/[id]", params: { id: item.id, item: JSON.stringify(item), isFavorite: isFav ? "true" : "false" } });
+                                    router.push({ pathname: "/search-item/[id]", params: { id: item.id, item: JSON.stringify(item), isFavorite: isFav ? "true" : "false", mealType } });
                                   }} />
                                 );
                               })
@@ -259,10 +257,10 @@ const QuickAdd = () => {
         </TouchableWithoutFeedback>
       )}
       <Modal visible={activeTab === "magicScan"} animationType="none" transparent={false} statusBarTranslucent>
-        <View style={{ flex: 1, backgroundColor: "#000" }}>
+        <View style={{ flex: 1, backgroundColor: "#000000" }}>
           <CameraModal
             visible={true}
-            onClose={() => switchTab("quickAdd")}
+            onClose={() => { handleRetake(); switchTab("quickAdd"); }}
             mode="magic"
             onBarcodeScanned={handleBarcodeScanned}
             onCapture={handleCapture}
@@ -315,12 +313,16 @@ const QuickAdd = () => {
               </View>
               <View className="w-[362px] self-center" style={{ position: "relative" }}>
                 <View className="flex-row">
-                  <TouchableOpacity className="flex-1 items-center py-3" activeOpacity={0.7} onPress={() => switchTab("quickAdd")}>
-                    <Text style={{ fontFamily: "Nunito_700Bold", fontSize: 16, color: "rgba(255,255,255,0.5)" }}>Quick Add</Text>
+                  <TouchableOpacity className="flex-1 items-center py-3" activeOpacity={0.25} onPress={() => switchTab("quickAdd")}>
+                    <Text className="font-nunito-700 text-lg" style={{ color: activeTab === "quickAdd" ? "#FFFFFF" : "rgba(255,255,255,0.35)" }}>
+                      Quick Add
+                    </Text>
                   </TouchableOpacity>
-                  <View className="flex-1 items-center py-3">
-                    <Text style={{ fontFamily: "Nunito_700Bold", fontSize: 16, color: "#FFFFFF" }}>Magic Scan</Text>
-                  </View>
+                  <TouchableOpacity className="flex-1 items-center py-3" activeOpacity={0.25} onPress={() => switchTab("magicScan")}>
+                    <Text className="font-nunito-700 text-lg" style={{ color: activeTab === "magicScan" ? "#FFFFFF" : "rgba(255,255,255,0.35)" }}>
+                      Magic Scan
+                    </Text>
+                  </TouchableOpacity>
                 </View>
                 <Animated.View style={[{ position: "absolute", bottom: 0, width: 181, height: 2, backgroundColor: "#C5E384" }, indicatorStyle]} />
               </View>

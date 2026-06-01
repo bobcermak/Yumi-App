@@ -1,5 +1,4 @@
 import { Icon, MealCard } from "@/components";
-import { Alert } from "react-native";
 import { getMealTypeByTime } from "@/lib/helpers/dateHelpers";
 import { useIndexContext } from "@/lib/hooks/useIndexContext";
 import { differenceInCalendarDays, format, isToday, isYesterday } from "date-fns";
@@ -8,10 +7,10 @@ import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import { Cookie, CookingPot, EggCrack, Orange, Pizza, Plus } from "phosphor-react-native";
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Alert, Text, TouchableOpacity, View } from "react-native";
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withRepeat, withTiming, Easing } from "react-native-reanimated";
 
-const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
+const DashboardSheet = forwardRef<BottomSheet>(function DashboardSheet(props, ref) {
   const router = useRouter();
   //Context
   const { mealLogs, deleteMeal, updateMeal, showToast, dashboardDate } = useIndexContext();
@@ -93,7 +92,7 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
     try {
       await updateMeal(mealLogId, { total_calories: newCal });
       showToast("Calories updated!", undefined, 'success');
-    } catch (error) {
+    } catch {
       showToast("Update failed", undefined, 'error');
     } finally {
       setIsSheetLoading(false);
@@ -193,7 +192,7 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
             <TouchableOpacity activeOpacity={0.25} onPress={() => internalRef.current?.snapToIndex(3)} className="flex-1 mr-3">
               <Text className="text-white text-xl font-nunito-800">{dateLabel}</Text>
             </TouchableOpacity>
-            <Icon className="w-[36px] h-[36px]" onPress={() => router.push({ pathname: "/(tabs)/quick-add", params: { mealType: currentMealType } })}>
+            <Icon className="w-[36px] h-[36px]" onPress={() => { internalRef.current?.snapToIndex(1); router.push({ pathname: "/(tabs)/quick-add", params: { mealType: currentMealType } }); }}>
               <Plus size={24} color="#1D1D1D" weight="regular" />
             </Icon>
           </View>
@@ -207,8 +206,8 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
                 isDayTime={isToday(dashboardDate) && currentMealType === section.title}
                 expanded={expandedMeal === section.title}
                 onToggle={() => setExpandedMeal(expandedMeal === section.title ? null : section.title)}
-                onAddPress={() => router.push({ pathname: "/(tabs)/quick-add", params: { mealType: section.title } })}
-                onSectionPress={() => router.push({ pathname: "/(tabs)/quick-add", params: { mealType: section.title } })}
+                onAddPress={() => { internalRef.current?.snapToIndex(1); router.push({ pathname: "/(tabs)/quick-add", params: { mealType: section.title } }); }}
+                onSectionPress={() => { internalRef.current?.snapToIndex(1); router.push({ pathname: "/(tabs)/quick-add", params: { mealType: section.title } }); }}
                 ingredients={section.ingredients}
                 onIngredientEdit={(id, newCal) => {
                   const ing = section.ingredients.find(i => i.id === id);
@@ -226,4 +225,5 @@ const DashboardSheet = forwardRef<BottomSheet>((props, ref) => {
     </BottomSheet>
   );
 });
+DashboardSheet.displayName = "DashboardSheet";
 export default DashboardSheet;

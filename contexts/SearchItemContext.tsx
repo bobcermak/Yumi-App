@@ -20,7 +20,7 @@ export const SearchItemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     //Router
     const router = useRouter();
     //Params
-    const { item: itemStr, isFavorite: isFavoriteParam } = useGlobalSearchParams<{ id: string, item: string, isFavorite?: string }>();
+    const { item: itemStr, isFavorite: isFavoriteParam, mealType: mealTypeParam } = useGlobalSearchParams<{ id: string, item: string, isFavorite?: string, mealType?: string }>();
 
     const initialItem: FoodSearchResult | null = useMemo(() => {
         try {
@@ -32,7 +32,10 @@ export const SearchItemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     //Hooks
     const [item, setItem] = useState<FoodSearchResult | null>(initialItem);
     const [isFavorite, setIsFavorite] = useState<boolean>(isFavoriteParam === 'true');
-    const [mealType, setMealType] = useState<string>(getMealTypeByTime());
+    const [mealType, setMealType] = useState<string>(mealTypeParam || getMealTypeByTime());
+    useEffect(() => {
+        if (mealTypeParam) setMealType(mealTypeParam);
+    }, [mealTypeParam]);
     const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
     const [mealData, setMealData] = useState({ grams: 100, count: 1, calories: 0, waterMl: 100 });
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -114,6 +117,7 @@ export const SearchItemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             router.replace('/(tabs)/search');
         } catch (error) {
             showToast("Failed to add meal", undefined, 'error');
+            console.error("[SearchItemContext] Error adding to meal:", error);
         } finally {
             setIsLoading(false);
         }

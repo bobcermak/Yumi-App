@@ -26,7 +26,7 @@ export const scanBarcode = async (data: string, ctx: ScanContext): Promise<void>
     ctx.setIsProcessing(false);
   }
 }
-export const scanPhoto = async (uri: string, base64: string | undefined, ctx: ScanContext): Promise<void> => {
+export const scanPhoto = async (uri: string, base64: string | undefined, ctx: ScanContext, signal?: AbortSignal): Promise<void> => {
   if (ctx.isProcessing) return;
   if (!base64) {
     ctx.showToast("Photo capture failed, try again", undefined, "error");
@@ -35,8 +35,10 @@ export const scanPhoto = async (uri: string, base64: string | undefined, ctx: Sc
   ctx.setIsProcessing(true);
   try {
     const result = await analyzeFood(base64);
+    if (signal?.aborted) return;
     ctx.navigateToMealLog(JSON.stringify(result), uri);
   } catch (err) {
+    if (signal?.aborted) return;
     if (err instanceof NotFoodError) {
       ctx.showToast("That doesn't look like food", undefined, "error");
     } else {

@@ -123,7 +123,7 @@ const CameraModal: FC<CameraModalProps> = ({ visible, onClose, mode, onBarcodeSc
       {isScanning ? (
         <Image
           source={{ uri: capturedImageUri! }}
-          style={[StyleSheet.absoluteFill, { opacity: 0.55 }]}
+          style={[StyleSheet.absoluteFill, { opacity: 0.5 }]}
           resizeMode="cover"
         />
       ) : !isConfirming ? (

@@ -21,15 +21,16 @@ const MealLog = () => {
   const { userProfile } = useAuth();
   const resultMealRef = useRef<ResultMealHandle>(null);
   const scrollRef = useRef<ScrollView>(null);
-  const { scanResult: scanResultParam, photoUri: photoUriParam } =
+  const { scanResult: scanResultParam, photoUri: photoUriParam, mealType: mealTypeParam } =
     useLocalSearchParams<{
       scanResult: string;
       photoUri: string;
+      mealType?: string;
     }>();
   const result: MagicScanResult | null = scanResultParam
     ? (JSON.parse(scanResultParam) as MagicScanResult)
     : null;
-  const [mealType, setMealType] = useState<string>(getMealTypeByTime());
+  const [mealType, setMealType] = useState<string>(mealTypeParam || getMealTypeByTime());
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
   const [isFavoriteLoading, setIsFavoriteLoading] = useState<boolean>(false);
@@ -385,7 +386,7 @@ const MealLog = () => {
           <TouchableOpacity
             activeOpacity={0.25}
             className="flex-row items-center justify-between bg-dark rounded-[14px] px-4 py-3 border border-white/10 mb-3"
-            onPress={() => router.push("/magic-scan")}
+            onPress={() => router.replace("/magic-scan")}
           >
             <Text className="text-white/60 font-nunito-600 text-base">
               Not Right?

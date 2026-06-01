@@ -97,14 +97,19 @@ const Search = () => {
   const isSearchActive = query.trim().length > 0 || hasFiltersActive;
   useEffect(() => {
     if (isSearchActive) setShowDropdown(true);
-  }, [query, category, foodType]);
+  }, [isSearchActive]);
   return (
     <TouchableWithoutFeedback
       onPress={() => {
-        setShowDropdown(false);
-        setShowDotsMenu(false);
         Keyboard.dismiss();
-        if (showDropdown && isSearchActive) {
+        setShowDotsMenu(false);
+        if (query.trim().length === 0) {
+          setShowDropdown(false);
+          setCategory("all");
+          setFoodType("all");
+        } else if (showDropdown) {
+          setShowDropdown(false);
+        } else if (hasFiltersActive) {
           setCategory("all");
           setFoodType("all");
         }
@@ -168,6 +173,7 @@ const Search = () => {
                       router.push("/search-results");
                     }}
                     onClear={() => {}}
+                    onFocus={() => { if (isSearchActive) setShowDropdown(true); }}
                   />
                   <View style={{ position: "relative", zIndex: 100 }}>
                     <Icon
@@ -264,7 +270,9 @@ const Search = () => {
                   </Animated.View>
                 )}
                 {showDropdown && isSearchActive && (
-                  <View
+                  <Animated.View
+                    entering={FadeInDown.duration(250)}
+                    exiting={FadeOut.duration(250)}
                     className={`w-[362px] self-center bg-dark rounded-[20px] border border-white/10 py-4 absolute overflow-hidden ${category === "all" ? "top-[180px]" : "top-[134px]"}`}
                     style={{
                       zIndex: 50,
@@ -340,7 +348,7 @@ const Search = () => {
                         </View>
                       )}
                     </View>
-                  </View>
+                  </Animated.View>
                 )}
                 <Animated.View entering={FadeInDown.duration(250).delay(250)} className="z-10 relative mt-4">
                   <PopularMealsSection />

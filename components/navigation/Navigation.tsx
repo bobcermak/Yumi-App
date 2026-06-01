@@ -240,7 +240,7 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
                   shadowColor="#C5E384"
                   onPress={() => {
                     handleMenuClose();
-                    router.push({ pathname: "/(tabs)/quick-add", params: { startTab: "magicScan" } });
+                    router.push({ pathname: "/(tabs)/quick-add", params: { startTab: "magicScan", _t: Date.now().toString() } });
                   }}
                   icon={<Sparkle size={24} color="#1D1D1D" weight="regular"/>}
                 >
