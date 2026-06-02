@@ -15,5 +15,6 @@ export type SearchItemContextType = {
     isDrink: boolean,
     setIsDrink: (v: boolean) => void,
     handleToggleFavorite: () => Promise<void>,
-    handleAddToMeal: (waterMlOverride?: number) => Promise<void>
+    handleAddToMeal: (waterMlOverride?: number) => Promise<void>,
+    source?: string,
 };

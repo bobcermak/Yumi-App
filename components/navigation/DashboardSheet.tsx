@@ -192,7 +192,7 @@ const DashboardSheet = forwardRef<BottomSheet>(function DashboardSheet(props, re
             <TouchableOpacity activeOpacity={0.25} onPress={() => internalRef.current?.snapToIndex(3)} className="flex-1 mr-3">
               <Text className="text-white text-xl font-nunito-800">{dateLabel}</Text>
             </TouchableOpacity>
-            <Icon className="w-[36px] h-[36px]" onPress={() => { internalRef.current?.snapToIndex(1); router.push({ pathname: "/(tabs)/quick-add", params: { mealType: currentMealType } }); }}>
+            <Icon className="w-[36px] h-[36px]" onPress={() => router.push({ pathname: "/(tabs)/quick-add", params: { mealType: currentMealType } })}>
               <Plus size={24} color="#1D1D1D" weight="regular" />
             </Icon>
           </View>
@@ -206,8 +206,7 @@ const DashboardSheet = forwardRef<BottomSheet>(function DashboardSheet(props, re
                 isDayTime={isToday(dashboardDate) && currentMealType === section.title}
                 expanded={expandedMeal === section.title}
                 onToggle={() => setExpandedMeal(expandedMeal === section.title ? null : section.title)}
-                onAddPress={() => { internalRef.current?.snapToIndex(1); router.push({ pathname: "/(tabs)/quick-add", params: { mealType: section.title } }); }}
-                onSectionPress={() => { internalRef.current?.snapToIndex(1); router.push({ pathname: "/(tabs)/quick-add", params: { mealType: section.title } }); }}
+                onAddPress={() => router.push({ pathname: "/(tabs)/quick-add", params: { mealType: section.title } })}
                 ingredients={section.ingredients}
                 onIngredientEdit={(id, newCal) => {
                   const ing = section.ingredients.find(i => i.id === id);

@@ -1,5 +1,6 @@
 import { Button, CameraModal, FilterChip, Icon, MyMeal, PopularMealsSection, SearchInput, SearchResultItem, SearchResultSkeleton } from "@/components";
 import { getMealTypeByTime } from "@/lib/helpers/dateHelpers";
+import { markQuickAdd } from "@/lib/helpers/quickAddSource";
 import { MEAL_TYPES } from "@/lib/helpers/mealHelpers";
 import { useMagicScan } from "@/lib/hooks/useMagicScan";
 import { useSearchContext } from "@/lib/hooks/useSearchContext";
@@ -31,7 +32,7 @@ const QuickAdd = () => {
   //Hooks
   const [activeTab, setActiveTab] = useState<ActiveTab>(startTab === "magicScan" ? "magicScan" : "quickAdd");
   const [mealType, setMealType] = useState(mealTypeParam || getMealTypeByTime());
-  const { isProcessing, capturedUri, pendingPhoto, handleBarcodeScanned, handleCapture, handleConfirm, handleRetake } = useMagicScan(mealType);
+  const { isProcessing, capturedUri, pendingPhoto, handleBarcodeScanned, handleCapture, handleConfirm, handleRetake } = useMagicScan(mealType, true);
   const [isMealDropdownOpen, setIsMealDropdownOpen] = useState<boolean>(false);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -96,7 +97,7 @@ const QuickAdd = () => {
   const sharedHeader = (
     <View style={{ zIndex: 200 }}>
       <View className="flex-row w-[362px] self-center items-center justify-between py-4">
-        <Icon onPress={() => router.back()} className="bg-yellow w-12 h-12">
+        <Icon onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")} className="bg-yellow w-12 h-12">
           <CaretLeft size={24} color="#1D1D1D" weight="regular" />
         </Icon>
         <View className="relative items-center" style={{ zIndex: 300 }}>
@@ -220,6 +221,7 @@ const QuickAdd = () => {
                                 return (
                                   <SearchResultItem key={item.id} item={item} onPress={() => {
                                     Keyboard.dismiss();
+                                    markQuickAdd();
                                     router.push({ pathname: "/search-item/[id]", params: { id: item.id, item: JSON.stringify(item), isFavorite: isFav ? "true" : "false", mealType } });
                                   }} />
                                 );
@@ -238,7 +240,7 @@ const QuickAdd = () => {
                     </View>
                   )}
                   <Animated.View entering={FadeInDown.duration(250).delay(250)} className="z-10 relative mt-4">
-                    <PopularMealsSection />
+                    <PopularMealsSection onBeforeNavigate={markQuickAdd} />
                     <View className="w-[362px] self-center mt-8 mb-4">
                       <View className="flex-row items-end justify-between">
                         <Text className="title">My Meals</Text>
@@ -281,7 +283,7 @@ const QuickAdd = () => {
               <View
                 className="flex-row w-[362px] self-center items-center justify-between py-4"
               >
-                <Icon onPress={() => switchTab("quickAdd")} className="bg-yellow w-12 h-12">
+                <Icon onPress={() => { handleRetake(); switchTab("quickAdd"); }} className="bg-yellow w-12 h-12">
                   <CaretLeft size={24} color="#1D1D1D" weight="regular" />
                 </Icon>
                 <View className="relative items-center" style={{ zIndex: 300 }}>

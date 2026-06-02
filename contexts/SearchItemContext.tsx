@@ -1,4 +1,4 @@
-import { createContext, useState, useMemo, useEffect, useCallback } from "react";
+import { createContext, useState, useMemo, useEffect, useCallback, type FC } from "react";
 import { useGlobalSearchParams, useRouter } from 'expo-router';
 import { FoodSearchResult } from "@/types/foodSearchResult";
 import { SearchItemContextType } from "@/types/searchItemContextType";
@@ -13,14 +13,14 @@ import { posthog } from "@/lib/config/posthog";
 
 export const SearchItemContext = createContext<SearchItemContextType | undefined>(undefined);
 
-export const SearchItemProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const SearchItemProvider: FC<{ children: React.ReactNode }> = ({ children }) => {
     //Contexts
     const { showToast, refreshData, waterMl, handleSetWater } = useIndexContext();
     const { userProfile } = useAuth();
     //Router
     const router = useRouter();
     //Params
-    const { item: itemStr, isFavorite: isFavoriteParam, mealType: mealTypeParam } = useGlobalSearchParams<{ id: string, item: string, isFavorite?: string, mealType?: string }>();
+    const { item: itemStr, isFavorite: isFavoriteParam, mealType: mealTypeParam, source: sourceParam } = useGlobalSearchParams<{ id: string, item: string, isFavorite?: string, mealType?: string, source?: string }>();
 
     const initialItem: FoodSearchResult | null = useMemo(() => {
         try {
@@ -113,8 +113,7 @@ export const SearchItemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 counted_as_drink: isDrink,
             });
             showToast(`Added to ${mealType}!`, format(new Date(), "HH:mm"), 'success');
-            router.dismissAll();
-            router.replace('/(tabs)/search');
+            router.replace('/(tabs)/quick-add');
         } catch (error) {
             showToast("Failed to add meal", undefined, 'error');
             console.error("[SearchItemContext] Error adding to meal:", error);
@@ -138,7 +137,8 @@ export const SearchItemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setIsDrink,
         handleToggleFavorite,
         handleAddToMeal,
-    }), [item, isFavorite, isFavoriteLoading, mealType, mealData, isLoading, isDropdownOpen, isDrink, handleToggleFavorite, handleAddToMeal]);
+        source: sourceParam,
+    }), [item, isFavorite, isFavoriteLoading, mealType, mealData, isLoading, isDropdownOpen, isDrink, handleToggleFavorite, handleAddToMeal, sourceParam]);
     return (
         <SearchItemContext.Provider value={value}>
             {children}

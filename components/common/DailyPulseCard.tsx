@@ -41,7 +41,7 @@ const DailyPulseCard: FC<DailyPulseCardProps> = ({ streak, carbs, fats, protein,
     }, []);
     return (
         <View className={`w-full rounded-[15px] overflow-hidden items-center justify-center h-[200px] p-6 ${isSad ? 'bg-pink/80' : 'bg-darkYellow'}`}>
-            <Animated.View style={floatingStyle} className="z-0 items-center justify-center">
+            <Animated.View style={floatingStyle} className="items-center justify-center">
                 <Image source={isSad
                     ? require("@/assets/images/sad-yumi.png")
                     : require("@/assets/images/happy-yumi.png")}

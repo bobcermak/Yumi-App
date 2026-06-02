@@ -1,18 +1,23 @@
-import { Button, Icon, ResultMeal, ResultMealSkeleton } from "@/components";
+import { Button, Icon, ResultMeal, ResultMealSkeleton, SearchResultItem, SearchResultSkeleton } from "@/components";
 import { MEAL_TYPES } from "@/lib/helpers/mealHelpers";
+import { useFoodSearch } from "@/lib/hooks/useFoodSearch";
 import { useSearchItem } from "@/lib/hooks/useSearchItem";
+import type { FoodSearchResult } from "@/types/foodSearchResult";
+import { consumeQuickAdd, markQuickAdd } from "@/lib/helpers/quickAddSource";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
-import { CaretDown, CaretLeft, Drop, Heart, Info } from "phosphor-react-native";
+import { CaretDown, CaretLeft, Drop, Heart, Info, MagnifyingGlass, Plus, X } from "phosphor-react-native";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, ScrollView, Switch, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Modal, Platform, ScrollView, Switch, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import Animated, { FadeInDown, FadeInUp, FadeOutUp, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const SearchItem = () => {
   //Contexts
   const { item, isFavorite, isFavoriteLoading, mealType, setMealType, mealData, setMealData, isLoading, isDropdownOpen, setIsDropdownOpen, isDrink, setIsDrink, handleToggleFavorite, handleAddToMeal } = useSearchItem();
   //Router
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const arrowRotation = useSharedValue(0);
   //Hooks
   const [waterMlInput, setWaterMlInput] = useState<string>((mealData.grams * mealData.count).toString());
@@ -20,7 +25,10 @@ const SearchItem = () => {
   const [isWaterManual, setIsWaterManual] = useState<boolean>(false);
   const waterInputRef = useRef<TextInput>(null);
   const [mealCardHeight, setMealCardHeight] = useState<number>(0);
+  const [showAddMoreModal, setShowAddMoreModal] = useState<boolean>(false);
 
+  const { query: modalQuery, setQuery: setModalQuery, results: modalResults, isLoading: modalIsLoading, isPending: modalIsPending, submitSearch: modalSubmitSearch } = useFoodSearch();
+  const [isQuickAdd] = useState(() => consumeQuickAdd());
   useEffect(() => {
     if (!isWaterInputFocused && !isWaterManual) {
       setWaterMlInput((mealData.grams * mealData.count).toString());
@@ -43,7 +51,7 @@ const SearchItem = () => {
         <Info size={48} color="#C5E384" weight="regular" />
         <Text className="text-white font-nunito-700 text-2xl mt-4">Item Not Found</Text>
         <Text className="text-white/80 font-nunito-600 text-center">
-          We couldn't load the details for this item.
+          We couldn&rsquo;t load the details for this item.
         </Text>
         <TouchableOpacity onPress={() => router.back()}>
           <Text className="text-yellow font-nunito-600 text-lg p-4">Go Back</Text>
@@ -56,10 +64,10 @@ const SearchItem = () => {
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); setIsDropdownOpen(false); }}>
-        <View style={{ flex: 1 }}>
-          <View className="flex-row w-[380px] self-center justify-between items-center py-4 px-2 z-50 mt-[56px]">
-            <Icon onPress={() => router.back()} className="bg-yellow w-12 h-12">
+      <View style={{ flex: 1 }}>
+        <View style={{ marginTop: 56, paddingBottom: 16, zIndex: 50 }}>
+          <View className="flex-row w-[362px] self-center justify-between items-center py-4">
+            <Icon onPress={() => isQuickAdd ? router.replace("/(tabs)/quick-add") : router.back()} className="bg-yellow w-12 h-12">
               <CaretLeft size={24} color="#1D1D1D" weight="regular" />
             </Icon>
             <View className="relative items-center w-[160px]">
@@ -119,6 +127,20 @@ const SearchItem = () => {
               </Icon>
             </View>
           </View>
+          {isQuickAdd && (
+            <View className="w-[362px] self-center">
+              <Button
+                className="rounded-[30px] mx-0 w-full py-4"
+                textClassName="text-xl"
+                onPress={() => handleAddToMeal(isDrink ? parsedWaterMl : undefined)}
+                disabled={isLoading}
+              >
+                {isLoading ? "Recording..." : "Record"}
+              </Button>
+            </View>
+          )}
+        </View>
+        <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); setIsDropdownOpen(false); }}>
           <ScrollView
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
@@ -271,19 +293,126 @@ const SearchItem = () => {
                   </Animated.View>
                 )}
             </View>
-            <View className="w-full px-4 mt-4 items-center mt-8">
-              <Button
-                className="rounded-[30px] mx-0 w-full py-5"
-                textClassName="text-xl"
-                onPress={() => handleAddToMeal(isDrink ? parsedWaterMl : undefined)}
-                disabled={isLoading}
-              >
-                {isLoading ? "Recording..." : "Record"}
-              </Button>
-            </View>
+            {!isQuickAdd && (
+              <View style={{ width: 362, marginTop: 24 }}>
+                <Button
+                  className="rounded-[30px] mx-0 w-full py-5"
+                  textClassName="text-xl"
+                  onPress={() => handleAddToMeal(isDrink ? parsedWaterMl : undefined)}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Recording..." : "Record"}
+                </Button>
+              </View>
+            )}
+            {isQuickAdd && (
+              <View style={{ width: 362, marginTop: 24 }}>
+                <Button
+                  className="rounded-[30px] mx-0 w-full py-5 bg-yellow"
+                  textClassName="text-xl"
+                  onPress={() => { setModalQuery(""); setShowAddMoreModal(true); }}
+                  icon={<Plus size={24} color="#1D1D1D" weight="bold" />}
+                >
+                  Add More
+                </Button>
+              </View>
+            )}
           </ScrollView>
-        </View>
-      </TouchableWithoutFeedback>
+        </TouchableWithoutFeedback>
+      </View>
+      <Modal
+        visible={showAddMoreModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowAddMoreModal(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); setShowAddMoreModal(false); }}>
+          <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "flex-end" }}>
+            <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+              <View style={{
+                backgroundColor: "#111111",
+                borderTopLeftRadius: 28,
+                borderTopRightRadius: 28,
+                paddingTop: 16,
+                paddingBottom: insets.bottom + 16,
+                minHeight: "75%",
+                maxHeight: "90%",
+              }}>
+                <View style={{ width: 40, height: 4, backgroundColor: "rgba(255,255,255,0.15)", borderRadius: 2, alignSelf: "center", marginBottom: 16 }} />
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, marginBottom: 16 }}>
+                  <Text style={{ fontFamily: "Nunito_700Bold", fontSize: 22, color: "#FFFFFF" }}>Add More</Text>
+                  <TouchableOpacity
+                    onPress={() => setShowAddMoreModal(false)}
+                    activeOpacity={0.25}
+                    style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.08)", alignItems: "center", justifyContent: "center" }}
+                  >
+                    <X size={20} color="rgba(255,255,255,0.7)" weight="bold" />
+                  </TouchableOpacity>
+                </View>
+                <View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
+                  <View style={{
+                    flexDirection: "row", alignItems: "center",
+                    backgroundColor: "rgba(255,255,255,0.06)", borderWidth: 1,
+                    borderColor: "rgba(255,255,255,0.1)", borderRadius: 16,
+                    paddingHorizontal: 14, height: 52,
+                  }}>
+                    <MagnifyingGlass size={20} color="rgba(255,255,255,0.4)" weight="regular" />
+                    <TextInput
+                      style={{ flex: 1, marginLeft: 10, color: "#FFFFFF", fontFamily: "Nunito_600SemiBold", fontSize: 15 }}
+                      placeholder="Search for food..."
+                      placeholderTextColor="rgba(255,255,255,0.35)"
+                      value={modalQuery}
+                      onChangeText={setModalQuery}
+                      onSubmitEditing={modalSubmitSearch}
+                      returnKeyType="search"
+                      autoFocus
+                    />
+                    {modalQuery.length > 0 && (
+                      <TouchableOpacity onPress={() => setModalQuery("")} activeOpacity={0.25} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                        <X size={18} color="rgba(255,255,255,0.4)" weight="bold" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+                <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+                  {(modalIsLoading || modalIsPending) && modalQuery.trim().length >= 2
+                    ? Array.from({ length: 4 }).map((_, i) => <SearchResultSkeleton key={i} />)
+                    : modalResults.length > 0
+                      ? modalResults.slice(0, 8).map((result: FoodSearchResult) => (
+                          <SearchResultItem
+                            key={result.id}
+                            item={result}
+                            onPress={() => {
+                              setShowAddMoreModal(false);
+                              markQuickAdd();
+                              router.push({ pathname: "/search-item/[id]", params: { id: result.id, item: JSON.stringify(result), mealType } });
+                            }}
+                          />
+                        ))
+                      : modalQuery.trim().length >= 2 && !modalIsLoading && !modalIsPending
+                        ? (
+                          <View style={{ alignItems: "center", paddingVertical: 40 }}>
+                            <MagnifyingGlass size={40} color="#C5E384" weight="duotone" />
+                            <Text style={{ color: "rgba(255,255,255,0.4)", fontFamily: "Nunito_600SemiBold", fontSize: 14, marginTop: 12, textAlign: "center" }}>
+                              No food found... try a different search
+                            </Text>
+                          </View>
+                        )
+                        : (
+                          <View style={{ alignItems: "center", paddingVertical: 40 }}>
+                            <MagnifyingGlass size={40} color="rgba(255,255,255,0.15)" weight="duotone" />
+                            <Text style={{ color: "rgba(255,255,255,0.3)", fontFamily: "Nunito_600SemiBold", fontSize: 14, marginTop: 12 }}>
+                              Type to search for food
+                            </Text>
+                          </View>
+                        )
+                  }
+                </ScrollView>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </KeyboardAvoidingView>
   );
 };

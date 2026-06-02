@@ -7,7 +7,7 @@ import { useRef, useEffect } from "react";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const PopularMealsSection = () => {
+const PopularMealsSection = ({ onBeforeNavigate }: { onBeforeNavigate?: () => void }) => {
   //Router
   const router = useRouter();
   //Context
@@ -42,10 +42,11 @@ const PopularMealsSection = () => {
             imgUrl={item.image_url}
             calories={item.calories_per_100g || 0}
             onPress={() => {
+              onBeforeNavigate?.();
               router.push({
                 pathname: "/search-item/[id]",
-                params: { 
-                  id: item.id, 
+                params: {
+                  id: item.id,
                   item: JSON.stringify(item),
                   isFavorite: filter === 'My' ? 'true' : 'false'
                 }

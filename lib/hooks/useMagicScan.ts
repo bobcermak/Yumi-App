@@ -79,7 +79,7 @@ export const useMagicScan = (
       });
     },
     navigateBack: () => {
-      if (isMountedRef.current) router.back();
+      if (isMountedRef.current && router.canGoBack()) router.back();
     },
     showToast,
   };
@@ -120,7 +120,10 @@ export const useMagicScan = (
     isProcessing,
     capturedUri,
     pendingPhoto,
-    handleBarcodeScanned: (data: string) => scanBarcode(data, ctx),
+    handleBarcodeScanned: (data: string) => {
+      cancelledRef.current = false;
+      scanBarcode(data, ctx);
+    },
     handleCapture: (uri: string, base64?: string) => {
       cancelledRef.current = false;
       const photo = { uri, base64 };

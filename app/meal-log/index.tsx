@@ -1,16 +1,18 @@
-import { Button, Icon, MealLogIngredientCard, ResultMeal } from "@/components";
+import { Button, Icon, MealLogIngredientCard, ResultMeal, SearchResultItem, SearchResultSkeleton } from "@/components";
+import type { FoodSearchResult } from "@/types/foodSearchResult";
 import { type ResultMealHandle } from "@/components/meals/ResultMeal";
 import { MEAL_TYPES, MEAL_TYPE_MAP, computeHealthRating } from "@/lib/helpers/mealHelpers";
 import { getMealTypeByTime } from "@/lib/helpers/dateHelpers";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useIndexContext } from "@/lib/hooks/useIndexContext";
+import { useFoodSearch } from "@/lib/hooks/useFoodSearch";
 import type { MagicScanResult } from "@/lib/services/food-search/magic-scan";
 import { addToFavorites, insertScannedFood, removeFromFavorites } from "@/lib/services/supabase/queries/foods";
 import { logMeal } from "@/lib/services/supabase/queries/mealLogs";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { CaretDown, CaretLeft, Heart, PencilSimple, Plus, Sparkle } from "phosphor-react-native";
+import { CaretDown, CaretLeft, Heart, MagnifyingGlass, PencilSimple, Plus, Sparkle, X } from "phosphor-react-native";
 import { useMemo, useRef, useState } from "react";
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import Animated, { FadeInDown, FadeInUp, FadeOutUp, LinearTransition, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -37,6 +39,8 @@ const MealLog = () => {
   const [insertedFoodId, setInsertedFoodId] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [openCountIndex, setOpenCountIndex] = useState<number | null>(null);
+  const [showAddMoreModal, setShowAddMoreModal] = useState<boolean>(false);
+  const { query: modalQuery, setQuery: setModalQuery, results: modalResults, isLoading: modalIsLoading, isPending: modalIsPending, submitSearch: modalSubmitSearch } = useFoodSearch();
   const [displayedComponents, setDisplayedComponents] = useState(() =>
     (result?.components ?? []).map((comp, i) => ({
       ...comp,
@@ -261,7 +265,7 @@ const MealLog = () => {
       }
       await refreshData();
       showToast("Meal recorded!");
-      router.replace("/(tabs)");
+      router.replace("/(tabs)/quick-add");
     } catch (error) {
       console.error("[MealLog] Error recording:", error);
       showToast("Failed to record meal", undefined, "error");
@@ -289,7 +293,7 @@ const MealLog = () => {
         }}
       >
         <View className="flex-row w-[362px] self-center justify-between items-center">
-          <Icon onPress={() => router.back()} className="bg-yellow w-12 h-12">
+          <Icon onPress={() => router.replace("/(tabs)/quick-add")} className="bg-yellow w-12 h-12">
             <CaretLeft size={24} color="#1D1D1D" weight="regular" />
           </Icon>
           <View className="relative items-center w-[160px]">
@@ -422,7 +426,7 @@ const MealLog = () => {
             entering={FadeInDown.delay(120).duration(250)}
             className="w-[362px] self-center"
           >
-            <Text className="title mb-4">What's inside?</Text>
+            <Text className="title mb-4">What&rsquo;s inside?</Text>
             <Animated.View
               className="gap-3"
               layout={LinearTransition.springify().damping(200)}
@@ -481,8 +485,8 @@ const MealLog = () => {
               <Button
                 className="rounded-[30px] mx-0 w-full py-5 bg-yellow"
                 textClassName="text-xl"
-                onPress={() => router.push({ pathname: "/meal-log/add-item" })}
-                icon={<Plus size={24} color="#1D1D1D" weight="bold" />}
+                onPress={() => { setModalQuery(""); setShowAddMoreModal(true); }}
+                icon={<Plus size={24} color="#1D1D1D" weight="bold"/>}
               >
                 Add More
               </Button>
@@ -505,6 +509,98 @@ const MealLog = () => {
           <PencilSimple size={24} color="#1D1D1D" weight="regular" />
         </Icon>
       </Animated.View>
+      <Modal
+        visible={showAddMoreModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowAddMoreModal(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowAddMoreModal(false)}>
+          <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "flex-end" }}>
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <View style={{
+                backgroundColor: "#111111",
+                borderTopLeftRadius: 28,
+                borderTopRightRadius: 28,
+                paddingTop: 16,
+                paddingBottom: insets.bottom + 16,
+                minHeight: "75%",
+                maxHeight: "90%",
+              }}>
+                <View style={{ width: 40, height: 4, backgroundColor: "rgba(255,255,255,0.15)", borderRadius: 2, alignSelf: "center", marginBottom: 16 }} />
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, marginBottom: 16 }}>
+                  <Text style={{ fontFamily: "Nunito_700Bold", fontSize: 22, color: "#FFFFFF" }}>Add More</Text>
+                  <TouchableOpacity
+                    onPress={() => setShowAddMoreModal(false)}
+                    activeOpacity={0.25}
+                    style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.08)", alignItems: "center", justifyContent: "center" }}
+                  >
+                    <X size={20} color="rgba(255,255,255,0.7)" weight="bold" />
+                  </TouchableOpacity>
+                </View>
+                <View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
+                  <View style={{
+                    flexDirection: "row", alignItems: "center",
+                    backgroundColor: "rgba(255,255,255,0.06)", borderWidth: 1,
+                    borderColor: "rgba(255,255,255,0.1)", borderRadius: 16,
+                    paddingHorizontal: 14, height: 52,
+                  }}>
+                    <MagnifyingGlass size={20} color="rgba(255,255,255,0.4)" weight="regular" />
+                    <TextInput
+                      style={{ flex: 1, marginLeft: 10, color: "#FFFFFF", fontFamily: "Nunito_600SemiBold", fontSize: 15 }}
+                      placeholder="Search for food..."
+                      placeholderTextColor="rgba(255,255,255,0.35)"
+                      value={modalQuery}
+                      onChangeText={setModalQuery}
+                      onSubmitEditing={modalSubmitSearch}
+                      returnKeyType="search"
+                      autoFocus
+                    />
+                    {modalQuery.length > 0 && (
+                      <TouchableOpacity onPress={() => setModalQuery("")} activeOpacity={0.25} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                        <X size={18} color="rgba(255,255,255,0.4)" weight="bold" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+                <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+                  {(modalIsLoading || modalIsPending) && modalQuery.trim().length >= 2
+                    ? Array.from({ length: 4 }).map((_, i) => <SearchResultSkeleton key={i} />)
+                    : modalResults.length > 0
+                      ? modalResults.slice(0, 8).map((food: FoodSearchResult) => (
+                          <SearchResultItem
+                            key={food.id}
+                            item={food}
+                            onPress={() => {
+                              setShowAddMoreModal(false);
+                              router.push({ pathname: "/search-item/[id]", params: { id: food.id, item: JSON.stringify(food), mealType, source: "quickAdd" } });
+                            }}
+                          />
+                        ))
+                      : modalQuery.trim().length >= 2 && !modalIsLoading && !modalIsPending
+                        ? (
+                          <View style={{ alignItems: "center", paddingVertical: 40 }}>
+                            <MagnifyingGlass size={40} color="#C5E384" weight="duotone" />
+                            <Text style={{ color: "rgba(255,255,255,0.4)", fontFamily: "Nunito_600SemiBold", fontSize: 14, marginTop: 12, textAlign: "center" }}>
+                              No food found... try a different search
+                            </Text>
+                          </View>
+                        )
+                        : (
+                          <View style={{ alignItems: "center", paddingVertical: 40 }}>
+                            <MagnifyingGlass size={40} color="rgba(255,255,255,0.15)" weight="duotone" />
+                            <Text style={{ color: "rgba(255,255,255,0.3)", fontFamily: "Nunito_600SemiBold", fontSize: 14, marginTop: 12 }}>
+                              Type to search for food
+                            </Text>
+                          </View>
+                        )
+                  }
+                </ScrollView>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </KeyboardAvoidingView>
   );
 };
