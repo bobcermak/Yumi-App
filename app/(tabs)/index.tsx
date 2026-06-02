@@ -22,13 +22,10 @@ const Home = () => {
     
     useFocusEffect(
         useCallback(() => {
-            const fetchInitialData = async () => {
-                if (userProfile?.id) {
-                    await refreshData();
-                }
-            };
-            fetchInitialData();
-        }, [userProfile?.id, refreshData])
+            if (userProfile?.id) {
+                refreshData();
+            }
+        }, [userProfile?.id])
     );
     //Hooks
     const [refreshing, setRefreshing] = useState<boolean>(false);
