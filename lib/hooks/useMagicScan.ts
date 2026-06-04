@@ -40,6 +40,7 @@ export const useMagicScan = (
   mealType?: string,
   replaceNavigation = false,
   onBeforeNavigate?: () => void,
+  logDate?: string,
 ) => {
   const router = useRouter();
   const { showToast } = useIndexContext();
@@ -72,7 +73,7 @@ export const useMagicScan = (
       doNavigate(() => router.replace({ pathname: "/search-item/[id]", params: { id, item, mealType: mealType ?? "" } }));
     },
     navigateToMealLog: (scanResult: string, photoUri?: string) => {
-      const params = { scanResult, photoUri: photoUri ?? "", mealType: mealType ?? "" };
+      const params = { scanResult, photoUri: photoUri ?? "", mealType: mealType ?? "", ...(logDate ? { logDate } : {}) };
       doNavigate(() => {
         if (replaceNavigation) router.replace({ pathname: "/meal-log", params });
         else router.push({ pathname: "/meal-log", params });

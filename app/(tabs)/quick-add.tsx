@@ -1,5 +1,6 @@
 import { Button, CameraModal, FilterChip, Icon, MyMeal, PopularMealsSection, SearchInput, SearchResultItem, SearchResultSkeleton } from "@/components";
 import { getMealTypeByTime } from "@/lib/helpers/dateHelpers";
+import { format, parseISO, isToday } from "date-fns";
 import { markQuickAdd } from "@/lib/helpers/quickAddSource";
 import { MEAL_TYPES } from "@/lib/helpers/mealHelpers";
 import { useMagicScan } from "@/lib/hooks/useMagicScan";
@@ -26,13 +27,15 @@ type ActiveTab = "quickAdd" | "magicScan";
 const QuickAdd = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { mealType: mealTypeParam, startTab, _t } = useLocalSearchParams<{ mealType: string; startTab: string; _t?: string }>();
+  const { mealType: mealTypeParam, startTab, _t, logDate: logDateParam } = useLocalSearchParams<{ mealType: string; startTab: string; _t?: string; logDate?: string }>();
+  const logDate = logDateParam && !isToday(parseISO(logDateParam)) ? logDateParam : undefined;
+  const logDateLabel = logDate ? format(parseISO(logDate), 'd MMM') : null;
   //Contexts
   const { query, setQuery, searchResults, isSearching, isSearchPending, searchSource, submitSearch, category, setCategory, foodType, setFoodType, popularMeals, refreshPopularMeals, setFilter } = useSearchContext();
   //Hooks
   const [activeTab, setActiveTab] = useState<ActiveTab>(startTab === "magicScan" ? "magicScan" : "quickAdd");
   const [mealType, setMealType] = useState(mealTypeParam || getMealTypeByTime());
-  const { isProcessing, capturedUri, pendingPhoto, handleBarcodeScanned, handleCapture, handleConfirm, handleRetake } = useMagicScan(mealType, true);
+  const { isProcessing, capturedUri, pendingPhoto, handleBarcodeScanned, handleCapture, handleConfirm, handleRetake } = useMagicScan(mealType, true, undefined, logDate);
   const [isMealDropdownOpen, setIsMealDropdownOpen] = useState<boolean>(false);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -53,7 +56,7 @@ const QuickAdd = () => {
     const tab: ActiveTab = startTab === "magicScan" ? "magicScan" : "quickAdd";
     setActiveTab(tab);
     tabPosition.value = tab === "magicScan" ? 1 : 0;
-  }, [startTab, _t]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [startTab, _t]);
   useFocusEffect(useCallback(() => {
     const tab: ActiveTab = startTab === "magicScan" ? "magicScan" : "quickAdd";
     setActiveTab(tab);
@@ -107,6 +110,9 @@ const QuickAdd = () => {
               <CaretDown size={20} color="white" weight="bold" />
             </Animated.View>
           </TouchableOpacity>
+          {logDateLabel && (
+            <Text className="font-nunito-600 text-xs text-white/40 mt-0.5 text-center self-center">({logDateLabel})</Text>
+          )}
           {isMealDropdownOpen && (
             <Animated.View
               entering={FadeInUp.duration(250)} exiting={FadeOutUp.duration(250)}
@@ -222,7 +228,7 @@ const QuickAdd = () => {
                                   <SearchResultItem key={item.id} item={item} onPress={() => {
                                     Keyboard.dismiss();
                                     markQuickAdd();
-                                    router.push({ pathname: "/search-item/[id]", params: { id: item.id, item: JSON.stringify(item), isFavorite: isFav ? "true" : "false", mealType } });
+                                    router.push({ pathname: "/search-item/[id]", params: { id: item.id, item: JSON.stringify(item), isFavorite: isFav ? "true" : "false", mealType, source: "quickAdd", ...(logDate ? { logDate } : {}) } });
                                   }} />
                                 );
                               })
@@ -240,7 +246,7 @@ const QuickAdd = () => {
                     </View>
                   )}
                   <Animated.View entering={FadeInDown.duration(250).delay(250)} className="z-10 relative mt-4">
-                    <PopularMealsSection onBeforeNavigate={markQuickAdd} />
+                    <PopularMealsSection onBeforeNavigate={markQuickAdd} logDate={logDate} />
                     <View className="w-[362px] self-center mt-8 mb-4">
                       <View className="flex-row items-end justify-between">
                         <Text className="title">My Meals</Text>
@@ -293,6 +299,9 @@ const QuickAdd = () => {
                       <CaretDown size={20} color="white" weight="bold" />
                     </Animated.View>
                   </TouchableOpacity>
+                  {logDateLabel && (
+                    <Text className="font-nunito-600 text-xs text-white/40 mt-0.5">({logDateLabel})</Text>
+                  )}
                   {isMealDropdownOpen && (
                     <Animated.View
                       entering={FadeInUp.duration(250)} exiting={FadeOutUp.duration(250)}

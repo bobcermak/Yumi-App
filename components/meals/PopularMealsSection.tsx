@@ -9,7 +9,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 type EmptyItem = { id: string; isEmpty: true };
 type MealItem = { id: string; isEmpty?: false; [key: string]: any };
 type ListItem = EmptyItem | MealItem;
-const PopularMealsSection = ({ onBeforeNavigate }: { onBeforeNavigate?: () => void }) => {
+const PopularMealsSection = ({ onBeforeNavigate, logDate }: { onBeforeNavigate?: () => void; logDate?: string }) => {
   const router = useRouter();
   const { popularMeals, filter, setFilter, isLoading } = useSearchContext();
   const flatListRef = useRef<FlatList>(null);
@@ -82,7 +82,9 @@ const PopularMealsSection = ({ onBeforeNavigate }: { onBeforeNavigate?: () => vo
                     params: {
                       id: item.id,
                       item: JSON.stringify(item),
-                      isFavorite: filter === 'My' ? 'true' : 'false'
+                      isFavorite: filter === 'My' ? 'true' : 'false',
+                      source: "quickAdd",
+                      ...(logDate ? { logDate } : {})
                     }
                   });
                 }}

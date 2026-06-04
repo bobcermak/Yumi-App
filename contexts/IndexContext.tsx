@@ -10,6 +10,17 @@ import { addDays, endOfMonth, format, isAfter, isBefore, isSameDay, isToday, sta
 import { createContext, useCallback, useEffect, useMemo, useState, type FC, useRef } from "react";
 import { posthog } from "@/lib/config/posthog";
 
+type DayCacheEntry = {
+    calories_current: number;
+    carbs_current: number;
+    fats_current: number;
+    protein_current: number;
+    water_ml: number;
+    mealLogs: MealLogWithIngredients[];
+    fetchedAt: number;
+};
+const CACHE_TTL = 3 * 60 * 1000;
+
 export const IndexContext = createContext<IndexContextProps | undefined>(undefined);
 
 type IndexProviderProps = {
@@ -33,6 +44,8 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
     const [waterMl, setWaterMl] = useState<number>(0);
     const overviewDataRef = useRef<OverviewData | null>(null);
     const dashboardDateRef = useRef<Date | null>(null);
+    const isDayChangingRef = useRef<boolean>(false);
+    const dayCache = useRef<Map<string, DayCacheEntry>>(new Map());
     const [overviewData, setOverviewData] = useState<OverviewData>({
         date: new Date(),
         calories: { current: 0, max: defaultCalLimit },
@@ -55,23 +68,41 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
             setToast(null);
         }, 4000);
     }, []);
+    const saveToCache = useCallback((dateStr: string, data: Omit<DayCacheEntry, 'fetchedAt'>) => {
+        if (dayCache.current.size >= 14) {
+            const oldest = dayCache.current.keys().next().value;
+            if (oldest) dayCache.current.delete(oldest);
+        }
+        dayCache.current.set(dateStr, { ...data, fetchedAt: Date.now() });
+    }, []);
     const fetchDailyLog = useCallback(async (userId: string, date: Date) => {
         const dateStr = format(date, "yyyy-MM-dd");
-        const { data } = await getDailyLog(userId, dateStr);
+        const [{ data }, logs] = await Promise.all([
+            getDailyLog(userId, dateStr),
+            getMealLogsForDay(userId, dateStr),
+        ]);
+        const entry = {
+            calories_current: data?.calories_current || 0,
+            carbs_current: data?.carbs_current || 0,
+            fats_current: data?.fats_current || 0,
+            protein_current: data?.protein_current || 0,
+            water_ml: data?.water_ml || 0,
+            mealLogs: logs,
+        };
+        saveToCache(dateStr, entry);
         setOverviewData(prev => ({
             ...prev,
             date,
-            calories: { ...prev.calories, current: data?.calories_current || 0 },
+            calories: { ...prev.calories, current: entry.calories_current },
             macros: {
-                carbs: { ...prev.macros.carbs, current: data?.carbs_current || 0 },
-                fats: { ...prev.macros.fats, current: data?.fats_current || 0 },
-                protein: { ...prev.macros.protein, current: data?.protein_current || 0 },
+                carbs: { ...prev.macros.carbs, current: entry.carbs_current },
+                fats: { ...prev.macros.fats, current: entry.fats_current },
+                protein: { ...prev.macros.protein, current: entry.protein_current },
             }
         }));
-        setWaterMl(data?.water_ml || 0);
-        const logs = await getMealLogsForDay(userId, dateStr);
+        setWaterMl(entry.water_ml);
         setMealLogs(logs);
-    }, []);
+    }, [saveToCache]);
     const fetchMonthActiveDates = useCallback(async (userId: string, date: Date) => {
         const start = format(startOfMonth(subDays(startOfMonth(date), 1)), "yyyy-MM-dd");
         const end = format(endOfMonth(addDays(endOfMonth(date), 1)), "yyyy-MM-dd");
@@ -121,13 +152,16 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
     }, [userProfile, refreshProfile, showToast]);
     useEffect(() => {
         if (userProfile?.id) {
-            fetchDailyLog(userProfile.id, overviewData.date);
-            fetchMonthActiveDates(userProfile.id, overviewData.date);
+            const today = overviewData.date;
+            fetchDailyLog(userProfile.id, today).then(() => {
+                prefetchDay(userProfile.id!, subDays(today, 1));
+            });
+            fetchMonthActiveDates(userProfile.id, today);
             recalculateUserRating(userProfile.id)
                 .then(() => refreshProfile())
                 .catch(e => console.warn("[IndexContext] Initial rating recalc failed:", e));
         }
-    }, [userProfile?.id]);
+    }, [userProfile?.id]); // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => {
         if (userProfile?.daily_calorie_limit) {
             const limit = userProfile.daily_calorie_limit;
@@ -159,17 +193,25 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
         if (!userProfile?.id) return;
         try {
             await deleteMealLog(userProfile.id, mealId);
-            posthog.capture('meal_deleted', {
-                meal_id: mealId,
-            });
+            posthog.capture('meal_deleted', { meal_id: mealId });
             showToast("Meal removed");
             const dateStr = format(dashboardDate, "yyyy-MM-dd");
-            const logs = await getMealLogsForDay(userProfile.id, dateStr);
+            dayCache.current.delete(dateStr);
+            const [{ data }, logs] = await Promise.all([
+                getDailyLog(userProfile.id, dateStr),
+                getMealLogsForDay(userProfile.id, dateStr),
+            ]);
             setMealLogs(logs);
-            await incrementUserStreak(userProfile.id);
-            await recalculateUserRating(userProfile.id);
+            saveToCache(dateStr, {
+                calories_current: data?.calories_current || 0,
+                carbs_current: data?.carbs_current || 0,
+                fats_current: data?.fats_current || 0,
+                protein_current: data?.protein_current || 0,
+                water_ml: data?.water_ml || 0,
+                mealLogs: logs,
+            });
+            await Promise.all([incrementUserStreak(userProfile.id), recalculateUserRating(userProfile.id)]);
             await refreshProfile();
-            const { data } = await getDailyLog(userProfile.id, dateStr);
             setOverviewData(prev => ({
                 ...prev,
                 calories: { ...prev.calories, current: data?.calories_current || 0 },
@@ -182,15 +224,26 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
         } catch (error) {
             showToast("Failed to remove meal", undefined, "error");
         }
-    }, [userProfile?.id, dashboardDate, showToast]);
+    }, [userProfile?.id, dashboardDate, showToast, saveToCache]);
     const updateMeal = useCallback(async (mealId: string, updates: Partial<MealLog>) => {
         if (!userProfile?.id) return;
         try {
             await updateMealLog(userProfile.id, mealId, updates);
             const dateStr = format(dashboardDate, "yyyy-MM-dd");
-            const logs = await getMealLogsForDay(userProfile.id, dateStr);
+            dayCache.current.delete(dateStr);
+            const [{ data }, logs] = await Promise.all([
+                getDailyLog(userProfile.id, dateStr),
+                getMealLogsForDay(userProfile.id, dateStr),
+            ]);
             setMealLogs(logs);
-            const { data } = await getDailyLog(userProfile.id, dateStr);
+            saveToCache(dateStr, {
+                calories_current: data?.calories_current || 0,
+                carbs_current: data?.carbs_current || 0,
+                fats_current: data?.fats_current || 0,
+                protein_current: data?.protein_current || 0,
+                water_ml: data?.water_ml || 0,
+                mealLogs: logs,
+            });
             setOverviewData(prev => ({
                 ...prev,
                 calories: { ...prev.calories, current: data?.calories_current || 0 },
@@ -203,47 +256,111 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
         } catch (error) {
             showToast("Failed to update meal", undefined, "error");
         }
-    }, [userProfile?.id, dashboardDate, showToast]);
+    }, [userProfile?.id, dashboardDate, showToast, saveToCache]);
     const setSelectedDate = useCallback(async (date: Date) => {
         if (isSameDay(date, overviewData.date)) return;
-        const oldMonth = overviewData.date.getMonth();
-        const oldYear = overviewData.date.getFullYear();
-        setOverviewData(prev => ({ ...prev, date }));
+        if (isDayChangingRef.current) return;
+        isDayChangingRef.current = true;
         const dateDay = startOfDay(date);
         const todayDay = startOfDay(new Date());
         const startDayLimit = userProfile?.start_date ? startOfDay(new Date(userProfile.start_date)) : null;
         const isValid = !isAfter(dateDay, todayDay) && (!startDayLimit || !isBefore(dateDay, startDayLimit));
-        if (isValid && userProfile?.id) {
-            setIsDataLoading(true);
-            const dateStr = format(dateDay, "yyyy-MM-dd");
-            const { data } = await getDailyLog(userProfile.id, dateStr);
-            const logs = await getMealLogsForDay(userProfile.id, dateStr);
-            setMealLogs(logs);
+        if (!isValid || !userProfile?.id) { isDayChangingRef.current = false; return; }
+        const dateStr = format(dateDay, "yyyy-MM-dd");
+        const oldMonth = overviewData.date.getMonth();
+        const oldYear = overviewData.date.getFullYear();
+        const cached = dayCache.current.get(dateStr);
+        if (cached && Date.now() - cached.fetchedAt < CACHE_TTL) {
             setDashboardDate(dateDay);
+            setMealLogs(cached.mealLogs);
             setOverviewData(prev => ({
                 ...prev,
-                calories: { ...prev.calories, current: data?.calories_current || 0 },
+                date: dateDay,
+                calories: { ...prev.calories, current: cached.calories_current },
                 macros: {
-                    carbs: { ...prev.macros.carbs, current: data?.carbs_current || 0 },
-                    fats: { ...prev.macros.fats, current: data?.fats_current || 0 },
-                    protein: { ...prev.macros.protein, current: data?.protein_current || 0 },
+                    carbs: { ...prev.macros.carbs, current: cached.carbs_current },
+                    fats: { ...prev.macros.fats, current: cached.fats_current },
+                    protein: { ...prev.macros.protein, current: cached.protein_current },
                 }
             }));
-            setWaterMl(data?.water_ml || 0);
+            setWaterMl(cached.water_ml);
+            isDayChangingRef.current = false;
+            if (date.getMonth() !== oldMonth || date.getFullYear() !== oldYear) {
+                fetchMonthActiveDates(userProfile.id, dateDay);
+            }
+            return;
+        }
+        setIsDataLoading(true);
+        setDashboardDate(dateDay);
+        try {
+            const [{ data }, logs] = await Promise.all([
+                getDailyLog(userProfile.id, dateStr),
+                getMealLogsForDay(userProfile.id, dateStr),
+            ]);
+            const entry = {
+                calories_current: data?.calories_current || 0,
+                carbs_current: data?.carbs_current || 0,
+                fats_current: data?.fats_current || 0,
+                protein_current: data?.protein_current || 0,
+                water_ml: data?.water_ml || 0,
+                mealLogs: logs,
+            };
+            saveToCache(dateStr, entry);
+            setMealLogs(logs);
+            setOverviewData(prev => ({
+                ...prev,
+                date: dateDay,
+                calories: { ...prev.calories, current: entry.calories_current },
+                macros: {
+                    carbs: { ...prev.macros.carbs, current: entry.carbs_current },
+                    fats: { ...prev.macros.fats, current: entry.fats_current },
+                    protein: { ...prev.macros.protein, current: entry.protein_current },
+                }
+            }));
+            setWaterMl(entry.water_ml);
             if (date.getMonth() !== oldMonth || date.getFullYear() !== oldYear) {
                 await fetchMonthActiveDates(userProfile.id, dateDay);
             }
+        } finally {
             setIsDataLoading(false);
+            isDayChangingRef.current = false;
         }
-    }, [userProfile?.id, userProfile?.start_date, overviewData.date, fetchMonthActiveDates]);
+    }, [userProfile?.id, userProfile?.start_date, overviewData.date, fetchMonthActiveDates, saveToCache]);
+    const prefetchDay = useCallback(async (userId: string, date: Date) => {
+        const dateStr = format(date, "yyyy-MM-dd");
+        const cached = dayCache.current.get(dateStr);
+        if (cached && Date.now() - cached.fetchedAt < CACHE_TTL) return;
+        const today = startOfDay(new Date());
+        if (isAfter(startOfDay(date), today)) return;
+        try {
+            const [{ data }, logs] = await Promise.all([
+                getDailyLog(userId, dateStr),
+                getMealLogsForDay(userId, dateStr),
+            ]);
+            saveToCache(dateStr, {
+                calories_current: data?.calories_current || 0,
+                carbs_current: data?.carbs_current || 0,
+                fats_current: data?.fats_current || 0,
+                protein_current: data?.protein_current || 0,
+                water_ml: data?.water_ml || 0,
+                mealLogs: logs,
+            });
+        } catch { /* silent */ }
+    }, [saveToCache]);
     const goToPrevDay = useCallback(() => {
-        setSelectedDate(subDays(overviewData.date, 1));
-    }, [overviewData.date, setSelectedDate]);
+        const prevDay = subDays(overviewData.date, 1);
+        setSelectedDate(prevDay).then(() => {
+            if (userProfile?.id) prefetchDay(userProfile.id, subDays(prevDay, 1));
+        });
+    }, [overviewData.date, setSelectedDate, prefetchDay, userProfile?.id]);
     const goToNextDay = useCallback(() => {
         if (!isToday(overviewData.date)) {
-            setSelectedDate(addDays(overviewData.date, 1));
+            const nextDay = addDays(overviewData.date, 1);
+            setSelectedDate(nextDay).then(() => {
+                if (userProfile?.id && !isToday(nextDay)) prefetchDay(userProfile.id, addDays(nextDay, 1));
+            });
         }
-    }, [overviewData.date, setSelectedDate]);
+    }, [overviewData.date, setSelectedDate, prefetchDay, userProfile?.id]);
     const goToToday = useCallback(() => {
         setSelectedDate(new Date());
     }, [setSelectedDate]);
@@ -253,14 +370,24 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
             const currentDash = dashboardDateRef.current ?? today;
             const isTodayView = isSameDay(currentDash, today);
             const dashStr = format(currentDash, "yyyy-MM-dd");
-            const { data: dashData } = await getDailyLog(userProfile.id, dashStr);
-            const dashLogs = await getMealLogsForDay(userProfile.id, dashStr);
+            dayCache.current.delete(dashStr);
+            const [{ data: dashData }, dashLogs] = await Promise.all([
+                getDailyLog(userProfile.id, dashStr),
+                getMealLogsForDay(userProfile.id, dashStr),
+            ]);
             setMealLogs(dashLogs);
+            saveToCache(dashStr, {
+                calories_current: dashData?.calories_current || 0,
+                carbs_current: dashData?.carbs_current || 0,
+                fats_current: dashData?.fats_current || 0,
+                protein_current: dashData?.protein_current || 0,
+                water_ml: dashData?.water_ml || 0,
+                mealLogs: dashLogs,
+            });
             await incrementUserStreak(userProfile.id);
             await recalculateUserRating(userProfile.id);
             await refreshProfile();
             const limit = userProfile.daily_calorie_limit || defaultCalLimit;
-            setRefreshKey(prev => prev + 1);
             setOverviewData(prev => ({
                 ...prev,
                 date: isTodayView ? today : currentDash,
@@ -276,7 +403,7 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
             return true;
         }
         return false;
-    }, [userProfile?.id, fetchMonthActiveDates, refreshProfile]);
+    }, [userProfile?.id, fetchMonthActiveDates, refreshProfile, saveToCache]);
     const contextValue = useMemo(() => ({
         toast,
         showToast,
@@ -298,7 +425,7 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
         waterMl,
         waterGoalMl,
         handleSetWater,
-    }), [toast, showToast, overviewData, dashboardDate, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, goToToday, refreshData, refreshKey, isDataLoading, mealLogs, deleteMeal, updateMeal, waterMl, waterGoalMl, handleSetWater]);
+    }), [toast, showToast, overviewData, dashboardDate, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, goToToday, refreshData, isDataLoading, mealLogs, deleteMeal, updateMeal, waterMl, waterGoalMl, handleSetWater]);
     return (
         <IndexContext.Provider value={contextValue}>
             {children}

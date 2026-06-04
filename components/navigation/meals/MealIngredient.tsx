@@ -9,11 +9,11 @@ export type MealIngredientProps = {
     baseCal?: number,
     count?: number,
     onDelete?: () => void,
-    onEdit?: (newCal: number) => void
+    onEdit?: (newCal: number) => void,
+    onItemPress?: () => void,
 }
-const MealIngredient: FC<MealIngredientProps> = ({ title, cal, baseCal, count, onDelete, onEdit }) => {
+const MealIngredient: FC<MealIngredientProps> = ({ title, cal, baseCal, count, onDelete, onEdit, onItemPress }) => {
     const { showToast } = useIndexContext();
-    //Hooks
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [editedCal, setEditedCal] = useState<string>(String(cal));
     const calculatedBaseCal = useMemo(() => {
@@ -25,10 +25,6 @@ const MealIngredient: FC<MealIngredientProps> = ({ title, cal, baseCal, count, o
         return baseCal;
     }, [editedCal, baseCal, cal]);
 
-    //Functions
-    const handleDelete = () => {
-        onDelete?.();
-    };
     const handleEditToggle = () => {
         if (isEditing) {
             const newCal = Number(editedCal) || 0;
@@ -47,23 +43,28 @@ const MealIngredient: FC<MealIngredientProps> = ({ title, cal, baseCal, count, o
         setEditedCal(String(cal));
     }, [cal]);
     return (
-        <TouchableOpacity
-            activeOpacity={isEditing ? 0.5 : 0.25}
-            onPress={() => { if (!isEditing) setIsEditing(true); }}
-            className="flex-row items-center justify-between py-3"
-        >
+        <View className="flex-row items-center justify-between py-3">
             <View className="flex-row items-center gap-2 flex-1 mr-4">
-                <TouchableOpacity onPress={handleDelete} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <TouchableOpacity onPress={onDelete} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                     <Trash size={20} color="#CA877E" weight="regular" />
                 </TouchableOpacity>
-                <View className="flex-row items-center gap-1 flex-1">
+                <TouchableOpacity
+                    activeOpacity={0.25}
+                    onPress={() => { if (!isEditing) onItemPress?.(); }}
+                    className="flex-1 flex-row items-center gap-1"
+                >
                     {count !== undefined && count > 1 && (
                         <Text className="base-text font-nunito-800 text-base shrink-0">{count}x</Text>
                     )}
                     <Text className="base-text font-nunito-600 text-base flex-1" numberOfLines={1} ellipsizeMode="tail">{title}</Text>
-                </View>
+                </TouchableOpacity>
             </View>
-            <View className="flex-row items-center gap-2 shrink-0">
+            <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleEditToggle}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                className="flex-row items-center gap-2 shrink-0"
+            >
                 <View className="flex-row items-center gap-1 shrink-0">
                     {calculatedBaseCal !== undefined && !isEditing && (
                         <Text className="base-text font-nunito-700 text-sm text-white/40 shrink-0">({calculatedBaseCal})</Text>
@@ -83,15 +84,13 @@ const MealIngredient: FC<MealIngredientProps> = ({ title, cal, baseCal, count, o
                         <Text className="base-text font-nunito-800 text-sm shrink-0" numberOfLines={1}>{editedCal} cal</Text>
                     )}
                 </View>
-                <TouchableOpacity onPress={handleEditToggle} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                    {isEditing ? (
-                        <Check size={16} color="#84C754" weight="bold" />
-                    ) : (
-                        <PencilSimple size={16} color="#FFFFFF80" weight="regular" />
-                    )}
-                </TouchableOpacity>
-            </View>
-        </TouchableOpacity>
+                {isEditing ? (
+                    <Check size={16} color="#84C754" weight="bold" />
+                ) : (
+                    <PencilSimple size={16} color="#FFFFFF80" weight="regular" />
+                )}
+            </TouchableOpacity>
+        </View>
     );
 }
 export default MealIngredient;

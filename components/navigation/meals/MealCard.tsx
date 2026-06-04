@@ -5,7 +5,7 @@ import { Pressable, Text, View } from "react-native";
 import Animated, { FadeIn, Layout, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { MealIngredientProps } from "./MealIngredient";
 
-type IngredientData = Omit<MealIngredientProps, 'onDelete' | 'onEdit'> & { id: string | number };
+type IngredientData = Omit<MealIngredientProps, 'onDelete' | 'onEdit' | 'onItemPress'> & { id: string | number };
 type MealCardProps = {
     icon: React.ReactNode,
     title: string,
@@ -17,10 +17,11 @@ type MealCardProps = {
     ingredients?: IngredientData[],
     expanded?: boolean,
     onToggle?: () => void,
+    onIngredientDelete?: (id: string | number) => void,
     onIngredientEdit?: (id: string | number, newCal: number) => void,
-    onIngredientDelete?: (id: string | number) => void
+    onIngredientPress?: (id: string | number) => void,
 }
-const MealCard: FC<MealCardProps> = ({ icon, title, allCal, isDayTime, onPress, onAddPress, onSectionPress, ingredients, expanded, onToggle, onIngredientEdit, onIngredientDelete }) => {
+const MealCard: FC<MealCardProps> = ({ icon, title, allCal, isDayTime, onPress, onAddPress, onSectionPress, ingredients, expanded, onToggle, onIngredientDelete, onIngredientEdit, onIngredientPress }) => {
     //Hooks
     const hasIngredients = ingredients && ingredients.length > 0;
     const [localExpanded, setLocalExpanded] = useState<boolean>(false);
@@ -84,6 +85,7 @@ const MealCard: FC<MealCardProps> = ({ icon, title, allCal, isDayTime, onPress, 
                                 count={ingredient.count}
                                 onDelete={() => onIngredientDelete?.(ingredient.id)}
                                 onEdit={(newCal) => onIngredientEdit?.(ingredient.id, newCal)}
+                                onItemPress={() => onIngredientPress?.(ingredient.id)}
                             />
                         ))}
                     </Animated.View>

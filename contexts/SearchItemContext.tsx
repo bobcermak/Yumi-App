@@ -12,15 +12,14 @@ import { format } from "date-fns";
 import { posthog } from "@/lib/config/posthog";
 
 export const SearchItemContext = createContext<SearchItemContextType | undefined>(undefined);
-
 export const SearchItemProvider: FC<{ children: React.ReactNode }> = ({ children }) => {
     //Contexts
-    const { showToast, refreshData, waterMl, handleSetWater } = useIndexContext();
+    const { showToast, refreshData, waterMl, handleSetWater, deleteMeal } = useIndexContext();
     const { userProfile } = useAuth();
     //Router
     const router = useRouter();
     //Params
-    const { item: itemStr, isFavorite: isFavoriteParam, mealType: mealTypeParam, source: sourceParam } = useGlobalSearchParams<{ id: string, item: string, isFavorite?: string, mealType?: string, source?: string }>();
+    const { item: itemStr, isFavorite: isFavoriteParam, mealType: mealTypeParam, source: sourceParam, mealLogId: mealLogIdParam, logDate: logDateParam } = useGlobalSearchParams<{ id: string, item: string, isFavorite?: string, mealType?: string, source?: string, mealLogId?: string, logDate?: string }>();
 
     const initialItem: FoodSearchResult | null = useMemo(() => {
         try {
@@ -91,7 +90,7 @@ export const SearchItemProvider: FC<{ children: React.ReactNode }> = ({ children
                 effectiveItem = { ...item, id: foodId };
                 setItem(effectiveItem);
             }
-            const { mealLog, ingredients } = prepareMealLogData(effectiveItem, mealData, mealType);
+            const { mealLog, ingredients } = prepareMealLogData(effectiveItem, mealData, mealType, logDateParam || undefined);
             await logMeal(
                 userProfile.id,
                 mealLog,
@@ -121,6 +120,21 @@ export const SearchItemProvider: FC<{ children: React.ReactNode }> = ({ children
             setIsLoading(false);
         }
     }, [userProfile?.id, item, mealData, mealType, isDrink, waterMl, handleSetWater, refreshData, showToast, router]);
+    const handleDeleteMeal = useCallback(async () => {
+        if (!mealLogIdParam) return;
+        setIsLoading(true);
+        try {
+            await deleteMeal(mealLogIdParam);
+            await refreshData();
+            showToast("Meal deleted!", undefined, 'success');
+            router.replace('/(tabs)');
+        } catch (error) {
+            showToast("Failed to delete meal", undefined, 'error');
+            console.error("[SearchItemContext] Error deleting meal:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [mealLogIdParam, deleteMeal, refreshData, showToast, router]);
     const value = useMemo(() => ({
         item,
         setItem,
@@ -137,8 +151,10 @@ export const SearchItemProvider: FC<{ children: React.ReactNode }> = ({ children
         setIsDrink,
         handleToggleFavorite,
         handleAddToMeal,
+        handleDeleteMeal,
         source: sourceParam,
-    }), [item, isFavorite, isFavoriteLoading, mealType, mealData, isLoading, isDropdownOpen, isDrink, handleToggleFavorite, handleAddToMeal, sourceParam]);
+        logDate: logDateParam || undefined,
+    }), [item, isFavorite, isFavoriteLoading, mealType, mealData, isLoading, isDropdownOpen, isDrink, handleToggleFavorite, handleAddToMeal, handleDeleteMeal, sourceParam, logDateParam]);
     return (
         <SearchItemContext.Provider value={value}>
             {children}

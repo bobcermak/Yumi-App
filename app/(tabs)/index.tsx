@@ -18,25 +18,30 @@ const Home = () => {
     const journeyCalendarRef = useRef<BottomSheet>(null);
     //Contexts
     const { userProfile } = useAuth();
-    const { overviewData, dashboardDate, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, refreshData, refreshKey, waterMl, waterGoalMl, handleSetWater, mealLogs } = useIndexContext();
-    
+    const { overviewData, dashboardDate, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, refreshData, waterMl, waterGoalMl, handleSetWater, mealLogs } = useIndexContext();
+    const lastRefreshRef = useRef<number>(0);
     useFocusEffect(
         useCallback(() => {
-            if (userProfile?.id) {
-                refreshData();
-            }
-        }, [userProfile?.id])
+            if (!userProfile?.id) return;
+            const now = Date.now();
+            if (now - lastRefreshRef.current < 30_000) return;
+            lastRefreshRef.current = now;
+            refreshData();
+        }, [userProfile?.id, refreshData])
     );
     //Hooks
     const [refreshing, setRefreshing] = useState<boolean>(false);
     const pageOpacity = useSharedValue<number>(0);
+    const contentOpacity = useSharedValue<number>(1);
     const insets = useSafeAreaInsets();
+    const isFirstMount = useRef(true);
 
     const TAB_BAR_HEIGHT = 148;
     //Router
     const router = useRouter();
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
+        lastRefreshRef.current = Date.now();
         const start = Date.now();
         await refreshData();
         const elapsed = Date.now() - start;
@@ -50,9 +55,18 @@ const Home = () => {
     useEffect(() => {
         pageOpacity.value = withTiming(1, { duration: 250 });
     }, [pageOpacity]);
+    useEffect(() => {
+        if (isFirstMount.current) { isFirstMount.current = false; return; }
+        contentOpacity.value = withTiming(0.6, { duration: 80 }, () => {
+            contentOpacity.value = withTiming(1, { duration: 280 });
+        });
+    }, [dashboardDate]); // eslint-disable-line react-hooks/exhaustive-deps
     const animatedPageStyle = useAnimatedStyle(() => ({
         opacity: pageOpacity.value,
         flex: 1
+    }));
+    const animatedContentStyle = useAnimatedStyle(() => ({
+        opacity: contentOpacity.value,
     }));
     //Gestures
     const swipeGesture = Gesture.Pan()
@@ -86,7 +100,7 @@ const Home = () => {
                         />
                     }
                 >
-                    <Animated.View key={`header-${refreshKey}`} entering={FadeInDown.duration(250).delay(100)} className="gap-4">
+                    <Animated.View entering={FadeInDown.duration(250).delay(100)} className="gap-4">
                         <HomeHeader
                             firstName={userProfile?.full_name?.split(" ")[0] || userProfile?.username || "Friend"}
                             avatarUrl={userProfile?.avatar_url}
@@ -101,7 +115,7 @@ const Home = () => {
                             onSearchPress={() => router.push("/(tabs)/search?focus=true")}
                         />
                     </Animated.View>
-                    <Animated.View key={`journey-section-${refreshKey}`} entering={FadeInDown.duration(250).delay(150)} className="w-[362px] self-center mt-8">
+                    <Animated.View entering={FadeInDown.duration(250).delay(150)} className="w-[362px] self-center mt-8">
                         <View className="flex-row justify-between items-end">
                             <Text className="title">My Journey</Text>
                             <TouchableOpacity
@@ -119,65 +133,67 @@ const Home = () => {
                             onSelectDate={setSelectedDate}
                         />
                     </Animated.View>
-                    <Animated.View key={`overview-${refreshKey}`} entering={FadeInDown.duration(250).delay(250)} className="w-[362px] self-center mt-8">
-                        <View className="flex-row justify-between items-end">
-                            <Button
-                                onPress={() => todayCalendarRef.current?.snapToIndex(0)}
-                                icon={<CalendarDots size={20} color="#1D1D1D" weight="regular" />}
-                            >
-                                {todayButtonLabel}
-                            </Button>
-                            <View className="flex-row gap-2">
-                                <Icon
-                                    onPress={goToPrevDay}
-                                    disabled={isPrevDisabled}
-                                    className={`bg-white/20 ${isPrevDisabled ? "opacity-20" : "opacity-100"}`}
-                                    shadowColor="transparent"
+                    <Animated.View style={animatedContentStyle}>
+                        <Animated.View entering={FadeInDown.duration(250).delay(250)} className="w-[362px] self-center mt-8">
+                            <View className="flex-row justify-between items-end">
+                                <Button
+                                    onPress={() => todayCalendarRef.current?.snapToIndex(0)}
+                                    icon={<CalendarDots size={20} color="#1D1D1D" weight="regular" />}
                                 >
-                                    <CaretLeft size={20} color="white" weight="regular" />
-                                </Icon>
-                                <Icon
-                                    onPress={goToNextDay}
-                                    disabled={isNextDisabled}
-                                    className={`bg-white/20 ${isNextDisabled ? "opacity-20" : "opacity-100"}`}
-                                    shadowColor="transparent"
-                                >
-                                    <CaretRight size={20} color="white" weight="regular" />
-                                </Icon>
+                                    {todayButtonLabel}
+                                </Button>
+                                <View className="flex-row gap-2">
+                                    <Icon
+                                        onPress={goToPrevDay}
+                                        disabled={isPrevDisabled}
+                                        className={`bg-white/20 ${isPrevDisabled ? "opacity-20" : "opacity-100"}`}
+                                        shadowColor="transparent"
+                                    >
+                                        <CaretLeft size={20} color="white" weight="regular" />
+                                    </Icon>
+                                    <Icon
+                                        onPress={goToNextDay}
+                                        disabled={isNextDisabled}
+                                        className={`bg-white/20 ${isNextDisabled ? "opacity-20" : "opacity-100"}`}
+                                        shadowColor="transparent"
+                                    >
+                                        <CaretRight size={20} color="white" weight="regular" />
+                                    </Icon>
+                                </View>
                             </View>
-                        </View>
-                        <GestureDetector gesture={swipeGesture}>
-                            <View>
-                                <DailyOverviewCard
-                                    date={dashboardDate}
-                                    calories={overviewData.calories}
-                                    macros={overviewData.macros}
-                                    onUpdateCaloriesMax={handleUpdateCaloriesMax}
-                                />
-                            </View>
-                        </GestureDetector>
-                    </Animated.View>
-                    <Animated.View key={`water-${refreshKey}`} entering={FadeInDown.duration(250).delay(320)} className="w-[362px] self-center mt-8">
-                        <WaterTracker
-                            waterMl={waterMl}
-                            goalMl={waterGoalMl}
-                            onSetWater={handleSetWater}
-                        />
-                    </Animated.View>
-                    <Animated.View key={`pulse-${refreshKey}`} entering={FadeInDown.duration(250).delay(400)} className="w-[362px] self-center mt-8">
-                        <Text className="title mb-4">Daily Pulse</Text>
-                        <DailyPulseCard
-                            streak={getEffectiveStreak(userProfile?.streak_count, userProfile?.last_log_date)}
-                            protein={overviewData.macros.protein}
-                            carbs={overviewData.macros.carbs}
-                            fats={overviewData.macros.fats}
-                            rating={(() => {
-                                const rated = mealLogs.filter(m => m.rating !== null && m.rating !== undefined);
-                                return rated.length > 0
-                                    ? Math.round((rated.reduce((s, m) => s + m.rating!, 0) / rated.length) * 10) / 10
-                                    : null;
-                            })()}
-                        />
+                            <GestureDetector gesture={swipeGesture}>
+                                <View>
+                                    <DailyOverviewCard
+                                        date={dashboardDate}
+                                        calories={overviewData.calories}
+                                        macros={overviewData.macros}
+                                        onUpdateCaloriesMax={handleUpdateCaloriesMax}
+                                    />
+                                </View>
+                            </GestureDetector>
+                        </Animated.View>
+                        <Animated.View entering={FadeInDown.duration(250).delay(320)} className="w-[362px] self-center mt-8">
+                            <WaterTracker
+                                waterMl={waterMl}
+                                goalMl={waterGoalMl}
+                                onSetWater={handleSetWater}
+                            />
+                        </Animated.View>
+                        <Animated.View entering={FadeInDown.duration(250).delay(400)} className="w-[362px] self-center mt-8">
+                            <Text className="title mb-4">Daily Pulse</Text>
+                            <DailyPulseCard
+                                streak={getEffectiveStreak(userProfile?.streak_count, userProfile?.last_log_date)}
+                                protein={overviewData.macros.protein}
+                                carbs={overviewData.macros.carbs}
+                                fats={overviewData.macros.fats}
+                                rating={(() => {
+                                    const rated = mealLogs.filter(m => m.rating !== null && m.rating !== undefined);
+                                    return rated.length > 0
+                                        ? Math.round((rated.reduce((s, m) => s + m.rating!, 0) / rated.length) * 10) / 10
+                                        : null;
+                                })()}
+                            />
+                        </Animated.View>
                     </Animated.View>
                 </ScrollView>
             </Animated.View>

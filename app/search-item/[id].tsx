@@ -1,4 +1,5 @@
 import { Button, Icon, ResultMeal, ResultMealSkeleton, SearchResultItem, SearchResultSkeleton } from "@/components";
+import { format, parseISO } from "date-fns";
 import { MEAL_TYPES } from "@/lib/helpers/mealHelpers";
 import { useFoodSearch } from "@/lib/hooks/useFoodSearch";
 import { useSearchItem } from "@/lib/hooks/useSearchItem";
@@ -14,7 +15,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const SearchItem = () => {
   //Contexts
-  const { item, isFavorite, isFavoriteLoading, mealType, setMealType, mealData, setMealData, isLoading, isDropdownOpen, setIsDropdownOpen, isDrink, setIsDrink, handleToggleFavorite, handleAddToMeal } = useSearchItem();
+  const { item, isFavorite, isFavoriteLoading, mealType, setMealType, mealData, setMealData, isLoading, isDropdownOpen, setIsDropdownOpen, isDrink, setIsDrink, handleToggleFavorite, handleAddToMeal, handleDeleteMeal, source, logDate } = useSearchItem();
+  const isDeleteMode = source === "delete";
+  const logDateLabel = logDate ? format(parseISO(logDate), 'd MMM') : null;
   //Router
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -67,7 +70,7 @@ const SearchItem = () => {
       <View style={{ flex: 1 }}>
         <View style={{ marginTop: 56, paddingBottom: 16, zIndex: 50 }}>
           <View className="flex-row w-[362px] self-center justify-between items-center py-4">
-            <Icon onPress={() => isQuickAdd ? router.replace("/(tabs)/quick-add") : router.back()} className="bg-yellow w-12 h-12">
+            <Icon onPress={() => isDeleteMode ? router.replace("/(tabs)") : isQuickAdd ? router.replace("/(tabs)/quick-add") : router.back()} className="bg-yellow w-12 h-12">
               <CaretLeft size={24} color="#1D1D1D" weight="regular" />
             </Icon>
             <View className="relative items-center w-[160px]">
@@ -81,6 +84,9 @@ const SearchItem = () => {
                   <CaretDown size={20} color="white" weight="bold" />
                 </Animated.View>
               </TouchableOpacity>
+              {logDateLabel && !isDeleteMode && (
+                <Text style={{ fontFamily: "Nunito_600SemiBold", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2, alignSelf: "center", textAlign: "center" }}>({logDateLabel})</Text>
+              )}
               {isDropdownOpen && (
                 <Animated.View
                   entering={FadeInUp.duration(250)}
@@ -127,15 +133,15 @@ const SearchItem = () => {
               </Icon>
             </View>
           </View>
-          {isQuickAdd && (
+          {(isQuickAdd || isDeleteMode) && (
             <View className="w-[362px] self-center">
               <Button
-                className="rounded-[30px] mx-0 w-full py-4"
-                textClassName="text-xl"
-                onPress={() => handleAddToMeal(isDrink ? parsedWaterMl : undefined)}
+                className={`rounded-[30px] mx-0 w-full py-4${isDeleteMode ? " bg-pink" : ""}`}
+                textClassName={`text-xl${isDeleteMode ? " text-white" : ""}`}
+                onPress={() => isDeleteMode ? handleDeleteMeal?.() : handleAddToMeal(isDrink ? parsedWaterMl : undefined)}
                 disabled={isLoading}
               >
-                {isLoading ? "Recording..." : "Record"}
+                {isLoading ? (isDeleteMode ? "Deleting..." : "Recording...") : isDeleteMode ? "Delete" : "Record"}
               </Button>
             </View>
           )}
@@ -293,7 +299,7 @@ const SearchItem = () => {
                   </Animated.View>
                 )}
             </View>
-            {!isQuickAdd && (
+            {!isQuickAdd && !isDeleteMode && (
               <View style={{ width: 362, marginTop: 24 }}>
                 <Button
                   className="rounded-[30px] mx-0 w-full py-5"
@@ -305,7 +311,7 @@ const SearchItem = () => {
                 </Button>
               </View>
             )}
-            {isQuickAdd && (
+            {isQuickAdd && !isDeleteMode && (
               <View style={{ width: 362, marginTop: 24 }}>
                 <Button
                   className="rounded-[30px] mx-0 w-full py-5 bg-yellow"

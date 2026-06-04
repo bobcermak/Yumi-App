@@ -1,6 +1,8 @@
 import { Icon, MealCard } from "@/components";
 import { getMealTypeByTime } from "@/lib/helpers/dateHelpers";
 import { useIndexContext } from "@/lib/hooks/useIndexContext";
+import type { FoodSearchResult } from "@/types/foodSearchResult";
+import { computeHealthRating } from "@/lib/helpers/mealHelpers";
 import { differenceInCalendarDays, format, isToday, isYesterday } from "date-fns";
 import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import * as Haptics from "expo-haptics";
@@ -50,6 +52,24 @@ const DashboardSheet = forwardRef<BottomSheet>(function DashboardSheet(props, re
         const items = Array.from(grouped.values()).map(items => {
           const first = items[0];
           const totalCal = items.reduce((sum, i) => sum + i.calories, 0);
+          const totalAmount = items.reduce((sum, i) => sum + i.amount_g, 0);
+          const cal100 = totalAmount > 0 ? (totalCal / totalAmount) * 100 : totalCal;
+          const totalCarbs = items.reduce((sum, i) => sum + (i.carbs || 0), 0);
+          const totalFat = items.reduce((sum, i) => sum + (i.fat || 0), 0);
+          const totalProtein = items.reduce((sum, i) => sum + (i.protein || 0), 0);
+          const carbs100 = totalAmount > 0 ? (totalCarbs / totalAmount) * 100 : 0;
+          const fat100 = totalAmount > 0 ? (totalFat / totalAmount) * 100 : 0;
+          const protein100 = totalAmount > 0 ? (totalProtein / totalAmount) * 100 : 0;
+          const foodItem: FoodSearchResult = {
+            id: first.food_id || first.id,
+            name: first.name,
+            calories_per_100g: cal100,
+            carbs_per_100g: carbs100,
+            fat_per_100g: fat100,
+            protein_per_100g: protein100,
+            health_rating: computeHealthRating({ calories_per_100g: cal100, protein_per_100g: protein100, fat_per_100g: fat100, carbs_per_100g: carbs100 }),
+            source: "usda",
+          };
           return {
             id: first.id,
             mealLogId: log.id,
@@ -57,10 +77,25 @@ const DashboardSheet = forwardRef<BottomSheet>(function DashboardSheet(props, re
             cal: totalCal,
             count: items.length > 1 ? items.length : undefined,
             baseCal: items.length > 1 ? first.calories : undefined,
+            foodItem,
           };
         });
         if (items.length === 0 && (log.total_calories || 0) > 0) {
-          return [{ id: log.id, mealLogId: log.id, title: log.name, cal: log.total_calories || 0, count: undefined, baseCal: undefined }];
+          const fbCal = log.total_calories || 0;
+          const fbCarbs = log.total_carbs || 0;
+          const fbFat = log.total_fat || 0;
+          const fbProtein = log.total_protein || 0;
+          const fallbackFood: FoodSearchResult = {
+            id: log.id,
+            name: log.name,
+            calories_per_100g: fbCal,
+            carbs_per_100g: fbCarbs,
+            fat_per_100g: fbFat,
+            protein_per_100g: fbProtein,
+            health_rating: computeHealthRating({ calories_per_100g: fbCal, protein_per_100g: fbProtein, fat_per_100g: fbFat, carbs_per_100g: fbCarbs }),
+            source: "usda",
+          };
+          return [{ id: log.id, mealLogId: log.id, title: log.name, cal: log.total_calories || 0, count: undefined, baseCal: undefined, foodItem: fallbackFood }];
         }
         return items;
       });
@@ -91,7 +126,6 @@ const DashboardSheet = forwardRef<BottomSheet>(function DashboardSheet(props, re
     setIsSheetLoading(true);
     try {
       await updateMeal(mealLogId, { total_calories: newCal });
-      showToast("Calories updated!", undefined, 'success');
     } catch {
       showToast("Update failed", undefined, 'error');
     } finally {
@@ -121,6 +155,20 @@ const DashboardSheet = forwardRef<BottomSheet>(function DashboardSheet(props, re
         },
       ]
     );
+  };
+  const handleIngredientPress = (ingId: string | number, sectionIngredients: typeof mealSections[0]['ingredients']) => {
+    const ing = sectionIngredients.find(i => i.id === ingId);
+    if (!ing || !('foodItem' in ing) || !ing.foodItem) return;
+    router.push({
+      pathname: "/search-item/[id]",
+      params: {
+        id: ing.foodItem.id,
+        item: JSON.stringify(ing.foodItem),
+        mealLogId: ing.mealLogId,
+        mealType: "",
+        source: "delete",
+      },
+    });
   };
   return (
     <BottomSheet
@@ -192,7 +240,7 @@ const DashboardSheet = forwardRef<BottomSheet>(function DashboardSheet(props, re
             <TouchableOpacity activeOpacity={0.25} onPress={() => internalRef.current?.snapToIndex(3)} className="flex-1 mr-3">
               <Text className="text-white text-xl font-nunito-800">{dateLabel}</Text>
             </TouchableOpacity>
-            <Icon className="w-[36px] h-[36px]" onPress={() => router.push({ pathname: "/(tabs)/quick-add", params: { mealType: currentMealType } })}>
+            <Icon className="w-[36px] h-[36px]" onPress={() => router.push({ pathname: "/(tabs)/quick-add", params: { mealType: currentMealType, logDate: isToday(dashboardDate) ? "" : format(dashboardDate, 'yyyy-MM-dd') } })}>
               <Plus size={24} color="#1D1D1D" weight="regular" />
             </Icon>
           </View>
@@ -206,7 +254,7 @@ const DashboardSheet = forwardRef<BottomSheet>(function DashboardSheet(props, re
                 isDayTime={isToday(dashboardDate) && currentMealType === section.title}
                 expanded={expandedMeal === section.title}
                 onToggle={() => setExpandedMeal(expandedMeal === section.title ? null : section.title)}
-                onAddPress={() => router.push({ pathname: "/(tabs)/quick-add", params: { mealType: section.title } })}
+                onAddPress={() => router.push({ pathname: "/(tabs)/quick-add", params: { mealType: section.title, logDate: isToday(dashboardDate) ? "" : format(dashboardDate, 'yyyy-MM-dd') } })}
                 ingredients={section.ingredients}
                 onIngredientEdit={(id, newCal) => {
                   const ing = section.ingredients.find(i => i.id === id);
@@ -216,6 +264,7 @@ const DashboardSheet = forwardRef<BottomSheet>(function DashboardSheet(props, re
                   const ing = section.ingredients.find(i => i.id === id);
                   if (ing) handleIngredientDelete(ing.mealLogId);
                 }}
+                onIngredientPress={(id) => handleIngredientPress(id, section.ingredients)}
               />
             ))}
           </View>

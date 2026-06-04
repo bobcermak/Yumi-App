@@ -3,6 +3,7 @@ import type { FoodSearchResult } from "@/types/foodSearchResult";
 import { type ResultMealHandle } from "@/components/meals/ResultMeal";
 import { MEAL_TYPES, MEAL_TYPE_MAP, computeHealthRating } from "@/lib/helpers/mealHelpers";
 import { getMealTypeByTime } from "@/lib/helpers/dateHelpers";
+import { format, parseISO } from "date-fns";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useIndexContext } from "@/lib/hooks/useIndexContext";
 import { useFoodSearch } from "@/lib/hooks/useFoodSearch";
@@ -23,15 +24,17 @@ const MealLog = () => {
   const { userProfile } = useAuth();
   const resultMealRef = useRef<ResultMealHandle>(null);
   const scrollRef = useRef<ScrollView>(null);
-  const { scanResult: scanResultParam, photoUri: photoUriParam, mealType: mealTypeParam } =
+  const { scanResult: scanResultParam, photoUri: photoUriParam, mealType: mealTypeParam, logDate: logDateParam } =
     useLocalSearchParams<{
       scanResult: string;
       photoUri: string;
       mealType?: string;
+      logDate?: string;
     }>();
   const result: MagicScanResult | null = scanResultParam
     ? (JSON.parse(scanResultParam) as MagicScanResult)
     : null;
+  const logDateLabel = logDateParam ? format(parseISO(logDateParam), 'd MMM') : null;
   const [mealType, setMealType] = useState<string>(mealTypeParam || getMealTypeByTime());
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
@@ -214,7 +217,7 @@ const MealLog = () => {
       const mealLogData = {
         name: result.name,
         type,
-        logged_at: new Date().toISOString(),
+        logged_at: logDateParam ? new Date(`${logDateParam}T12:00:00`).toISOString() : new Date().toISOString(),
         total_calories: mealData.calories,
         total_carbs: Math.round(currentNutrition.carbs100 * factor * count),
         total_fat: Math.round(currentNutrition.fat100 * factor * count),
@@ -312,6 +315,9 @@ const MealLog = () => {
                 <CaretDown size={20} color="white" weight="bold" />
               </Animated.View>
             </TouchableOpacity>
+            {logDateLabel && (
+              <Text style={{ fontFamily: "Nunito_600SemiBold", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2, alignSelf: "center", textAlign: "center" }}>({logDateLabel})</Text>
+            )}
             {isDropdownOpen && (
               <Animated.View
                 entering={FadeInUp.duration(250)}

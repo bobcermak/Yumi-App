@@ -45,6 +45,7 @@ export const prepareMealLogData = (
   item: FoodSearchResult,
   mealData: { grams: number; count: number; calories: number },
   mealType: string,
+  logDate?: string,
 ) => {
   const { grams, count } = mealData;
   const type = MEAL_TYPE_MAP[mealType] || "breakfast";
@@ -80,7 +81,7 @@ export const prepareMealLogData = (
     mealLog: {
       name: item.name || "Unknown Product",
       type,
-      logged_at: new Date().toISOString(),
+      logged_at: logDate ? new Date(`${logDate}T12:00:00`).toISOString() : new Date().toISOString(),
       total_calories: singleCalories * count,
       total_carbs: Math.round(singleMacros.carbs * count),
       total_fat: Math.round(singleMacros.fat * count),
