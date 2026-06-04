@@ -18,7 +18,7 @@ const Home = () => {
     const journeyCalendarRef = useRef<BottomSheet>(null);
     //Contexts
     const { userProfile } = useAuth();
-    const { overviewData, dashboardDate, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, refreshData, waterMl, waterGoalMl, handleSetWater, mealLogs } = useIndexContext();
+    const { overviewData, dashboardDate, handleUpdateCaloriesMax, activeDates, targetDate, setSelectedDate, goToPrevDay, goToNextDay, refreshData, isDataLoading, waterMl, waterGoalMl, handleSetWater, mealLogs } = useIndexContext();
     const lastRefreshRef = useRef<number>(0);
     useFocusEffect(
         useCallback(() => {
@@ -71,6 +71,7 @@ const Home = () => {
     //Gestures
     const swipeGesture = Gesture.Pan()
         .activeOffsetX([-10, 10])
+        .enabled(!isDataLoading)
         .onEnd((e) => {
             if (e.translationX > 50) {
                 runOnJS(goToPrevDay)();
@@ -78,10 +79,10 @@ const Home = () => {
                 runOnJS(goToNextDay)();
             }
         });
-    const isNextDisabled = isToday(dashboardDate);
-    const isPrevDisabled = userProfile?.start_date 
+    const isNextDisabled = isToday(dashboardDate) || isDataLoading;
+    const isPrevDisabled = isDataLoading || (userProfile?.start_date
         ? isBefore(dashboardDate, new Date(userProfile.start_date)) || isSameDay(dashboardDate, new Date(userProfile.start_date))
-        : false;
+        : false);
     const todayButtonLabel = isToday(dashboardDate) ? "Today" : format(dashboardDate, "dd MMM, yyyy");
     return (
         <View className="flex-1">

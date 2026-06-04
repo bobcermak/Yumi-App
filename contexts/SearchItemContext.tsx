@@ -14,7 +14,7 @@ import { posthog } from "@/lib/config/posthog";
 export const SearchItemContext = createContext<SearchItemContextType | undefined>(undefined);
 export const SearchItemProvider: FC<{ children: React.ReactNode }> = ({ children }) => {
     //Contexts
-    const { showToast, refreshData, waterMl, handleSetWater, deleteMeal } = useIndexContext();
+    const { showToast, refreshData, waterMl, handleSetWater, deleteMeal, updateMeal } = useIndexContext();
     const { userProfile } = useAuth();
     //Router
     const router = useRouter();
@@ -120,6 +120,27 @@ export const SearchItemProvider: FC<{ children: React.ReactNode }> = ({ children
             setIsLoading(false);
         }
     }, [userProfile?.id, item, mealData, mealType, isDrink, waterMl, handleSetWater, refreshData, showToast, router]);
+    const handleUpdateMeal = useCallback(async () => {
+        if (!mealLogIdParam || !item) return;
+        setIsLoading(true);
+        try {
+            const factor = mealData.grams / 100;
+            const count = mealData.count;
+            await updateMeal(mealLogIdParam, {
+                total_calories: Math.round((item.calories_per_100g || 0) * factor * count),
+                total_carbs: Math.round((item.carbs_per_100g || 0) * factor * count),
+                total_fat: Math.round((item.fat_per_100g || 0) * factor * count),
+                total_protein: Math.round((item.protein_per_100g || 0) * factor * count),
+            });
+            showToast("Meal updated!", undefined, 'success');
+            router.replace('/(tabs)');
+        } catch (error) {
+            showToast("Failed to update", undefined, 'error');
+            console.error("[SearchItemContext] Error updating meal:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [mealLogIdParam, item, mealData, updateMeal, showToast, router]);
     const handleDeleteMeal = useCallback(async () => {
         if (!mealLogIdParam) return;
         setIsLoading(true);
@@ -151,10 +172,11 @@ export const SearchItemProvider: FC<{ children: React.ReactNode }> = ({ children
         setIsDrink,
         handleToggleFavorite,
         handleAddToMeal,
+        handleUpdateMeal,
         handleDeleteMeal,
         source: sourceParam,
         logDate: logDateParam || undefined,
-    }), [item, isFavorite, isFavoriteLoading, mealType, mealData, isLoading, isDropdownOpen, isDrink, handleToggleFavorite, handleAddToMeal, handleDeleteMeal, sourceParam, logDateParam]);
+    }), [item, isFavorite, isFavoriteLoading, mealType, mealData, isLoading, isDropdownOpen, isDrink, handleToggleFavorite, handleAddToMeal, handleUpdateMeal, handleDeleteMeal, sourceParam, logDateParam]);
     return (
         <SearchItemContext.Provider value={value}>
             {children}

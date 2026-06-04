@@ -9,7 +9,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 type EmptyItem = { id: string; isEmpty: true };
 type MealItem = { id: string; isEmpty?: false; [key: string]: any };
 type ListItem = EmptyItem | MealItem;
-const PopularMealsSection = ({ onBeforeNavigate, logDate }: { onBeforeNavigate?: () => void; logDate?: string }) => {
+const PopularMealsSection = ({ onBeforeNavigate, logDate, onMealPress }: { onBeforeNavigate?: () => void; logDate?: string; onMealPress?: (item: any) => void }) => {
   const router = useRouter();
   const { popularMeals, filter, setFilter, isLoading } = useSearchContext();
   const flatListRef = useRef<FlatList>(null);
@@ -77,16 +77,20 @@ const PopularMealsSection = ({ onBeforeNavigate, logDate }: { onBeforeNavigate?:
                 calories={item.calories_per_100g || 0}
                 onPress={() => {
                   onBeforeNavigate?.();
-                  router.push({
-                    pathname: "/search-item/[id]",
-                    params: {
-                      id: item.id,
-                      item: JSON.stringify(item),
-                      isFavorite: filter === 'My' ? 'true' : 'false',
-                      source: "quickAdd",
-                      ...(logDate ? { logDate } : {})
-                    }
-                  });
+                  if (onMealPress) {
+                    onMealPress(item);
+                  } else {
+                    router.push({
+                      pathname: "/search-item/[id]",
+                      params: {
+                        id: item.id,
+                        item: JSON.stringify(item),
+                        isFavorite: filter === 'My' ? 'true' : 'false',
+                        source: "quickAdd",
+                        ...(logDate ? { logDate } : {})
+                      }
+                    });
+                  }
                 }}
               />
             );

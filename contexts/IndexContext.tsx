@@ -45,6 +45,7 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
     const overviewDataRef = useRef<OverviewData | null>(null);
     const dashboardDateRef = useRef<Date | null>(null);
     const isDayChangingRef = useRef<boolean>(false);
+    const dayChangeStartRef = useRef<number>(0);
     const dayCache = useRef<Map<string, DayCacheEntry>>(new Map());
     const [overviewData, setOverviewData] = useState<OverviewData>({
         date: new Date(),
@@ -259,8 +260,10 @@ export const IndexProvider: FC<IndexProviderProps> = ({ children }) => {
     }, [userProfile?.id, dashboardDate, showToast, saveToCache]);
     const setSelectedDate = useCallback(async (date: Date) => {
         if (isSameDay(date, overviewData.date)) return;
-        if (isDayChangingRef.current) return;
+        const stuck = isDayChangingRef.current && Date.now() - dayChangeStartRef.current > 8000;
+        if (isDayChangingRef.current && !stuck) return;
         isDayChangingRef.current = true;
+        dayChangeStartRef.current = Date.now();
         const dateDay = startOfDay(date);
         const todayDay = startOfDay(new Date());
         const startDayLimit = userProfile?.start_date ? startOfDay(new Date(userProfile.start_date)) : null;

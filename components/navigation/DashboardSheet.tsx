@@ -12,6 +12,18 @@ import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState }
 import { Alert, Text, TouchableOpacity, View } from "react-native";
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withRepeat, withTiming, Easing } from "react-native-reanimated";
 
+type IngredientItem = {
+  id: string;
+  mealLogId: string;
+  title: string;
+  cal: number;
+  count: number | undefined;
+  baseCal: number | undefined;
+  initialGrams: number | undefined;
+  initialCount: number | undefined;
+  foodItem: FoodSearchResult;
+};
+
 const DashboardSheet = forwardRef<BottomSheet>(function DashboardSheet(props, ref) {
   const router = useRouter();
   //Context
@@ -42,7 +54,7 @@ const DashboardSheet = forwardRef<BottomSheet>(function DashboardSheet(props, re
     ];
     return sections.map(section => {
       const logsForType = mealLogs.filter(log => log.type === section.type);
-      const ingredients = logsForType.flatMap(log => {
+      const ingredients: IngredientItem[] = logsForType.flatMap((log): IngredientItem[] => {
         const grouped = new Map<string, typeof log.meal_ingredients>();
         for (const ing of log.meal_ingredients) {
           const key = (ing.food_id ?? ing.name) + '_' + log.id;
@@ -63,6 +75,7 @@ const DashboardSheet = forwardRef<BottomSheet>(function DashboardSheet(props, re
           const foodItem: FoodSearchResult = {
             id: first.food_id || first.id,
             name: first.name,
+            image_url: log.image_url || undefined,
             calories_per_100g: cal100,
             carbs_per_100g: carbs100,
             fat_per_100g: fat100,
@@ -77,6 +90,8 @@ const DashboardSheet = forwardRef<BottomSheet>(function DashboardSheet(props, re
             cal: totalCal,
             count: items.length > 1 ? items.length : undefined,
             baseCal: items.length > 1 ? first.calories : undefined,
+            initialGrams: first.amount_g,
+            initialCount: items.length,
             foodItem,
           };
         });
@@ -88,6 +103,7 @@ const DashboardSheet = forwardRef<BottomSheet>(function DashboardSheet(props, re
           const fallbackFood: FoodSearchResult = {
             id: log.id,
             name: log.name,
+            image_url: log.image_url || undefined,
             calories_per_100g: fbCal,
             carbs_per_100g: fbCarbs,
             fat_per_100g: fbFat,
@@ -95,7 +111,7 @@ const DashboardSheet = forwardRef<BottomSheet>(function DashboardSheet(props, re
             health_rating: computeHealthRating({ calories_per_100g: fbCal, protein_per_100g: fbProtein, fat_per_100g: fbFat, carbs_per_100g: fbCarbs }),
             source: "usda",
           };
-          return [{ id: log.id, mealLogId: log.id, title: log.name, cal: log.total_calories || 0, count: undefined, baseCal: undefined, foodItem: fallbackFood }];
+          return [{ id: log.id, mealLogId: log.id, title: log.name, cal: log.total_calories || 0, count: undefined, baseCal: undefined, initialGrams: undefined, initialCount: undefined, foodItem: fallbackFood }];
         }
         return items;
       });
@@ -156,9 +172,9 @@ const DashboardSheet = forwardRef<BottomSheet>(function DashboardSheet(props, re
       ]
     );
   };
-  const handleIngredientPress = (ingId: string | number, sectionIngredients: typeof mealSections[0]['ingredients']) => {
+  const handleIngredientPress = (ingId: string | number, sectionIngredients: IngredientItem[]) => {
     const ing = sectionIngredients.find(i => i.id === ingId);
-    if (!ing || !('foodItem' in ing) || !ing.foodItem) return;
+    if (!ing || !ing.foodItem) return;
     router.push({
       pathname: "/search-item/[id]",
       params: {
@@ -167,6 +183,9 @@ const DashboardSheet = forwardRef<BottomSheet>(function DashboardSheet(props, re
         mealLogId: ing.mealLogId,
         mealType: "",
         source: "delete",
+        initialGrams: String(ing.initialGrams ?? 100),
+        initialCount: String(ing.initialCount ?? 1),
+        logDate: isToday(dashboardDate) ? "" : format(dashboardDate, 'yyyy-MM-dd'),
       },
     });
   };
