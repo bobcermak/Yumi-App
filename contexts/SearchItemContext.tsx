@@ -112,7 +112,7 @@ export const SearchItemProvider: FC<{ children: React.ReactNode }> = ({ children
                 counted_as_drink: isDrink,
             });
             showToast(`Added to ${mealType}!`, format(new Date(), "HH:mm"), 'success');
-            router.replace('/(tabs)/quick-add');
+            router.replace(sourceParam === "addMore" ? '/(tabs)' : '/(tabs)/quick-add');
         } catch (error) {
             showToast("Failed to add meal", undefined, 'error');
             console.error("[SearchItemContext] Error adding to meal:", error);

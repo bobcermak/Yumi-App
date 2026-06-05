@@ -21,7 +21,7 @@ const FOOD_TYPE_OPTIONS: { label: string; value: FoodType }[] = [
 const Search = () => {
   //Router
   const router = useRouter();
-  const { focus } = useLocalSearchParams<{ focus: string }>();
+  const { focus, initialQuery, mealType: addMoreMealType, logDate: addMoreLogDate, source: addMoreSource } = useLocalSearchParams<{ focus?: string; initialQuery?: string; mealType?: string; logDate?: string; source?: string }>();
   const insets = useSafeAreaInsets();
   //Contexts
   const { query, setQuery, searchResults, isSearching, isSearchPending, searchSource, submitSearch, category, setCategory, foodType, setFoodType, popularMeals, refreshPopularMeals, setFilter,
@@ -33,6 +33,24 @@ const Search = () => {
   const catListRef = useRef<FlatList>(null);
   const foodTypeListRef = useRef<FlatList>(null);
   const pageOpacity = useSharedValue<number>(0);
+  const hasPreFilledRef = useRef(false);
+  const hasAutoSubmittedRef = useRef(false);
+
+  // Pre-fill query when opened from AddMore modal
+  useEffect(() => {
+    if (initialQuery && !hasPreFilledRef.current) {
+      hasPreFilledRef.current = true;
+      setQuery(initialQuery);
+      setShowDropdown(true);
+    }
+  }, []);
+  // Auto-submit once query is set from AddMore
+  useEffect(() => {
+    if (initialQuery && query === initialQuery && !hasAutoSubmittedRef.current && query.trim().length >= 2) {
+      hasAutoSubmittedRef.current = true;
+      submitSearch();
+    }
+  }, [query]);
 
   //Animations
   useEffect(() => {
@@ -170,7 +188,10 @@ const Search = () => {
                     }
                     onSubmit={() => {
                       submitSearch();
-                      router.push("/search-results");
+                      router.push({
+                        pathname: "/search-results",
+                        params: addMoreSource === "addMore" ? { mealType: addMoreMealType, ...(addMoreLogDate ? { logDate: addMoreLogDate } : {}), source: "addMore" } : {},
+                      });
                     }}
                     onClear={() => {}}
                     onFocus={() => { if (isSearchActive) setShowDropdown(true); }}
@@ -326,6 +347,7 @@ const Search = () => {
                                     id: item.id,
                                     item: JSON.stringify(item),
                                     isFavorite: isFav ? "true" : "false",
+                                    ...(addMoreSource === "addMore" ? { mealType: addMoreMealType, ...(addMoreLogDate ? { logDate: addMoreLogDate } : {}), source: "addMore" } : {}),
                                   },
                                 });
                               }}

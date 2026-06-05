@@ -1,4 +1,5 @@
 import { CameraModal } from "@/components";
+import type { FoodSearchResult } from "@/types/foodSearchResult";
 import { useIndexContext } from "@/lib/hooks/useIndexContext";
 import { searchFoodByBarcode } from "@/lib/services/food-search/barcode";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -20,9 +21,10 @@ type SearchInputProps = {
   onSubmit?: () => void,
   onClear?: () => void,
   onFocus?: () => void,
-  isSubmitDisabled?: boolean
+  isSubmitDisabled?: boolean,
+  onBarcodeFound?: (food: FoodSearchResult) => void,
 }
-const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...", showCamera = true, onSearchPress, onCameraPress, className = "", isInput = false, autoFocus = false, value, onChangeText, onSubmit, onClear, onFocus, isSubmitDisabled = false }) => {
+const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...", showCamera = true, onSearchPress, onCameraPress, className = "", isInput = false, autoFocus = false, value, onChangeText, onSubmit, onClear, onFocus, isSubmitDisabled = false, onBarcodeFound }) => {
   //Router
   const router = useRouter();
   //Hooks
@@ -73,10 +75,14 @@ const SearchInput: FC<SearchInputProps> = ({ placeholder = "Search for food...",
       const result = await searchFoodByBarcode(data);
       setIsSearching(false);
       if (result) {
-        router.push({
-          pathname: "/search-item/[id]",
-          params: { id: result.id, item: JSON.stringify(result) }
-        });
+        if (onBarcodeFound) {
+          onBarcodeFound(result);
+        } else {
+          router.push({
+            pathname: "/search-item/[id]",
+            params: { id: result.id, item: JSON.stringify(result) }
+          });
+        }
       } else {
         showToast('Product not found 🥑', undefined, 'error');
       }

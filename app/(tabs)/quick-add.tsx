@@ -9,8 +9,8 @@ import type { FoodCategory, FoodType } from "@/types/searchFilters";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { CaretDown, CaretLeft, MagnifyingGlass, Plus } from "phosphor-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { FlatList, Keyboard, Modal, RefreshControl, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
-import Animated, { FadeInDown, FadeInUp, FadeOutUp, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import { FlatList, Keyboard, Modal, RefreshControl, Text, TouchableOpacity, TouchableWithoutFeedback, useWindowDimensions, View } from "react-native";
+import Animated, { FadeInDown, FadeInUp, FadeOut, FadeOutUp, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const CATEGORY_OPTIONS: { label: string; value: FoodCategory }[] = [
@@ -27,7 +27,8 @@ type ActiveTab = "quickAdd" | "magicScan";
 const QuickAdd = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { mealType: mealTypeParam, startTab, _t, logDate: logDateParam } = useLocalSearchParams<{ mealType: string; startTab: string; _t?: string; logDate?: string }>();
+  const { width: screenWidth } = useWindowDimensions();
+  const { mealType: mealTypeParam, startTab, _t, logDate: logDateParam, cameraMode } = useLocalSearchParams<{ mealType: string; startTab: string; _t?: string; logDate?: string; cameraMode?: string }>();
   const logDate = logDateParam && !isToday(parseISO(logDateParam)) ? logDateParam : undefined;
   const logDateLabel = logDate ? format(parseISO(logDate), 'd MMM') : null;
   //Contexts
@@ -79,7 +80,7 @@ const QuickAdd = () => {
     arrowRotation.value = withTiming(next ? 180 : 0, { duration: 250 });
   };
   const indicatorStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: tabPosition.value * 181 }],
+    transform: [{ translateX: tabPosition.value * (screenWidth / 2) }],
   }));
   const arrowStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${arrowRotation.value}deg` }],
@@ -133,7 +134,7 @@ const QuickAdd = () => {
         </View>
         <View className="w-12" />
       </View>
-      <View className="w-[362px] self-center" style={{ position: "relative" }}>
+      <View style={{ position: "relative" }}>
         <View className="flex-row">
           <TouchableOpacity className="flex-1 items-center py-3" activeOpacity={0.25} onPress={() => switchTab("quickAdd")}>
             <Text className="font-nunito-700 text-lg" style={{ color: activeTab === "quickAdd" ? "#FFFFFF" : "rgba(255,255,255,0.35)" }}>
@@ -146,7 +147,7 @@ const QuickAdd = () => {
             </Text>
           </TouchableOpacity>
         </View>
-        <Animated.View style={[{ position: "absolute", bottom: 0, width: 181, height: 2, backgroundColor: "#C5E384" }, indicatorStyle]} />
+        <Animated.View style={[{ position: "absolute", bottom: 0, width: screenWidth / 2, height: 2, backgroundColor: "#C5E384" }, indicatorStyle]} />
       </View>
       <View style={{ height: 1, backgroundColor: "rgba(255,255,255,0.08)" }} />
     </View>
@@ -183,22 +184,24 @@ const QuickAdd = () => {
                       onFocus={() => { if (isSearchActive) setShowDropdown(true); }}
                     />
                   </Animated.View>
-                  <Animated.View entering={FadeInDown.duration(250).delay(250)} className="w-[362px] self-center mt-3">
+                  <Animated.View entering={FadeInDown.duration(250).delay(250)} className="mt-3">
                     <FlatList ref={catListRef} data={CATEGORY_OPTIONS} horizontal showsHorizontalScrollIndicator={false}
                       keyExtractor={(item) => item.value} nestedScrollEnabled directionalLockEnabled scrollEventThrottle={16}
-                      contentContainerStyle={{ gap: 8 }}
+                      contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}
                       renderItem={({ item }) => <FilterChip label={item.label} isActive={category === item.value} onPress={() => setCategory(item.value)} />} />
                   </Animated.View>
                   {category === "all" && (
-                    <Animated.View entering={FadeInDown.duration(250).delay(250)} className="w-[362px] self-center mt-3">
+                    <Animated.View entering={FadeInDown.duration(250).delay(250)} className="mt-3">
                       <FlatList ref={foodTypeListRef} data={FOOD_TYPE_OPTIONS} horizontal showsHorizontalScrollIndicator={false}
                         keyExtractor={(item) => item.value} nestedScrollEnabled directionalLockEnabled scrollEventThrottle={16}
-                        contentContainerStyle={{ gap: 8 }}
+                        contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}
                         renderItem={({ item }) => <FilterChip label={item.label} isActive={foodType === item.value} onPress={() => setFoodType(item.value)} />} />
                     </Animated.View>
                   )}
                   {showDropdown && isSearchActive && (
-                    <View
+                    <Animated.View
+                      entering={FadeInDown.duration(250)}
+                      exiting={FadeOut.duration(250)}
                       className={`w-[362px] self-center bg-dark rounded-[20px] border border-white/10 py-4 absolute overflow-hidden ${category === "all" ? "top-[180px]" : "top-[134px]"}`}
                       style={{ zIndex: 50, elevation: 20, shadowColor: "#000000", shadowOpacity: 0.5, shadowRadius: 10 }}
                     >
@@ -243,7 +246,7 @@ const QuickAdd = () => {
                               </View>
                             )}
                       </View>
-                    </View>
+                    </Animated.View>
                   )}
                   <Animated.View entering={FadeInDown.duration(250).delay(250)} className="z-10 relative mt-4">
                     <PopularMealsSection onBeforeNavigate={markQuickAdd} logDate={logDate} />
@@ -269,7 +272,7 @@ const QuickAdd = () => {
           <CameraModal
             visible={true}
             onClose={() => { handleRetake(); switchTab("quickAdd"); }}
-            mode="magic"
+            mode={cameraMode === "barcode" ? "barcode" : "magic"}
             onBarcodeScanned={handleBarcodeScanned}
             onCapture={handleCapture}
             isProcessing={isProcessing}
@@ -322,7 +325,7 @@ const QuickAdd = () => {
                 </View>
                 <View className="w-12" />
               </View>
-              <View className="w-[362px] self-center" style={{ position: "relative" }}>
+              <View style={{ position: "relative" }}>
                 <View className="flex-row">
                   <TouchableOpacity className="flex-1 items-center py-3" activeOpacity={0.25} onPress={() => switchTab("quickAdd")}>
                     <Text className="font-nunito-700 text-lg" style={{ color: activeTab === "quickAdd" ? "#FFFFFF" : "rgba(255,255,255,0.35)" }}>
@@ -335,7 +338,7 @@ const QuickAdd = () => {
                     </Text>
                   </TouchableOpacity>
                 </View>
-                <Animated.View style={[{ position: "absolute", bottom: 0, width: 181, height: 2, backgroundColor: "#C5E384" }, indicatorStyle]} />
+                <Animated.View style={[{ position: "absolute", bottom: 0, width: screenWidth / 2, height: 2, backgroundColor: "#C5E384" }, indicatorStyle]} />
               </View>
               <View style={{ height: 1, backgroundColor: "rgba(255,255,255,0.15)" }} />
             </View>

@@ -1,6 +1,6 @@
 import { Icon, SearchResultItem, SearchResultSkeleton } from "@/components";
 import { useSearchContext } from "@/lib/hooks/useSearchContext";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { CaretLeft, MagnifyingGlass } from "phosphor-react-native";
 import { FlatList, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -11,6 +11,7 @@ const SearchResults = () => {
   const insets = useSafeAreaInsets();
   //Context
   const { searchResults, isSearching, searchSource, query, popularMeals } = useSearchContext();
+  const { mealType, logDate, source } = useLocalSearchParams<{ mealType?: string; logDate?: string; source?: string }>();
 
   return (
     <View className="flex-1 mt-[56px]">
@@ -51,7 +52,8 @@ const SearchResults = () => {
                   params: {
                     id: item.id,
                     item: JSON.stringify(item),
-                    isFavorite: isFav ? 'true' : 'false'
+                    isFavorite: isFav ? 'true' : 'false',
+                    ...(source === "addMore" ? { mealType, ...(logDate ? { logDate } : {}), source: "addMore" } : {})
                   }
                 })}
               />

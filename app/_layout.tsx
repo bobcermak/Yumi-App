@@ -12,6 +12,7 @@ import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AnimatedBackground, AppLoadingSkeleton, RootLayoutContent } from "@/components";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useEffect, useRef } from "react";
 import { PostHogProvider } from "posthog-react-native";
 import "./globals.css";
@@ -84,7 +85,9 @@ const RootLayout = () => {
                             <StatusBar style="light" />
                             <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#121212' }}/>
                             <AnimatedBackground/>
-                            <RootLayoutContent />
+                            <BottomSheetModalProvider>
+                              <RootLayoutContent />
+                            </BottomSheetModalProvider>
                           </SafeAreaProvider>
                         </ThemeProvider>
                       </SearchItemProvider>

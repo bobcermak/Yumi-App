@@ -2,18 +2,21 @@ import { CameraModal, Icon } from "@/components";
 import { getMealTypeByTime } from "@/lib/helpers/dateHelpers";
 import { MEAL_TYPES } from "@/lib/helpers/mealHelpers";
 import { useMagicScan } from "@/lib/hooks/useMagicScan";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { isToday, parseISO } from "date-fns";
 import { CaretDown, CaretLeft } from "phosphor-react-native";
 import { useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import Animated, { FadeInUp, FadeOutUp, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 
 const MagicScan = () => {
-  //Router
   const router = useRouter();
-  
-  const [mealType, setMealType] = useState<string>(getMealTypeByTime());
-  const { isProcessing, capturedUri, pendingPhoto, handleBarcodeScanned, handleCapture, handleConfirm, handleRetake } = useMagicScan(mealType, true);
+  const { mealType: mealTypeParam, logDate: logDateParam, cameraMode } = useLocalSearchParams<{ mealType?: string; logDate?: string; cameraMode?: string }>();
+  const logDate = logDateParam && !isToday(parseISO(logDateParam)) ? logDateParam : undefined;
+
+  const { width: screenWidth } = useWindowDimensions();
+  const [mealType, setMealType] = useState<string>(mealTypeParam || getMealTypeByTime());
+  const { isProcessing, capturedUri, pendingPhoto, handleBarcodeScanned, handleCapture, handleConfirm, handleRetake } = useMagicScan(mealType, true, undefined, logDate);
   const [isMealDropdownOpen, setIsMealDropdownOpen] = useState<boolean>(false);
 
   const isConfirming = !!pendingPhoto && !isProcessing;
@@ -21,7 +24,7 @@ const MagicScan = () => {
   const tabPosition = useSharedValue(1);
   const arrowRotation = useSharedValue(0);
   const indicatorStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: tabPosition.value * 181 }],
+    transform: [{ translateX: tabPosition.value * (screenWidth / 2) }],
   }));
   const arrowStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${arrowRotation.value}deg` }],
@@ -40,7 +43,7 @@ const MagicScan = () => {
       <CameraModal
         visible={true}
         onClose={() => router.back()}
-        mode="magic"
+        mode={cameraMode === "barcode" ? "barcode" : "magic"}
         onBarcodeScanned={handleBarcodeScanned}
         onCapture={handleCapture}
         isProcessing={isProcessing}
@@ -48,9 +51,9 @@ const MagicScan = () => {
         pendingPhotoUri={pendingPhoto?.uri ?? null}
         onConfirm={handleConfirm}
         onRetake={handleRetake}
-        overlayText="Scan barcode or take a photo"
+        overlayText={cameraMode === "barcode" ? "Align barcode within the frame" : "Scan barcode or take a photo"}
         asModal={false}
-        hideHeader={true}
+        hideHeader={cameraMode !== "barcode"}
       />
       {!isConfirming && !isScanning && (
         <View
@@ -88,7 +91,7 @@ const MagicScan = () => {
             </View>
             <View className="w-12" />
           </View>
-          <View className="w-[362px] self-center" style={{ position: "relative" }}>
+          <View style={{ position: "relative" }}>
             <View className="flex-row">
               <TouchableOpacity
                 className="flex-1 items-center py-3"
@@ -105,7 +108,7 @@ const MagicScan = () => {
                 </Text>
               </View>
             </View>
-            <Animated.View style={[{ position: "absolute", bottom: 0, width: 181, height: 2, backgroundColor: "#C5E384" }, indicatorStyle]} />
+            <Animated.View style={[{ position: "absolute", bottom: 0, width: screenWidth / 2, height: 2, backgroundColor: "#C5E384" }, indicatorStyle]} />
           </View>
           <View style={{ height: 1, backgroundColor: "rgba(255,255,255,0.15)" }} />
         </View>
