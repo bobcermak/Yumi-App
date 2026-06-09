@@ -1,5 +1,6 @@
 import { Food } from "@/types/database/dbModels";
 import { FoodSearchResult } from "@/types/foodSearchResult";
+import { computeHealthRating } from "@/lib/helpers/mealHelpers";
 import supabase from "../client";
 import { uploadImage } from "./storage";
 
@@ -230,6 +231,60 @@ export const insertScannedFood = async (
     }
   }
   return { id: newFood.id, imageUrl };
+};
+export const getUserCreatedFoods = async (userId: string): Promise<Food[]> => {
+    const { data, error } = await supabase
+        .from('foods')
+        .select('*')
+        .eq('created_by', userId)
+        .eq('category', 'Custom Meal')
+        .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+};
+export const createCustomFood = async (
+    userId: string,
+    data: {
+        name: string;
+        calories_per_100g: number;
+        protein_per_100g: number;
+        fat_per_100g: number;
+        carbs_per_100g: number;
+    },
+    photoUri?: string | null
+): Promise<{ id: string; imageUrl: string | null }> => {
+    const health_rating = computeHealthRating({
+        calories_per_100g: data.calories_per_100g,
+        protein_per_100g: data.protein_per_100g,
+        fat_per_100g: data.fat_per_100g,
+        carbs_per_100g: data.carbs_per_100g,
+    });
+    const { data: newFood, error } = await supabase
+        .from('foods')
+        .insert({
+            name: data.name,
+            brand: '',
+            category: 'Custom Meal',
+            created_by: userId,
+            calories_per_100g: Math.round(data.calories_per_100g),
+            protein_per_100g: Math.round(data.protein_per_100g),
+            fat_per_100g: Math.round(data.fat_per_100g),
+            carbs_per_100g: Math.round(data.carbs_per_100g),
+            health_rating,
+        })
+        .select('id')
+        .single();
+    if (error) throw error;
+    let imageUrl: string | null = null;
+    if (photoUri) {
+        try {
+            imageUrl = await uploadImage(photoUri, `${newFood.id}.jpg`, 'foods');
+            if (imageUrl) await supabase.from('foods').update({ image_url: imageUrl }).eq('id', newFood.id);
+        } catch (err) {
+            console.error('[foods] createCustomFood image upload failed:', err);
+        }
+    }
+    return { id: newFood.id, imageUrl };
 };
 export const toggleFavoriteFood = async (userId: string, item: FoodSearchResult): Promise<{ isFavorite: boolean, newFoodId: string }> => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

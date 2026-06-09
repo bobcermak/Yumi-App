@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { useIndexContext } from "@/lib/hooks/useIndexContext";
 import type { MagicScanResult } from "@/lib/services/food-search/magic-scan";
 import { addToFavorites, insertScannedFood, removeFromFavorites } from "@/lib/services/supabase/queries/foods";
-import { logMeal } from "@/lib/services/supabase/queries/mealLogs";
+import { logMeal, updateMealLogCount } from "@/lib/services/supabase/queries/mealLogs";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { CaretDown, CaretLeft, Heart, PencilSimple, Plus, Sparkle } from "phosphor-react-native";
 import { useMemo, useRef, useState } from "react";
@@ -42,7 +42,7 @@ const MealLog = () => {
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [openCountIndex, setOpenCountIndex] = useState<number | null>(null);
   const [showAddMoreModal, setShowAddMoreModal] = useState<boolean>(false);
-  const [additionalFoods, setAdditionalFoods] = useState<Array<{ food: FoodSearchResult; key: number }>>([]);
+  const [additionalFoods, setAdditionalFoods] = useState<Array<{ food: FoodSearchResult; key: number; mealLogId: string; loggedAt: string }>>([]);
   const [displayedComponents, setDisplayedComponents] = useState(() =>
     (result?.components ?? []).map((comp, i) => ({
       ...comp,
@@ -426,12 +426,26 @@ const MealLog = () => {
             onDataChange={setMealData}
           />
         </Animated.View>
-        {additionalFoods.map(({ food, key }) => (
+        {additionalFoods.map(({ food, key, mealLogId, loggedAt }) => (
           <Animated.View key={key} entering={FadeInDown.duration(300).springify()} className="w-[362px] self-center">
             <AdditionalFoodCard
               food={food}
               mealType={mealType}
+              isLoading={isRecording}
               onDone={() => setAdditionalFoods(prev => prev.filter(f => f.key !== key))}
+              onCountChange={async (count) => {
+                if (!userProfile?.id) return;
+                await updateMealLogCount(userProfile.id, mealLogId, count, {
+                  name: food.name,
+                  food_id: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(food.id) ? food.id : null,
+                  amount_g: 100,
+                  calories: Math.round(food.calories_per_100g || 0),
+                  carbs: Math.round(food.carbs_per_100g || 0),
+                  fat: Math.round(food.fat_per_100g || 0),
+                  protein: Math.round(food.protein_per_100g || 0),
+                }, loggedAt);
+                await refreshData();
+              }}
             />
           </Animated.View>
         ))}
@@ -523,7 +537,7 @@ const MealLog = () => {
         onClose={() => setShowAddMoreModal(false)}
         mealType={mealType}
         logDate={logDateParam}
-        onFoodSelect={(food) => setAdditionalFoods(prev => [...prev, { food, key: Date.now() }])}
+        onFoodSelect={(food, mealLogId, loggedAt) => setAdditionalFoods(prev => [...prev, { food, key: Date.now(), mealLogId, loggedAt }])}
       />
     </KeyboardAvoidingView>
   );

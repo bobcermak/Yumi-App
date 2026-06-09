@@ -168,7 +168,7 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
                 <TouchableOpacity
                   key={route.key}
                   onPress={onPress}
-                  activeOpacity={0.25}
+                  activeOpacity={1}
                   className="w-[64px] h-[64px] rounded-full bg-green justify-center items-center mx-2 mb-10"
                   style={{
                     shadowColor: "#84C754",
@@ -179,7 +179,7 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
                   }}
                 >
                   <Animated.View style={plusRotateStyle}>
-                    <Plus size={28} color="#FFFFFF" weight="regular" />
+                    <Plus size={28} color="#FFFFFF" weight={currentRouteName === "quick-add" ? "bold" : "regular"} />
                   </Animated.View>
                 </TouchableOpacity>
               );

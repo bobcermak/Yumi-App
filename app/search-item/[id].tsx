@@ -3,6 +3,9 @@ import type { FoodSearchResult } from "@/types/foodSearchResult";
 import { format, parseISO } from "date-fns";
 import { MEAL_TYPES } from "@/lib/helpers/mealHelpers";
 import { useSearchItem } from "@/lib/hooks/useSearchItem";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { useIndexContext } from "@/lib/hooks/useIndexContext";
+import { updateMealLogCount } from "@/lib/services/supabase/queries/mealLogs";
 import { consumeQuickAdd } from "@/lib/helpers/quickAddSource";
 import { useGlobalSearchParams, useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -15,6 +18,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 const SearchItem = () => {
   //Contexts
   const { item, isFavorite, isFavoriteLoading, mealType, setMealType, mealData, setMealData, isLoading, isDropdownOpen, setIsDropdownOpen, isDrink, setIsDrink, handleToggleFavorite, handleAddToMeal, handleUpdateMeal, handleDeleteMeal, source, logDate } = useSearchItem();
+  const { userProfile } = useAuth();
+  const { refreshData } = useIndexContext();
   const isDeleteMode = source === "delete";
   const logDateLabel = logDate ? format(parseISO(logDate), 'd MMM') : null;
   const { initialGrams: initialGramsStr, initialCount: initialCountStr } = useGlobalSearchParams<{ initialGrams?: string; initialCount?: string }>();
@@ -34,7 +39,7 @@ const SearchItem = () => {
   const waterInputRef = useRef<TextInput>(null);
   const [mealCardHeight, setMealCardHeight] = useState<number>(0);
   const [showAddMoreModal, setShowAddMoreModal] = useState<boolean>(false);
-  const [additionalFoods, setAdditionalFoods] = useState<{ food: FoodSearchResult; key: number }[]>([]);
+  const [additionalFoods, setAdditionalFoods] = useState<{ food: FoodSearchResult; key: number; mealLogId: string; loggedAt: string }[]>([]);
 
   const [isQuickAdd] = useState(() => consumeQuickAdd());
   useEffect(() => {
@@ -310,12 +315,26 @@ const SearchItem = () => {
                   </Animated.View>
                 )}
             </View>
-            {additionalFoods.map(({ food, key }) => (
+            {additionalFoods.map(({ food, key, mealLogId, loggedAt }) => (
               <View key={key} style={{ width: 362 }}>
                 <AdditionalFoodCard
                   food={food}
                   mealType={mealType}
+                  isLoading={isLoading}
                   onDone={() => setAdditionalFoods(prev => prev.filter(f => f.key !== key))}
+                  onCountChange={async (count) => {
+                    if (!userProfile?.id) return;
+                    await updateMealLogCount(userProfile.id, mealLogId, count, {
+                      name: food.name,
+                      food_id: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(food.id) ? food.id : null,
+                      amount_g: 100,
+                      calories: Math.round(food.calories_per_100g || 0),
+                      carbs: Math.round(food.carbs_per_100g || 0),
+                      fat: Math.round(food.fat_per_100g || 0),
+                      protein: Math.round(food.protein_per_100g || 0),
+                    }, loggedAt);
+                    await refreshData();
+                  }}
                 />
               </View>
             ))}
@@ -363,7 +382,7 @@ const SearchItem = () => {
         onClose={() => setShowAddMoreModal(false)}
         mealType={mealType}
         logDate={logDate}
-        onFoodSelect={(food) => setAdditionalFoods(prev => [...prev, { food, key: Date.now() }])}
+        onFoodSelect={(food, mealLogId, loggedAt) => setAdditionalFoods(prev => [...prev, { food, key: Date.now(), mealLogId, loggedAt }])}
       />
     </KeyboardAvoidingView>
   );

@@ -104,6 +104,49 @@ export const updateMealLog = async (userId: string, mealId: string, updates: Par
     const dateStr = format(new Date(meal.logged_at!), 'yyyy-MM-dd');
     await recalculateDailyLog(userId, dateStr);
 };
+type SingleServing = {
+    name: string;
+    food_id: string | null;
+    amount_g: number;
+    calories: number;
+    carbs: number;
+    fat: number;
+    protein: number;
+};
+export const updateMealLogCount = async (
+    userId: string,
+    mealId: string,
+    count: number,
+    serving: SingleServing,
+    loggedAt: string,
+): Promise<void> => {
+    const totals = {
+        total_calories: serving.calories * count,
+        total_carbs: Math.round(serving.carbs * count),
+        total_fat: Math.round(serving.fat * count),
+        total_protein: Math.round(serving.protein * count),
+    };
+    const { error: updateError } = await supabase
+        .from('meal_logs')
+        .update(totals)
+        .eq('id', mealId)
+        .eq('user_id', userId);
+    if (updateError) throw updateError;
+    await supabase.from('meal_ingredients').delete().eq('meal_log_id', mealId);
+    const newIngredients = Array.from({ length: count }, () => ({
+        meal_log_id: mealId,
+        name: serving.name,
+        food_id: serving.food_id,
+        amount_g: serving.amount_g,
+        calories: serving.calories,
+        carbs: serving.carbs,
+        fat: serving.fat,
+        protein: serving.protein,
+    }));
+    await supabase.from('meal_ingredients').insert(newIngredients);
+    const dateStr = format(new Date(loggedAt), 'yyyy-MM-dd');
+    await recalculateDailyLog(userId, dateStr);
+};
 //GET
 export const getMealLogsForDay = async (userId: string, date: string): Promise<MealLogWithIngredients[]> => {
     const { data, error } = await supabase

@@ -138,6 +138,10 @@ const DashboardSheet = forwardRef<BottomSheet>(function DashboardSheet(props, re
     transform: [{ rotate: `${rotation.value}deg` }],
   }));
   //Functions
+  const navigateToQuickAdd = (params: Record<string, string>) => {
+    internalRef.current?.snapToIndex(1);
+    router.push({ pathname: "/(tabs)/quick-add", params });
+  };
   const handleIngredientEdit = async (mealLogId: string, newCal: number) => {
     setIsSheetLoading(true);
     try {
@@ -259,7 +263,7 @@ const DashboardSheet = forwardRef<BottomSheet>(function DashboardSheet(props, re
             <TouchableOpacity activeOpacity={0.25} onPress={() => internalRef.current?.snapToIndex(3)} className="flex-1 mr-3">
               <Text className="text-white text-xl font-nunito-800">{dateLabel}</Text>
             </TouchableOpacity>
-            <Icon className="w-[36px] h-[36px]" onPress={() => router.push({ pathname: "/(tabs)/quick-add", params: { mealType: currentMealType, logDate: isToday(dashboardDate) ? "" : format(dashboardDate, 'yyyy-MM-dd') } })}>
+            <Icon className="w-[36px] h-[36px]" onPress={() => navigateToQuickAdd({ mealType: currentMealType, logDate: isToday(dashboardDate) ? "" : format(dashboardDate, 'yyyy-MM-dd') })}>
               <Plus size={24} color="#1D1D1D" weight="regular" />
             </Icon>
           </View>
@@ -273,7 +277,7 @@ const DashboardSheet = forwardRef<BottomSheet>(function DashboardSheet(props, re
                 isDayTime={isToday(dashboardDate) && currentMealType === section.title}
                 expanded={expandedMeal === section.title}
                 onToggle={() => setExpandedMeal(expandedMeal === section.title ? null : section.title)}
-                onAddPress={() => router.push({ pathname: "/(tabs)/quick-add", params: { mealType: section.title, logDate: isToday(dashboardDate) ? "" : format(dashboardDate, 'yyyy-MM-dd') } })}
+                onAddPress={() => navigateToQuickAdd({ mealType: section.title, logDate: isToday(dashboardDate) ? "" : format(dashboardDate, 'yyyy-MM-dd') })}
                 ingredients={section.ingredients}
                 onIngredientEdit={(id, newCal) => {
                   const ing = section.ingredients.find(i => i.id === id);

@@ -1,4 +1,5 @@
 import { Button, FilterChip, Icon, MyMeal, PopularMealsSection, SearchInput, SearchResultItem, SearchResultSkeleton } from "@/components";
+import { useMyMeals } from "@/lib/hooks/useMyMeals";
 import { useSearchContext } from "@/lib/hooks/useSearchContext";
 import type { FoodCategory, FoodType } from "@/types/searchFilters";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -26,6 +27,7 @@ const Search = () => {
   //Contexts
   const { query, setQuery, searchResults, isSearching, isSearchPending, searchSource, submitSearch, category, setCategory, foodType, setFoodType, popularMeals, refreshPopularMeals, setFilter,
   } = useSearchContext();
+  const { items: myMeals, isLoading: myMealsLoading } = useMyMeals();
   //Hooks
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [showDotsMenu, setShowDotsMenu] = useState<boolean>(false);
@@ -378,25 +380,56 @@ const Search = () => {
                     <View className="flex-row items-end justify-between">
                       <Text className="title">My Meals</Text>
                       <Button
-                        onPress={() => {}}
+                        onPress={() => router.push("/create-meal")}
                         icon={<Plus size={20} color="#1D1D1D" weight="bold"/>}
                       >
                         Create
                       </Button>
                     </View>
                     <View className="gap-3 mt-4">
-                      <MyMeal
-                        imgUrl={null}
-                        name="My Custom Meal"
-                        weightGrams={100}
-                        calories={200}
-                      />
-                      <MyMeal
-                        imgUrl={null}
-                        name="My Custom Meal"
-                        weightGrams={100}
-                        calories={200}
-                      />
+                      {myMealsLoading ? (
+                        Array.from({ length: 2 }).map((_, i) => (
+                          <View key={i} className="bg-dark rounded-[15px] p-3 flex-row items-center w-[362px] border border-white/10" style={{ opacity: 0.5 }}>
+                            <View className="w-[60px] h-[60px] rounded-[10px] bg-white/10" />
+                            <View className="flex-1 ml-4 gap-2">
+                              <View className="h-4 bg-white/10 rounded-md w-3/4" />
+                              <View className="h-3 bg-white/10 rounded-md w-1/2" />
+                            </View>
+                          </View>
+                        ))
+                      ) : myMeals.length === 0 ? (
+                        <View className="items-center py-8 gap-3">
+                          <Text className="text-white/30 font-nunito-600 text-base text-center">
+                            No meals yet. Create your first!
+                          </Text>
+                        </View>
+                      ) : (
+                        myMeals.map(meal => (
+                          <MyMeal
+                            key={meal.id}
+                            imgUrl={meal.image_url}
+                            name={meal.name}
+                            calories={Math.round(meal.calories_per_100g)}
+                            onPress={() => router.push({
+                              pathname: "/search-item/[id]",
+                              params: {
+                                id: meal.id,
+                                item: JSON.stringify({
+                                  id: meal.id,
+                                  name: meal.name,
+                                  image_url: meal.image_url,
+                                  calories_per_100g: meal.calories_per_100g,
+                                  carbs_per_100g: meal.carbs_per_100g,
+                                  fat_per_100g: meal.fat_per_100g,
+                                  protein_per_100g: meal.protein_per_100g,
+                                  health_rating: meal.health_rating,
+                                  source: "usda",
+                                }),
+                              },
+                            })}
+                          />
+                        ))
+                      )}
                     </View>
                   </View>
                 </Animated.View>
