@@ -283,11 +283,11 @@ const CreateMeal = () => {
                                 {hasIngredients ? "auto · " : ""}per 100g
                             </Text>
                         </View>
-                        <View className="bg-[#1E1E1E] rounded-[18px] border border-white/10 items-center py-5 mb-2">
-                            <Text className="text-yellow font-nunito-800 text-4xl">
+                        <View className="bg-[#1E1E1E] flex-row rounded-[18px] border border-white/10 items-center justify-center py-5 mb-2 gap-2">
+                            <Text className="text-yellow font-nunito-800 text-4xl mt-4">
                                 {cal100 || "0"}
                             </Text>
-                            <Text className="text-white/40 font-nunito-600 text-sm -mt-1">cal</Text>
+                            <Text className="text-white/40 font-nunito-600 text-sm mt-4">cal</Text>
                         </View>
                         <View className="bg-[#1E1E1E] rounded-[18px] border border-white/10 px-4 py-5">
                             <View className="flex-row justify-around">

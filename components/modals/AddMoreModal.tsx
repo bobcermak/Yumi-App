@@ -336,25 +336,45 @@ const AddMoreModal: FC<AddMoreModalProps> = ({ visible, onClose, mealType, logDa
                           </Text>
                         </View>
                       ) : (
-                        myMeals.map(meal => (
-                          <MyMeal
-                            key={meal.id}
-                            imgUrl={meal.image_url}
-                            name={meal.name}
-                            calories={Math.round(meal.calories_per_100g)}
-                            onAddPress={() => handleFoodPress({
-                              id: meal.id,
-                              name: meal.name,
-                              image_url: meal.image_url ?? undefined,
-                              calories_per_100g: meal.calories_per_100g,
-                              carbs_per_100g: meal.carbs_per_100g ?? 0,
-                              fat_per_100g: meal.fat_per_100g ?? 0,
-                              protein_per_100g: meal.protein_per_100g ?? 0,
-                              health_rating: meal.health_rating ?? undefined,
-                              source: "usda",
-                            })}
-                          />
-                        ))
+                        myMeals.map(meal => {
+                          const mealFood: FoodSearchResult = {
+                            id: meal.id,
+                            name: meal.name,
+                            image_url: meal.image_url ?? undefined,
+                            calories_per_100g: meal.calories_per_100g,
+                            carbs_per_100g: meal.carbs_per_100g ?? 0,
+                            fat_per_100g: meal.fat_per_100g ?? 0,
+                            protein_per_100g: meal.protein_per_100g ?? 0,
+                            health_rating: meal.health_rating ?? undefined,
+                            source: "usda",
+                          };
+                          return (
+                            <MyMeal
+                              key={meal.id}
+                              imgUrl={meal.image_url}
+                              name={meal.name}
+                              calories={Math.round(meal.calories_per_100g)}
+                              onPress={() => {
+                                if (isIngredientMode) {
+                                  handleFoodPress(mealFood);
+                                } else {
+                                  performClose();
+                                  router.push({
+                                    pathname: "/search-item/[id]",
+                                    params: {
+                                      id: meal.id,
+                                      item: JSON.stringify(mealFood),
+                                      mealType,
+                                      ...(logDate ? { logDate } : {}),
+                                      source: "addMore",
+                                    },
+                                  });
+                                }
+                              }}
+                              onAddPress={() => handleFoodPress(mealFood)}
+                            />
+                          );
+                        })
                       )}
                     </View>
                   </View>

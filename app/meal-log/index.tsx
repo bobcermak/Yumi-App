@@ -368,7 +368,7 @@ const MealLog = () => {
         </View>
         <View className="w-[362px] self-center mt-3">
           <Button
-            className="rounded-[30px] mx-0 w-full py-4"
+            className="rounded-[30px] mx-0 w-full py-5 bg-yellow"
             textClassName="text-xl"
             onPress={handleRecord}
             disabled={isRecording || !mealData}
@@ -436,7 +436,7 @@ const MealLog = () => {
               onCountChange={async (count) => {
                 if (!userProfile?.id) return;
                 await updateMealLogCount(userProfile.id, mealLogId, count, {
-                  name: food.name,
+                  name: food.name || "Unknown Food",
                   food_id: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(food.id) ? food.id : null,
                   amount_g: 100,
                   calories: Math.round(food.calories_per_100g || 0),
@@ -508,10 +508,10 @@ const MealLog = () => {
         )}
         <Animated.View entering={FadeInDown.delay(200).duration(250)} className="w-[362px] self-center mt-6 mb-2">
           <Button
-            className="rounded-[30px] mx-0 w-full py-4 bg-white/10"
-            textClassName="text-base text-white/70"
+            className="rounded-[30px] mx-0 w-full py-5 bg-yellow"
+            textClassName="text-xl"
             onPress={() => setShowAddMoreModal(true)}
-            icon={<Plus size={20} color="rgba(255,255,255,0.7)" weight="regular" />}
+            icon={<Plus size={24} color="#1D1D1D" weight="bold"/>}
           >
             Add More
           </Button>

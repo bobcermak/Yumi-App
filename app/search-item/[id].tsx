@@ -13,7 +13,6 @@ import { CaretDown, CaretLeft, Drop, Heart, Info, Plus, X } from "phosphor-react
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, ScrollView, Switch, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import Animated, { FadeInDown, FadeInUp, FadeOutUp, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const SearchItem = () => {
   //Contexts
@@ -30,7 +29,6 @@ const SearchItem = () => {
   );
   //Router
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const arrowRotation = useSharedValue(0);
   //Hooks
   const [waterMlInput, setWaterMlInput] = useState<string>((mealData.grams * mealData.count).toString());
@@ -151,7 +149,7 @@ const SearchItem = () => {
           {(isQuickAdd || isDeleteMode) && (
             <View className="w-[362px] self-center">
               <Button
-                className={`rounded-[30px] mx-0 w-full py-4${isDeleteMode ? " bg-pink" : ""}`}
+                className={`rounded-[30px] mx-0 w-full py-5${isDeleteMode ? " bg-pink" : " bg-yellow"}`}
                 textClassName={`text-xl${isDeleteMode ? " text-white" : ""}`}
                 onPress={() => isDeleteMode ? handleDeleteMeal?.() : handleAddToMeal(isDrink ? parsedWaterMl : undefined)}
                 disabled={isLoading}
@@ -325,7 +323,7 @@ const SearchItem = () => {
                   onCountChange={async (count) => {
                     if (!userProfile?.id) return;
                     await updateMealLogCount(userProfile.id, mealLogId, count, {
-                      name: food.name,
+                      name: food.name || "Unknown Product",
                       food_id: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(food.id) ? food.id : null,
                       amount_g: 100,
                       calories: Math.round(food.calories_per_100g || 0),
@@ -341,7 +339,7 @@ const SearchItem = () => {
             {!isQuickAdd && !isDeleteMode && (
               <View style={{ width: 362, marginTop: 24 }}>
                 <Button
-                  className="rounded-[30px] mx-0 w-full py-5"
+                  className="rounded-[30px] mx-0 w-full py-5 bg-yellow"
                   textClassName="text-xl"
                   onPress={() => handleAddToMeal(isDrink ? parsedWaterMl : undefined)}
                   disabled={isLoading}
