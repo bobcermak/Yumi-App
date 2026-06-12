@@ -32,16 +32,12 @@ const MyMeal: FC<MyMealProps> = ({ imgUrl, name, weightGrams, calories, onPress,
           {name}
         </Text>
         <View className="flex-row items-center">
-          {weightGrams !== undefined && (
-            <>
-              <Text className="text-white/80 font-nunito-700 text-base">
-                {weightGrams} <Text className="text-white/50">g</Text>
-              </Text>
-              <Text className="text-white/25 font-nunito-700 text-sm mx-1">
-                •
-              </Text>
-            </>
-          )}
+          <Text className="text-white/80 font-nunito-700 text-base">
+            100 <Text className="text-white/50">g</Text>
+          </Text>
+          <Text className="text-white/25 font-nunito-700 text-sm mx-1">
+            •
+          </Text>
           <Text className="text-white/80 font-nunito-700 text-base">
             {calories} <Text className="text-white/50">cal</Text>
           </Text>

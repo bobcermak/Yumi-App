@@ -2,7 +2,7 @@ import { Button, FilterChip, Icon, MyMeal, PopularMealsSection, SearchInput, Sea
 import { useMyMeals } from "@/lib/hooks/useMyMeals";
 import { useSearchContext } from "@/lib/hooks/useSearchContext";
 import type { FoodCategory, FoodType } from "@/types/searchFilters";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Camera, CaretLeft, DotsThree, ForkKnife, Lightning, MagnifyingGlass, Plus } from "phosphor-react-native";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { FlatList, Keyboard, Text, TouchableOpacity, TouchableWithoutFeedback, View, RefreshControl } from "react-native";
@@ -27,7 +27,8 @@ const Search = () => {
   //Contexts
   const { query, setQuery, searchResults, isSearching, isSearchPending, searchSource, submitSearch, category, setCategory, foodType, setFoodType, popularMeals, refreshPopularMeals, setFilter,
   } = useSearchContext();
-  const { items: myMeals, isLoading: myMealsLoading } = useMyMeals();
+  const { items: myMeals, isLoading: myMealsLoading, refresh: refreshMyMeals } = useMyMeals();
+  useFocusEffect(useCallback(() => { refreshMyMeals(); }, [refreshMyMeals]));
   //Hooks
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [showDotsMenu, setShowDotsMenu] = useState<boolean>(false);
@@ -35,10 +36,9 @@ const Search = () => {
   const catListRef = useRef<FlatList>(null);
   const foodTypeListRef = useRef<FlatList>(null);
   const pageOpacity = useSharedValue<number>(0);
-  const hasPreFilledRef = useRef(false);
-  const hasAutoSubmittedRef = useRef(false);
+  const hasPreFilledRef = useRef<boolean>(false);
+  const hasAutoSubmittedRef = useRef<boolean>(false);
 
-  // Pre-fill query when opened from AddMore modal
   useEffect(() => {
     if (initialQuery && !hasPreFilledRef.current) {
       hasPreFilledRef.current = true;
@@ -46,14 +46,12 @@ const Search = () => {
       setShowDropdown(true);
     }
   }, []);
-  // Auto-submit once query is set from AddMore
   useEffect(() => {
     if (initialQuery && query === initialQuery && !hasAutoSubmittedRef.current && query.trim().length >= 2) {
       hasAutoSubmittedRef.current = true;
       submitSearch();
     }
   }, [query]);
-
   //Animations
   useEffect(() => {
     pageOpacity.value = withTiming(1, { duration: 250 });
@@ -75,16 +73,17 @@ const Search = () => {
     Keyboard.dismiss();
     catListRef.current?.scrollToOffset({ offset: 0, animated: true });
     foodTypeListRef.current?.scrollToOffset({ offset: 0, animated: true });
-    if (refreshPopularMeals) {
-      await refreshPopularMeals();
-    }
+    await Promise.all([
+      refreshPopularMeals ? refreshPopularMeals() : Promise.resolve(),
+      refreshMyMeals(),
+    ]);
     const elapsed = Date.now() - start;
     const minTime = 1500;
     if (elapsed < minTime) {
       await new Promise(resolve => setTimeout(resolve, minTime - elapsed));
     }
     setRefreshing(false);
-  }, [setQuery, setCategory, setFoodType, setFilter, refreshPopularMeals]);
+  }, [setQuery, setCategory, setFoodType, setFilter, refreshPopularMeals, refreshMyMeals]);
   const DOTS_OPTIONS = [
     {
       label: "Create Meal",
