@@ -34,9 +34,11 @@ type AddMoreModalProps = {
   onClose: () => void,
   mealType: string,
   logDate?: string,
-  onFoodSelect?: (food: FoodSearchResult, mealLogId: string, loggedAt: string) => void
+  onFoodSelect?: (food: FoodSearchResult, mealLogId: string, loggedAt: string) => void,
+  onIngredientSelect?: (food: FoodSearchResult) => void,
 };
-const AddMoreModal: FC<AddMoreModalProps> = ({ visible, onClose, mealType, logDate, onFoodSelect }) => {
+const AddMoreModal: FC<AddMoreModalProps> = ({ visible, onClose, mealType, logDate, onFoodSelect, onIngredientSelect }) => {
+  const isIngredientMode = !!onIngredientSelect;
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { userProfile } = useAuth();
@@ -104,8 +106,16 @@ const AddMoreModal: FC<AddMoreModalProps> = ({ visible, onClose, mealType, logDa
     return () => { show.remove(); hide.remove(); };
   }, []);
   const handleFoodPress = async (food: FoodSearchResult) => {
-    if (!userProfile?.id || isAdding) return;
+    if (isAdding) return;
     Keyboard.dismiss();
+
+    if (isIngredientMode) {
+      onIngredientSelect!(food);
+      animateClose();
+      return;
+    }
+
+    if (!userProfile?.id) return;
     setIsAdding(true);
     try {
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -223,6 +233,10 @@ const AddMoreModal: FC<AddMoreModalProps> = ({ visible, onClose, mealType, logDa
                       item={food}
                       showArrow
                       onPress={() => {
+                        if (isIngredientMode) {
+                          handleFoodPress(food);
+                          return;
+                        }
                         performClose();
                         router.push({
                           pathname: "/search-item/[id]",
@@ -265,7 +279,7 @@ const AddMoreModal: FC<AddMoreModalProps> = ({ visible, onClose, mealType, logDa
                   <View>
                     <View className="flex-row w-[362px] self-center items-center justify-between py-3">
                       <View className="w-12" />
-                      <Text className="font-nunito-700 text-2xl text-white">Add More</Text>
+                      <Text className="font-nunito-700 text-2xl text-white">{isIngredientMode ? "Add Ingredient" : "Add More"}</Text>
                       <Icon onPress={animateClose} className="bg-white/10 w-12 h-12">
                         <X size={20} color="rgba(255,255,255,0.75)" weight="regular" />
                       </Icon>

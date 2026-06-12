@@ -286,6 +286,45 @@ export const createCustomFood = async (
     }
     return { id: newFood.id, imageUrl };
 };
+export const deleteCustomFood = async (userId: string, foodId: string): Promise<void> => {
+    const { error } = await supabase
+        .from('foods')
+        .delete()
+        .eq('id', foodId)
+        .eq('created_by', userId);
+    if (error) throw error;
+};
+export const updateCustomFood = async (
+    userId: string,
+    foodId: string,
+    data: {
+        name: string;
+        calories_per_100g: number;
+        protein_per_100g: number;
+        fat_per_100g: number;
+        carbs_per_100g: number;
+    }
+): Promise<void> => {
+    const health_rating = computeHealthRating({
+        calories_per_100g: data.calories_per_100g,
+        protein_per_100g: data.protein_per_100g,
+        fat_per_100g: data.fat_per_100g,
+        carbs_per_100g: data.carbs_per_100g,
+    });
+    const { error } = await supabase
+        .from('foods')
+        .update({
+            name: data.name,
+            calories_per_100g: Math.round(data.calories_per_100g),
+            protein_per_100g: Math.round(data.protein_per_100g),
+            fat_per_100g: Math.round(data.fat_per_100g),
+            carbs_per_100g: Math.round(data.carbs_per_100g),
+            health_rating,
+        })
+        .eq('id', foodId)
+        .eq('created_by', userId);
+    if (error) throw error;
+};
 export const toggleFavoriteFood = async (userId: string, item: FoodSearchResult): Promise<{ isFavorite: boolean, newFoodId: string }> => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     let foodId = uuidRegex.test(item.id) ? item.id : await upsertExternalFood(item);

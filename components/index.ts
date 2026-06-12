@@ -41,6 +41,7 @@ export { default as ResultMealSkeleton } from "./meals/ResultMealSkeleton";
 export { default as AppLoadingSkeleton } from "./common/AppLoadingSkeleton";
 export { default as RootLayoutContent } from "./common/RootLayoutContent";
 export { default as MyMeal } from "./meals/MyMeal";
+export { default as MyMealSkeleton } from "./meals/MyMealSkeleton";
 export { default as MealLogIngredientCard } from "./meals/MealLogIngredientCard";
 export { default as AddMoreModal } from "./modals/AddMoreModal";
 export { default as AdditionalFoodCard } from "./meals/AdditionalFoodCard";

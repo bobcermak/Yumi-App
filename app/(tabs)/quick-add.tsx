@@ -1,4 +1,4 @@
-import { Button, CameraModal, FilterChip, Icon, MyMeal, PopularMealsSection, SearchInput, SearchResultItem, SearchResultSkeleton } from "@/components";
+import { Button, CameraModal, FilterChip, Icon, MyMeal, MyMealSkeleton, PopularMealsSection, SearchInput, SearchResultItem, SearchResultSkeleton } from "@/components";
 import { useMyMeals } from "@/lib/hooks/useMyMeals";
 import { getMealTypeByTime } from "@/lib/helpers/dateHelpers";
 import { format, parseISO, isToday } from "date-fns";
@@ -264,13 +264,7 @@ const QuickAdd = () => {
                       <View className="gap-3 mt-4">
                         {myMealsLoading ? (
                           Array.from({ length: 2 }).map((_, i) => (
-                            <View key={i} className="bg-dark rounded-[15px] p-3 flex-row items-center w-[362px] border border-white/10" style={{ opacity: 0.5 }}>
-                              <View className="w-[60px] h-[60px] rounded-[10px] bg-white/10" />
-                              <View className="flex-1 ml-4 gap-2">
-                                <View className="h-4 bg-white/10 rounded-md w-3/4" />
-                                <View className="h-3 bg-white/10 rounded-md w-1/2" />
-                              </View>
-                            </View>
+                            <MyMealSkeleton key={i} />
                           ))
                         ) : myMeals.length === 0 ? (
                           <View className="items-center py-8 gap-3">
@@ -286,6 +280,20 @@ const QuickAdd = () => {
                               name={meal.name}
                               calories={Math.round(meal.calories_per_100g)}
                               onPress={() => router.push({
+                                pathname: "/create-meal",
+                                params: {
+                                  editId: meal.id,
+                                  editName: meal.name,
+                                  editCal: String(Math.round(meal.calories_per_100g)),
+                                  editProtein: String(Math.round(meal.protein_per_100g)),
+                                  editCarbs: String(Math.round(meal.carbs_per_100g)),
+                                  editFat: String(Math.round(meal.fat_per_100g)),
+                                  isCustom: meal.isCustom ? "true" : "false",
+                                  mealType,
+                                  ...(logDate ? { logDate } : {}),
+                                },
+                              })}
+                              onAddPress={() => router.push({
                                 pathname: "/search-item/[id]",
                                 params: {
                                   id: meal.id,
