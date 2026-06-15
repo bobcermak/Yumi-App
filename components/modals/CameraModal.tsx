@@ -133,7 +133,7 @@ const CameraModal: FC<CameraModalProps> = ({ visible, onClose, mode, onBarcodeSc
             animatedProps={animatedCameraProps}
             autofocus="off"
             onBarcodeScanned={mode !== "photo" ? handleBarcodeScanned : undefined}
-            barcodeScannerSettings={mode !== "photo" ? { barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e"] } : undefined}
+            barcodeScannerSettings={mode !== "photo" ? { barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e", "code128", "code39", "itf14"] } : undefined}
             enableTorch={torch}
             style={StyleSheet.absoluteFill}
           />

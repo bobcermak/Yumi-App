@@ -70,7 +70,7 @@ export const useMagicScan = (
     isProcessing,
     setIsProcessing: (v: boolean) => { if (isMountedRef.current) setIsProcessing(v); },
     navigateToItem: (id: string, item: string) => {
-      doNavigate(() => router.replace({ pathname: "/search-item/[id]", params: { id, item, mealType: mealType ?? "" } }));
+      doNavigate(() => router.replace({ pathname: "/search-item/[id]", params: { id, item, mealType: mealType ?? "", source: "magicScan" } }));
     },
     navigateToMealLog: (scanResult: string, photoUri?: string) => {
       const params = { scanResult, photoUri: photoUri ?? "", mealType: mealType ?? "", ...(logDate ? { logDate } : {}) };

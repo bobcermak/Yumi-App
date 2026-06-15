@@ -1,17 +1,19 @@
 import { useEffect } from "react";
-import { Dimensions } from "react-native";
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
+import { useWindowDimensions } from "react-native";
+import Animated, { cancelAnimation, Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 
-const { height: SCREEN_H } = Dimensions.get("window");
 const ScanLine = () => {
+    const { height: SCREEN_H } = useWindowDimensions();
     const translateY = useSharedValue(0);
     useEffect(() => {
+        cancelAnimation(translateY);
+        translateY.value = 0;
         translateY.value = withRepeat(
             withTiming(SCREEN_H, { duration: 2200, easing: Easing.inOut(Easing.quad) }),
             -1,
             true,
         );
-    }, []);
+    }, [SCREEN_H]);
     const style = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
     return (
         <Animated.View

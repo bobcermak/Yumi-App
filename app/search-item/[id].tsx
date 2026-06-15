@@ -78,7 +78,7 @@ const SearchItem = () => {
       <View style={{ flex: 1 }}>
         <View style={{ marginTop: 56, paddingBottom: 16, zIndex: 50 }}>
           <View className="flex-row w-[362px] self-center justify-between items-center py-4">
-            <Icon onPress={() => isDeleteMode ? router.replace("/(tabs)") : source === "addMore" ? router.replace("/(tabs)") : isQuickAdd ? router.replace("/(tabs)/quick-add") : router.back()} className="bg-yellow w-12 h-12">
+            <Icon onPress={() => isDeleteMode ? router.replace("/(tabs)") : source === "addMore" || source === "magicScan" ? router.replace("/(tabs)") : isQuickAdd ? router.replace("/(tabs)/quick-add") : router.back()} className="bg-yellow w-12 h-12">
               <CaretLeft size={24} color="#1D1D1D" weight="regular" />
             </Icon>
             <View className="relative items-center w-[160px]">
