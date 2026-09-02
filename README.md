@@ -80,8 +80,8 @@ Aplikace je navržena jako udržitelný **Freemium** model.
 
 **1. Klonování repozitáře:**
 ```bash
-git clone [https://github.com/tvoje-jmeno/yumi-app.git](https://github.com/tvoje-jmeno/yumi-app.git)
-cd yumi-app
+git clone https://github.com/bobcermak/Yumi-App.git
+cd Yumi-App
 ```
 
 **2. Instalace závislostí:**
