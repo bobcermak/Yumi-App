@@ -1,3 +1,4 @@
+import { ProfileInsert } from "@/types/database/dbModels";
 import { uploadImage } from "../services/supabase/queries/storage";
 import { createProfile, addProgressPhotos } from "../services/supabase/queries/setupUserAccount";
 
