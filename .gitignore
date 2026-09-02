@@ -43,3 +43,5 @@ app-example
 /android
 .claude/
 .vscode/
+# Metro caches (kept on this volume; C: has no free space)
+.metro-cache/

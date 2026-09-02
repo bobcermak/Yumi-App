@@ -55,12 +55,12 @@ const HomeHeader: FC<HomeHeaderProps> = ({ firstName, avatarUrl, rating, isPremi
         <Icon onPress={onCalendarPress} className="bg-dark w-12 h-12" shadowColor="#000000">
             <CalendarDots size={24} color="white" weight="regular"/>
         </Icon>
-        <Icon onPress={() => {}} className="relative bg-dark w-12 h-12" shadowColor="#000000">
+        {/* <Icon onPress={() => {}} className="relative bg-dark w-12 h-12" shadowColor="#000000">
             <Bell size={24} color="white" weight="regular"/>
             {true && (
                 <View className="absolute top-[12.5px] right-[11px] w-[8px] h-[8px] rounded-full bg-[#CA877E]"/>
             )}
-        </Icon>
+        </Icon> */}
       </View>
     </View>
   );

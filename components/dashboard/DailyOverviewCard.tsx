@@ -75,7 +75,7 @@ const DailyOverviewCard: FC<DailyOverviewCardProps> = ({ date, calories, macros,
                 elevation: 5
             }}
         >
-            <Animated.Text style={animStyles[0]} className="text-white text-xl font-nunito-700 -mb-2">
+            <Animated.Text style={animStyles[0]} className="text-white text-lg font-nunito-700 -mb-2">
                 <Text className="text-yellow">{format(date, "dd")} </Text>
                 {format(date, "MMMM, EEEE")}
             </Animated.Text>

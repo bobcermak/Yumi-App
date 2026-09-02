@@ -194,7 +194,6 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
                 <AnimatedTabIcon
                   route={route.name}
                   focused={focused}
-                  isNotification={route.name === "groups"}
                 />
               </TouchableOpacity>
             );

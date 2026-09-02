@@ -1,16 +1,31 @@
-import { AddMoreModal, Button, Icon } from "@/components";
+import { AddMoreModal, Button, PressableScale } from "@/components";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useIndexContext } from "@/lib/hooks/useIndexContext";
 import { createCustomFood, deleteCustomFood, updateCustomFood } from "@/lib/services/supabase/queries/foods";
 import type { FoodSearchResult } from "@/types/foodSearchResult";
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Barcode, CaretLeft, CheckCircle, CookingPot, MagnifyingGlass, Sparkle, Trash } from "phosphor-react-native";
+import { Barcode, CaretLeft, CaretRight, CheckCircle, MagnifyingGlass, Sparkle, Trash } from "phosphor-react-native";
 import { useMemo, useRef, useState } from "react";
 import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
-import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition } from "react-native-reanimated";
+import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition, ReduceMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const YELLOW = "#C5E384";
+const ACCENT = "#C5E384";
+const CLAY = "#CA877E";
+const SURFACE = "#181818";
+const BORDER = "rgba(255,255,255,0.07)";
+const HAIRLINE = "rgba(255,255,255,0.055)";
+const PAGE = "#121212";
+const CARBS = "#E53E3E";
+const FAT = "#ED8936";
+const PROTEIN = "#3182CE";
+const card = {
+    backgroundColor: SURFACE,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: BORDER
+} as const;
 type Ingredient = {
     food: FoodSearchResult,
     weight: string,
@@ -84,6 +99,14 @@ const CreateMeal = () => {
     const fat100     = hasIngredients ? String(computed?.fat     ?? 0) : manualFat;
     const protein100 = hasIngredients ? String(computed?.protein ?? 0) : manualProtein;
     const canSave    = name.trim().length >= 2 && (hasIngredients || parseFloat(manualCal) > 0);
+    const macroSplit = useMemo(() => {
+        const carbs = parseFloat(carbs100) || 0;
+        const fat = parseFloat(fat100) || 0;
+        const protein = parseFloat(protein100) || 0;
+        const total = carbs + fat + protein;
+        if (total <= 0) return null;
+        return { carbs: carbs / total, fat: fat / total, protein: protein / total };
+    }, [carbs100, fat100, protein100]);
     const addIngredient = (food: FoodSearchResult) => {
         setIngredients(prev => [...prev, { food, weight: "100", key: Date.now() }]);
     };
@@ -135,7 +158,7 @@ const CreateMeal = () => {
                 fat_per_100g: parseFloat(fat100) || 0,
                 carbs_per_100g: parseFloat(carbs100) || 0,
             });
-            showToast("Meal updated!", undefined, "success");
+            showToast("Meal updated", undefined, "success");
             router.back();
         } catch {
             showToast("Failed to update meal", undefined, "error");
@@ -163,189 +186,304 @@ const CreateMeal = () => {
             },
         });
     };
+    const macros = [
+        { label: "Carbs",   value: carbs100,   setter: setManualCarbs,   color: CARBS },
+        { label: "Fat",     value: fat100,     setter: setManualFat,     color: FAT },
+        { label: "Protein", value: protein100, setter: setManualProtein, color: PROTEIN },
+    ] as const;
     return (
-        <View className="flex-1 bg-black">
-                <View
-                    className="items-center pb-12"
-                    style={{ backgroundColor: "rgba(197,227,132,0.82)", paddingTop: insets.top + 12 }}
+        /* No background of its own — the app-wide green blur in AnimatedBackground
+           shows through, the same way it does on every other screen. */
+        <View className="flex-1">
+            <View style={{ paddingTop: insets.top + 8 }} className="px-5">
+                <PressableScale
+                    onPress={() => router.back()}
+                    className="w-10 h-10 items-center justify-center rounded-full"
+                    style={{ backgroundColor: SURFACE, borderWidth: 1, borderColor: BORDER }}
                 >
-                    <View className="absolute left-4" style={{ top: insets.top + 12 }}>
-                        <Icon onPress={() => router.back()} className="bg-dark w-12 h-12">
-                            <CaretLeft size={24} color="white" weight="regular" />
-                        </Icon>
-                    </View>
-                    <View className="mt-5 mb-[14px] w-20 h-20 rounded-full bg-black/10 items-center justify-center">
-                        <CookingPot size={44} color="#1D1D1D" weight="duotone" />
-                    </View>
-                    <Text className="text-dark font-nunito-800 text-[28px]" style={{ letterSpacing: -0.3 }}>
-                        {isEditMode ? "Edit Meal" : "New Custom Meal"}
-                    </Text>
-                    <Text className="text-dark/50 font-nunito-600 text-sm mt-1">
-                        {isEditMode ? "Update or record this meal" : "Fill in the details below"}
-                    </Text>
-                </View>
-                <ScrollView
-                    ref={scrollRef}
-                    showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
-                    keyboardDismissMode="on-drag"
-                    className="flex-1 bg-black rounded-t-[28px]"
-                    style={{ marginTop: -28 }}
-                    contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 28, paddingBottom: insets.bottom + 110 }}
+                    <CaretLeft size={19} color="rgba(255,255,255,0.75)" weight="bold" />
+                </PressableScale>
+
+                <Animated.View
+                    entering={FadeInDown.duration(260).reduceMotion(ReduceMotion.System)}
+                    className="mt-5 mb-1"
                 >
-                    <View
-                        className="bg-[#1E1E1E] rounded-[18px] mb-5"
-                        style={{
-                            borderWidth: 1.5,
-                            borderColor: name.length > 0 ? "rgba(197,227,132,0.45)" : "rgba(255,255,255,0.07)",
-                            shadowColor: name.length > 0 ? YELLOW : "transparent",
-                            shadowOffset: { width: 0, height: 0 },
-                            shadowOpacity: 0.12,
-                            shadowRadius: 8,
-                        }}
+                    <Text
+                        className="text-white font-nunito-800"
+                        style={{ fontSize: 30, lineHeight: 36, letterSpacing: -0.8 }}
                     >
-                        <TextInput
-                            value={name}
-                            onChangeText={setName}
-                            placeholder="Name of my meal…"
-                            placeholderTextColor="rgba(255,255,255,0.2)"
-                            className="text-white font-nunito-700 text-lg py-4 px-5"
-                            maxLength={60}
-                        />
+                        {isEditMode ? "Edit meal" : "New meal"}
+                    </Text>
+                    <Text className="text-white/30 font-nunito-600 text-sm mt-1">
+                        {isEditMode ? "Update it, record it, or remove it" : "Build it from ingredients or type the numbers"}
+                    </Text>
+                </Animated.View>
+            </View>
+
+            <ScrollView
+                ref={scrollRef}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
+                className="flex-1"
+                contentContainerStyle={{
+                    paddingHorizontal: 20,
+                    paddingTop: 24,
+                    paddingBottom: insets.bottom + (isEditMode ? 190 : 130)
+                }}
+            >
+                {/* ── NAME ── */}
+                <Animated.View
+                    entering={FadeInDown.duration(260).delay(50).reduceMotion(ReduceMotion.System)}
+                    className="mb-9"
+                >
+                    <View className="flex-row items-baseline justify-between mb-2">
+                        <Text className="text-white/35 font-nunito-600 text-xs">Name</Text>
+                        {name.length > 0 && (
+                            <Text
+                                className="text-white/20 font-nunito-600 text-[11px]"
+                                style={{ fontVariant: ["tabular-nums"] }}
+                            >
+                                {name.length}/60
+                            </Text>
+                        )}
                     </View>
-                    {!isEditMode && <View className="mb-5">
-                        <View className="flex-row items-center justify-between mb-2">
-                            <Text className="title">Ingredients</Text>
-                            {hasIngredients && (
-                                <Text className="text-yellow font-nunito-700 text-xs">{ingredients.length} added</Text>
-                            )}
+                    <TextInput
+                        value={name}
+                        onChangeText={setName}
+                        placeholder="Sunday lasagne"
+                        placeholderTextColor="rgba(255,255,255,0.17)"
+                        className="text-white font-nunito-800 pb-2.5"
+                        style={{ fontSize: 22, letterSpacing: -0.4, padding: 0, paddingBottom: 10 }}
+                        maxLength={60}
+                    />
+                    {/* The rule under the field carries the state — no glowing box needed. */}
+                    <View
+                        style={{
+                            height: 1.5,
+                            borderRadius: 2,
+                            backgroundColor: name.length > 0 ? "rgba(197,227,132,0.6)" : "rgba(255,255,255,0.09)"
+                        }}
+                    />
+                </Animated.View>
+
+                {/* ── INGREDIENTS ── */}
+                {!isEditMode && (
+                    <Animated.View
+                        entering={FadeInDown.duration(260).delay(100).reduceMotion(ReduceMotion.System)}
+                        className="mb-9"
+                    >
+                        <View className="flex-row items-baseline justify-between mb-3.5">
+                            <Text className="text-white font-nunito-800" style={{ fontSize: 17, letterSpacing: -0.2 }}>
+                                Ingredients
+                            </Text>
+                            <Text className="text-white/25 font-nunito-600 text-xs">
+                                {hasIngredients ? `${ingredients.length} added` : "optional"}
+                            </Text>
                         </View>
-                        <View className="flex-row gap-2 mb-2">
+
+                        {/* One primary way in, two shortcuts under it — not three identical tiles. */}
+                        <PressableScale
+                            onPress={() => setShowSearchModal(true)}
+                            className="flex-row items-center px-3.5 mb-2.5"
+                            style={[card, { height: 60 }]}
+                        >
+                            <View
+                                className="w-9 h-9 rounded-xl items-center justify-center"
+                                style={{ backgroundColor: "rgba(197,227,132,0.12)" }}
+                            >
+                                <MagnifyingGlass size={17} color={ACCENT} weight="bold" />
+                            </View>
+                            <Text className="flex-1 text-white/85 font-nunito-700 text-[15px] ml-3">
+                                Search foods
+                            </Text>
+                            <CaretRight size={15} color="rgba(255,255,255,0.2)" weight="bold" />
+                        </PressableScale>
+
+                        <View className="flex-row gap-2.5">
                             {([
-                                { Ic: MagnifyingGlass, label: "Search",     onPress: () => setShowSearchModal(true) },
-                                { Ic: Sparkle,         label: "Magic Scan", onPress: () => router.push({ pathname: "/magic-scan" }) },
-                                { Ic: Barcode,         label: "Barcode",    onPress: () => router.push({ pathname: "/magic-scan", params: { cameraMode: "barcode" } }) },
+                                { Ic: Sparkle, label: "Magic scan", onPress: () => router.push({ pathname: "/magic-scan" }) },
+                                { Ic: Barcode, label: "Barcode",    onPress: () => router.push({ pathname: "/magic-scan", params: { cameraMode: "barcode" } }) },
                             ] as const).map(({ Ic, label, onPress }) => (
-                                <TouchableOpacity
+                                <PressableScale
                                     key={label}
-                                    activeOpacity={0.7}
                                     onPress={onPress}
-                                    className="flex-1 flex-row items-center justify-center gap-[5px] py-[13px] bg-[#1E1E1E] rounded-[14px] border border-white/10"
+                                    className="flex-1 flex-row items-center justify-center gap-2"
+                                    style={[card, { height: 48, borderRadius: 16 }]}
                                 >
-                                    <Ic size={16} color="rgba(255,255,255,0.4)" weight="regular" />
-                                    <Text className="text-white/40 font-nunito-700 text-xs">{label}</Text>
-                                </TouchableOpacity>
+                                    <Ic size={15} color="rgba(255,255,255,0.45)" weight="regular" />
+                                    <Text className="text-white/45 font-nunito-700 text-[13px]">{label}</Text>
+                                </PressableScale>
                             ))}
                         </View>
+
                         {hasIngredients && (
-                            <Animated.View layout={LinearTransition.springify().damping(20)} className="gap-2">
-                                {ingredients.map(ing => (
+                            <Animated.View
+                                layout={LinearTransition.springify().damping(20)}
+                                className="mt-2.5 overflow-hidden"
+                                style={card}
+                            >
+                                {ingredients.map((ing, index) => (
                                     <Animated.View
                                         key={ing.key}
-                                        entering={FadeInDown.duration(200).springify()}
+                                        entering={FadeInDown.duration(200).springify().reduceMotion(ReduceMotion.System)}
                                         exiting={FadeOut.duration(150)}
-                                        className="flex-row items-center bg-[#1E1E1E] border border-white/10 rounded-[14px] p-[10px] gap-[10px]"
+                                        className="flex-row items-center px-3 py-3 gap-3"
+                                        style={index > 0 ? { borderTopWidth: 1, borderTopColor: HAIRLINE } : undefined}
                                     >
                                         <Image
                                             source={ing.food.image_url ? { uri: ing.food.image_url } : require("@/assets/images/not-found-meal.webp")}
-                                            className="w-[38px] h-[38px] rounded-[10px]"
+                                            className="w-10 h-10 rounded-xl"
                                             resizeMode="cover"
                                         />
-                                        <Text className="flex-1 text-white font-nunito-700 text-sm" numberOfLines={1}>
+                                        <Text className="flex-1 text-white/90 font-nunito-700 text-sm" numberOfLines={1}>
                                             {ing.food.name}
                                         </Text>
-                                        <View className="flex-row items-center bg-white/[7] rounded-[10px] px-[10px] py-[6px] gap-[3px]">
+                                        <View
+                                            className="flex-row items-center rounded-xl px-2.5 py-1.5 gap-1"
+                                            style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
+                                        >
                                             <TextInput
                                                 value={ing.weight}
                                                 onChangeText={v => setIngredients(prev => prev.map(i => i.key === ing.key ? { ...i, weight: v.replace(/[^0-9]/g, "") } : i))}
                                                 keyboardType="numeric"
                                                 maxLength={4}
-                                                className="text-white font-nunito-500 text-sm min-w-[32px] text-right"
-                                                style={{ padding: 0 }}
+                                                className="text-white font-nunito-700 text-sm min-w-[30px] text-right"
+                                                style={{ padding: 0, fontVariant: ["tabular-nums"] }}
                                             />
-                                            <Text className="text-white/35 font-nunito-600 text-xs">g</Text>
+                                            <Text className="text-white/30 font-nunito-600 text-xs">g</Text>
                                         </View>
                                         <TouchableOpacity
                                             onPress={() => setIngredients(prev => prev.filter(i => i.key !== ing.key))}
-                                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                            activeOpacity={0.5}
                                         >
-                                            <Trash size={17} color="#CA877E" weight="regular" />
+                                            <Trash size={16} color={CLAY} weight="regular" />
                                         </TouchableOpacity>
                                     </Animated.View>
                                 ))}
                             </Animated.View>
                         )}
-                    </View>}
-                    <View>
-                        <View className="flex-row items-center justify-between mb-2">
-                            <Text className="title">Nutrition</Text>
-                            <Text className="text-white/25 font-nunito-600 text-xs">
-                                {hasIngredients ? "auto · " : ""}per 100g
-                            </Text>
+                    </Animated.View>
+                )}
+
+                {/* ── NUTRITION ── */}
+                <Animated.View entering={FadeInDown.duration(260).delay(150).reduceMotion(ReduceMotion.System)}>
+                    <View className="flex-row items-baseline justify-between mb-3.5">
+                        <Text className="text-white font-nunito-800" style={{ fontSize: 17, letterSpacing: -0.2 }}>
+                            Nutrition
+                        </Text>
+                        <Text className="text-white/25 font-nunito-600 text-xs">
+                            {hasIngredients ? "calculated · per 100 g" : "per 100 g"}
+                        </Text>
+                    </View>
+
+                    <View style={[card, { paddingVertical: 26, alignItems: "center" }]} className="mb-2.5">
+                        <View className="flex-row items-baseline">
+                            {hasIngredients ? (
+                                <Text
+                                    className="font-nunito-800"
+                                    style={{ color: ACCENT, fontSize: 46, lineHeight: 52, letterSpacing: -1.6, fontVariant: ["tabular-nums"] }}
+                                >
+                                    {cal100 || "0"}
+                                </Text>
+                            ) : (
+                                <TextInput
+                                    value={manualCal}
+                                    onChangeText={v => setManualCal(v.replace(/[^0-9]/g, ""))}
+                                    keyboardType="numeric"
+                                    placeholder="0"
+                                    placeholderTextColor="rgba(197,227,132,0.25)"
+                                    maxLength={5}
+                                    className="font-nunito-800 text-right"
+                                    style={{
+                                        color: ACCENT,
+                                        fontSize: 46,
+                                        lineHeight: 52,
+                                        letterSpacing: -1.6,
+                                        padding: 0,
+                                        minWidth: 92,
+                                        fontVariant: ["tabular-nums"]
+                                    }}
+                                />
+                            )}
+                            <Text className="text-white/35 font-nunito-600 text-base ml-2">cal</Text>
                         </View>
-                        <View className="bg-[#1E1E1E] flex-row rounded-[18px] border border-white/10 items-center justify-center py-5 mb-2 gap-2">
-                            <Text className="text-yellow font-nunito-800 text-4xl mt-4">
-                                {cal100 || "0"}
-                            </Text>
-                            <Text className="text-white/40 font-nunito-600 text-sm mt-4">cal</Text>
-                        </View>
-                        <View className="bg-[#1E1E1E] rounded-[18px] border border-white/10 px-4 py-5">
-                            <View className="flex-row justify-around">
-                                {([
-                                    { label: "Carbs",   value: carbs100,   setter: setManualCarbs,   color: "#E53E3E" },
-                                    { label: "Fat",     value: fat100,     setter: setManualFat,     color: "#ED8936" },
-                                    { label: "Protein", value: protein100, setter: setManualProtein, color: "#3182CE" },
-                                ] as const).map(({ label, value, setter, color }) => (
-                                    <View key={label} className="items-center gap-2">
-                                        <View className="flex-row items-center gap-[6px]">
-                                            <View className="w-3 h-3 rounded-[2px]" style={{ backgroundColor: color }} />
-                                            <Text className="font-nunito-600 text-base" style={{ color: color + "CC" }}>{label}</Text>
-                                        </View>
-                                        {hasIngredients ? (
-                                            <Text className="font-nunito-700 text-xl text-white">
-                                                {value}<Text className="text-white/40 font-nunito-600 text-sm">g</Text>
-                                            </Text>
-                                        ) : (
-                                            <View className="flex-row items-baseline gap-[3px]">
-                                                <TextInput
-                                                    value={value}
-                                                    onChangeText={setter}
-                                                    keyboardType="numeric"
-                                                    placeholder="0"
-                                                    placeholderTextColor="rgba(255,255,255,0.15)"
-                                                    maxLength={5}
-                                                    className="text-white font-nunito-700 text-xl min-w-[36px] text-center"
-                                                    style={{ padding: 0 }}
-                                                />
-                                                <Text className="text-white/40 font-nunito-600 text-sm">g</Text>
-                                            </View>
-                                        )}
-                                    </View>
-                                ))}
+                        <Text className="text-white/20 font-nunito-600 text-[11px] mt-1.5">
+                            {hasIngredients ? "from your ingredients" : "tap the number to edit"}
+                        </Text>
+                    </View>
+
+                    <View style={[card, { paddingHorizontal: 18, paddingVertical: 20 }]}>
+                        {macroSplit && (
+                            <View className="flex-row h-1.5 rounded-full overflow-hidden mb-5">
+                                <View style={{ flex: macroSplit.carbs, backgroundColor: CARBS }} />
+                                <View style={{ flex: macroSplit.fat, backgroundColor: FAT }} />
+                                <View style={{ flex: macroSplit.protein, backgroundColor: PROTEIN }} />
                             </View>
+                        )}
+                        <View className="flex-row">
+                            {macros.map(({ label, value, setter, color }) => (
+                                <View key={label} className="flex-1 items-center" style={{ gap: 7 }}>
+                                    <View className="flex-row items-center gap-1.5">
+                                        <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: color }} />
+                                        <Text className="text-white/40 font-nunito-600 text-xs">{label}</Text>
+                                    </View>
+                                    {hasIngredients ? (
+                                        <Text
+                                            className="text-white font-nunito-800 text-xl"
+                                            style={{ fontVariant: ["tabular-nums"] }}
+                                        >
+                                            {value || "0"}
+                                            <Text className="text-white/30 font-nunito-600 text-sm">g</Text>
+                                        </Text>
+                                    ) : (
+                                        <View className="flex-row items-baseline">
+                                            <TextInput
+                                                value={value}
+                                                onChangeText={v => setter(v.replace(/[^0-9.]/g, ""))}
+                                                keyboardType="numeric"
+                                                placeholder="0"
+                                                placeholderTextColor="rgba(255,255,255,0.15)"
+                                                maxLength={5}
+                                                className="text-white font-nunito-800 text-xl min-w-[34px] text-center"
+                                                style={{ padding: 0, fontVariant: ["tabular-nums"] }}
+                                            />
+                                            <Text className="text-white/30 font-nunito-600 text-sm">g</Text>
+                                        </View>
+                                    )}
+                                </View>
+                            ))}
                         </View>
                     </View>
-                </ScrollView>
-                <View
-                    className="absolute left-4 right-4"
-                    style={{ bottom: insets.bottom + 12 }}
-                >
+                </Animated.View>
+            </ScrollView>
+
+            {/* ── ACTIONS ── */}
+            <View className="absolute left-0 right-0 bottom-0" pointerEvents="box-none">
+                {/* Content fades out under the bar instead of colliding with it. */}
+                <LinearGradient
+                    colors={["transparent", PAGE]}
+                    pointerEvents="none"
+                    style={{ height: 56 }}
+                />
+                <View style={{ backgroundColor: PAGE, paddingHorizontal: 20, paddingBottom: insets.bottom + 12 }}>
                     {isEditMode ? (
                         <>
                             <Button
-                                className="rounded-[30px] mx-0 w-full py-5 mb-3"
-                                textClassName="text-xl"
+                                className="rounded-[20px] mx-0 w-full h-14 mb-2.5"
+                                textClassName="text-[17px]"
                                 onPress={handleRecord}
                                 disabled={isSaving}
                             >
                                 Record
                             </Button>
-                            <View className="flex-row gap-3">
+                            <View className="flex-row gap-2.5">
                                 {isCustomMeal && (
                                     <Button
-                                        className="flex-1 rounded-[20px] py-4 bg-[#2A1A1A]"
-                                        textClassName="text-base text-[#CA877E]"
-                                        shadowColor="#CA877E"
+                                        className="flex-1 rounded-[18px] h-12 bg-[#181818]"
+                                        textClassName="text-[15px] text-[#CA877E]"
+                                        shadowColor="transparent"
                                         onPress={handleDelete}
                                         disabled={isSaving}
                                     >
@@ -353,9 +491,9 @@ const CreateMeal = () => {
                                     </Button>
                                 )}
                                 <Button
-                                    className={`${isCustomMeal ? "flex-1" : "w-full"} rounded-[20px] py-4 bg-[#1E1E1E]`}
-                                    textClassName={`text-base ${hasChanged ? "text-yellow" : "text-white/30"}`}
-                                    shadowColor={hasChanged ? "#C5E384" : "transparent"}
+                                    className={`${isCustomMeal ? "flex-1" : "w-full"} rounded-[18px] h-12 bg-[#181818]`}
+                                    textClassName={`text-[15px] ${hasChanged ? "text-yellow" : "text-white/30"}`}
+                                    shadowColor="transparent"
                                     onPress={handleUpdate}
                                     disabled={!hasChanged || isSaving || !canSave}
                                 >
@@ -365,74 +503,105 @@ const CreateMeal = () => {
                         </>
                     ) : (
                         <Button
-                            className="rounded-[30px] mx-0 w-full py-5"
-                            textClassName="text-xl"
+                            className="rounded-[20px] mx-0 w-full h-14"
+                            textClassName="text-[17px]"
                             onPress={handleSave}
                             disabled={!canSave || isSaving}
                         >
-                            {isSaving ? "Saving…" : "Save Meal"}
+                            {isSaving ? "Saving…" : "Save meal"}
                         </Button>
                     )}
                 </View>
-                <AddMoreModal
-                    visible={showSearchModal}
-                    onClose={() => setShowSearchModal(false)}
-                    mealType="Breakfast"
-                    onIngredientSelect={addIngredient}
-                />
-                {createdMeal && (
-                    <Animated.View
-                        entering={FadeIn.duration(250)}
-                        className="absolute inset-0 bg-black/75 items-center justify-center px-6"
-                    >
-                        <Animated.View
-                            entering={FadeInDown.duration(350).springify().damping(18)}
-                            className="w-full bg-[#1A1A1A] rounded-[28px] p-7 border border-white/[8] items-center"
-                        >
-                            <View className="w-[72px] h-[72px] rounded-full bg-yellow/[12] items-center justify-center mb-4">
-                                <CheckCircle size={40} color={YELLOW} weight="duotone" />
-                            </View>
+            </View>
 
-                            <Text className="text-white font-nunito-800 text-2xl mb-[6px] text-center">
-                                Meal Created!
-                            </Text>
-                            <Text className="text-yellow font-nunito-700 text-base mb-1 text-center" numberOfLines={1}>
-                                {createdMeal.name}
-                            </Text>
-                            <Text className="text-white/35 font-nunito-600 text-[13px] mb-7 text-center">
-                                {createdMeal.cal} cal · {createdMeal.protein}g protein · {createdMeal.carbs}g carbs · {createdMeal.fat}g fat
-                            </Text>
-                            <Button
-                                className="rounded-[30px] mx-0 w-full py-5 mb-3"
-                                textClassName="text-xl"
-                                onPress={() => {
-                                    router.replace({
-                                        pathname: "/search-item/[id]",
-                                        params: {
+            <AddMoreModal
+                visible={showSearchModal}
+                onClose={() => setShowSearchModal(false)}
+                mealType="Breakfast"
+                onIngredientSelect={addIngredient}
+            />
+
+            {createdMeal && (
+                <Animated.View
+                    entering={FadeIn.duration(200)}
+                    className="absolute inset-0 items-center justify-center px-6"
+                    style={{ backgroundColor: "rgba(10,10,10,0.82)" }}
+                >
+                    <Animated.View
+                        entering={FadeInDown.duration(320).springify().damping(18).reduceMotion(ReduceMotion.System)}
+                        className="w-full items-center px-7 py-8"
+                        style={[card, { borderRadius: 28 }]}
+                    >
+                        <View
+                            className="w-16 h-16 rounded-full items-center justify-center mb-5"
+                            style={{ backgroundColor: "rgba(197,227,132,0.11)" }}
+                        >
+                            <CheckCircle size={34} color={ACCENT} weight="duotone" />
+                        </View>
+
+                        <Text
+                            className="text-white font-nunito-800 text-center"
+                            style={{ fontSize: 23, letterSpacing: -0.4 }}
+                        >
+                            Meal created
+                        </Text>
+                        <Text
+                            className="font-nunito-700 text-[15px] mt-1.5 text-center"
+                            style={{ color: ACCENT }}
+                            numberOfLines={1}
+                        >
+                            {createdMeal.name}
+                        </Text>
+
+                        <View className="flex-row flex-wrap items-center justify-center gap-1.5 mt-4 mb-7">
+                            {([
+                                { v: `${createdMeal.cal} cal`, c: ACCENT },
+                                { v: `${createdMeal.carbs}g carbs`, c: CARBS },
+                                { v: `${createdMeal.fat}g fat`, c: FAT },
+                                { v: `${createdMeal.protein}g protein`, c: PROTEIN },
+                            ] as const).map(({ v, c }) => (
+                                <View
+                                    key={v}
+                                    className="flex-row items-center gap-1.5 px-2.5 py-1 rounded-lg"
+                                    style={{ backgroundColor: "rgba(255,255,255,0.04)" }}
+                                >
+                                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: c }} />
+                                    <Text className="text-white/55 font-nunito-600 text-[12px]">{v}</Text>
+                                </View>
+                            ))}
+                        </View>
+
+                        <Button
+                            className="rounded-[20px] mx-0 w-full h-14 mb-1"
+                            textClassName="text-[17px]"
+                            onPress={() => {
+                                router.replace({
+                                    pathname: "/search-item/[id]",
+                                    params: {
+                                        id: createdMeal.id,
+                                        item: JSON.stringify({
                                             id: createdMeal.id,
-                                            item: JSON.stringify({
-                                                id: createdMeal.id,
-                                                name: createdMeal.name,
-                                                calories_per_100g: createdMeal.cal,
-                                                protein_per_100g:  createdMeal.protein,
-                                                carbs_per_100g:    createdMeal.carbs,
-                                                fat_per_100g:      createdMeal.fat,
-                                                source: "usda",
-                                            }),
-                                        },
-                                    });
-                                }}
-                            >
-                                Record it
-                            </Button>
-                            <TouchableOpacity onPress={() => router.back()} activeOpacity={0.6} className="py-[10px]">
-                                <Text className="text-white/40 font-nunito-700 text-[15px]">
-                                    Skip for now
-                                </Text>
-                            </TouchableOpacity>
-                        </Animated.View>
+                                            name: createdMeal.name,
+                                            calories_per_100g: createdMeal.cal,
+                                            protein_per_100g:  createdMeal.protein,
+                                            carbs_per_100g:    createdMeal.carbs,
+                                            fat_per_100g:      createdMeal.fat,
+                                            source: "usda",
+                                        }),
+                                    },
+                                });
+                            }}
+                        >
+                            Record it
+                        </Button>
+                        <TouchableOpacity onPress={() => router.back()} activeOpacity={0.6} className="py-3">
+                            <Text className="text-white/40 font-nunito-700 text-[15px]">
+                                Skip for now
+                            </Text>
+                        </TouchableOpacity>
                     </Animated.View>
-                )}
+                </Animated.View>
+            )}
         </View>
     );
 };

@@ -1,5 +1,13 @@
+const fs = require("fs");
+const path = require("path");
 const { getDefaultConfig } = require("expo/metro-config");
-const { withNativeWind } = require('nativewind/metro');
-const config = getDefaultConfig(__dirname)
+const { FileStore } = require("metro-cache");
+const { withNativeWind } = require("nativewind/metro");
+const config = getDefaultConfig(__dirname);
 config.resolver.unstable_enablePackageExports = true;
-module.exports = withNativeWind(config, { input: './app/globals.css' })
+const cacheRoot = path.join(__dirname, ".metro-cache");
+const fileMapCache = path.join(cacheRoot, "file-map");
+fs.mkdirSync(fileMapCache, { recursive: true });
+config.cacheStores = [new FileStore({ root: path.join(cacheRoot, "transform") })];
+config.fileMapCacheDirectory = fileMapCache;
+module.exports = withNativeWind(config, { input: "./app/globals.css" });
