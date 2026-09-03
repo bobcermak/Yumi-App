@@ -1,5 +1,5 @@
 import { House, MagnifyingGlass, Plus, Users, List, IconProps } from "phosphor-react-native";
-import { type FC, useEffect, useRef } from "react";
+import { type FC, useEffect, useState } from "react";
 import { Animated, View } from "react-native";
 
 type Icon = FC<IconProps>;
@@ -18,8 +18,8 @@ type AnimatedTabIconProps = {
 }
 const AnimatedTabIcon: FC<AnimatedTabIconProps> = ({ route, focused, isNotification = false }) => {
   //Hooks
-  const scale = useRef(new Animated.Value(focused ? 1.15 : 1)).current;
-  const opacity = useRef(new Animated.Value(focused ? 1 : 0.5)).current;
+  const [scale] = useState(() => new Animated.Value(focused ? 1.15 : 1));
+  const [opacity] = useState(() => new Animated.Value(focused ? 1 : 0.5));
 
   const IconComponent = ICONS[route];
   const isBold = BOLD_ICONS.includes(route);
@@ -38,7 +38,7 @@ const AnimatedTabIcon: FC<AnimatedTabIconProps> = ({ route, focused, isNotificat
         useNativeDriver: true,
       }),
     ]).start();
-  }, [focused]);
+  }, [focused, scale, opacity]);
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
       <Animated.View style={{ opacity }}>

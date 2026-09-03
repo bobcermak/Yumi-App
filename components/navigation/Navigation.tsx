@@ -1,6 +1,6 @@
 import { Button, DashboardSheet } from "@/components";
 import BottomSheet from "@gorhom/bottom-sheet";
-import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import { BottomTabBarProps } from "expo-router/js-tabs";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import { NotePencil, Plus, Sparkle, X } from "phosphor-react-native";
@@ -14,14 +14,14 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
   const router = useRouter();
   const [tabBarWidth, setTabBarWidth] = useState<number>(0);
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
-  const indicatorX = useRef(new Animated.Value(0)).current;
-  const indicatorScaleX = useRef(new Animated.Value(1)).current;
-  const entranceAnim = useRef(new Animated.Value(0)).current;
-  const plusRotation = useRef(new Animated.Value(0)).current;
+  const [indicatorX] = useState(() => new Animated.Value(0));
+  const [indicatorScaleX] = useState(() => new Animated.Value(1));
+  const [entranceAnim] = useState(() => new Animated.Value(0));
+  const [plusRotation] = useState(() => new Animated.Value(0));
   const bottomSheetRef = useRef<BottomSheet>(null);
   const menuOpacity = useSharedValue(0);
   const menuOverlayStyle = useAnimatedStyle(() => ({
-    opacity: menuOpacity.value,
+    opacity: menuOpacity.get(),
   }));
   const PADDING_HORIZONTAL = 12;
   const INNER_WIDTH = tabBarWidth - PADDING_HORIZONTAL;
@@ -38,7 +38,7 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
       damping: 20,
       stiffness: 100,
     }).start();
-  }, []);
+  }, [entranceAnim]);
   useEffect(() => {
     Animated.spring(plusRotation, {
       toValue: isMenuOpen ? 1 : 0,
@@ -46,9 +46,9 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
       damping: 15,
       stiffness: 150,
     }).start();
-  }, [isMenuOpen]);
+  }, [isMenuOpen, plusRotation]);
   useEffect(() => {
-    menuOpacity.value = withTiming(isMenuOpen ? 1 : 0, { duration: 250 });
+    menuOpacity.set(withTiming(isMenuOpen ? 1 : 0, { duration: 250 }));
   }, [isMenuOpen, menuOpacity]);
   useEffect(() => {
     if (tabBarWidth === 0) return;
@@ -73,7 +73,7 @@ const Navigation: FC<BottomTabBarProps> = ({ state, navigation }) => {
         }),
       ]),
     ]).start();
-  }, [effectiveIndex, tabBarWidth]);
+  }, [effectiveIndex, tabBarWidth, TAB_WIDTH, indicatorX, indicatorScaleX]);
   const handleMenuOpen = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setIsMenuOpen(true);

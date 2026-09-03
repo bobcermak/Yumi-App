@@ -1,9 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Animated, View } from "react-native";
 
 const ResultMealSkeleton = () => {
   //Refs
-  const fadeAnim = useRef(new Animated.Value(0.25)).current;
+  const [fadeAnim] = useState(() => new Animated.Value(0.25));
   //Effects
   useEffect(() => {
     Animated.loop(

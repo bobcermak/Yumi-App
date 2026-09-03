@@ -1,8 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Animated, View } from "react-native";
 
 const AppLoadingSkeleton = () => {
-  const pulse = useRef(new Animated.Value(0.3)).current;
+  const [pulse] = useState(() => new Animated.Value(0.3));
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
@@ -10,7 +10,7 @@ const AppLoadingSkeleton = () => {
         Animated.timing(pulse, { toValue: 0.3, duration: 1000, useNativeDriver: true }),
       ])
     ).start();
-  }, []);
+  }, [pulse]);
   const bg  = '#FFFFFF12';
   const dim = '#FFFFFF08';
   const bdr = '#FFFFFF10';

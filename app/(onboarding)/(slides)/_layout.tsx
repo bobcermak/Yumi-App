@@ -24,6 +24,7 @@ const SlidesLayout = () => {
             <Stack screenOptions={{
                 headerShown: false,
                 animation: "slide_from_right",
+                contentStyle: { backgroundColor: "transparent" },
             }}>
                 <Stack.Screen name="user-information"/>
                 <Stack.Screen name="calculate-weight"/>

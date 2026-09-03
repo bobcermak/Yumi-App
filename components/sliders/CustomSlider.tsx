@@ -20,7 +20,7 @@ const CustomSlider: FC<CustomSliderProps> = ({ value, minimumValue, maximumValue
     const PIXELS_PER_UNIT = 10;
     //Hooks
     const [localValue, setLocalValue] = useState(value);
-    const scrollAnim = useRef(new Animated.Value(-(value - minimumValue) * PIXELS_PER_UNIT)).current;
+    const [scrollAnim] = useState(() => new Animated.Value(-(value - minimumValue) * PIXELS_PER_UNIT));
     const initialScrollRef = useRef(-(value - minimumValue) * PIXELS_PER_UNIT);
 
     useEffect(() => {
@@ -31,7 +31,7 @@ const CustomSlider: FC<CustomSliderProps> = ({ value, minimumValue, maximumValue
             useNativeDriver: true,
             bounciness: 0,
         }).start();
-    }, [value, minimumValue]);
+    }, [value, minimumValue, scrollAnim]);
     const localValueRef = useRef(localValue);
     localValueRef.current = localValue;
     const minRef = useRef(minimumValue);
@@ -46,7 +46,7 @@ const CustomSlider: FC<CustomSliderProps> = ({ value, minimumValue, maximumValue
     onSlidingStartRef.current = onSlidingStart;
     const onSlidingCompleteRef = useRef(onSlidingComplete);
     onSlidingCompleteRef.current = onSlidingComplete;
-    const panResponder = useRef(PanResponder.create({
+    const [panResponder] = useState(() => PanResponder.create({
         onStartShouldSetPanResponder: () => false,
         onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > Math.abs(gs.dy) && Math.abs(gs.dx) > 5,
         onPanResponderGrant: () => {
@@ -84,7 +84,7 @@ const CustomSlider: FC<CustomSliderProps> = ({ value, minimumValue, maximumValue
         onPanResponderTerminate: () => {
             onSlidingCompleteRef.current?.();
         }
-    })).current;
+    }));
     return (
         <View
             className="w-full items-center"

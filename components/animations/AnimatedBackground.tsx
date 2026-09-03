@@ -1,9 +1,9 @@
 import { Image, View, Animated } from "react-native";
-import { useRef, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const AnimatedBackground = () => {
   //Hooks
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [fadeAnim] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -11,7 +11,7 @@ const AnimatedBackground = () => {
       duration: 1000,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [fadeAnim]);
   return (
     <Animated.View style={{ opacity: fadeAnim, flex: 1, position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
       <View pointerEvents="none" className="absolute top-0 left-0 w-full h-full">

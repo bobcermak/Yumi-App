@@ -3,7 +3,7 @@ import { ScrollView, View, Text, RefreshControl, ActivityIndicator } from "react
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeIn, FadeInDown, ReduceMotion, useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
-import { Fire, GearSix, PencilSimple, ImageSquare, Quotes, UsersThree, Plus, ArrowRight } from "phosphor-react-native";
+import { Fire, GearSix, ImageSquare, Quotes, UsersThree, Plus, ArrowRight } from "phosphor-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useRouter } from "expo-router";
 import { format, parseISO } from "date-fns";
@@ -147,8 +147,8 @@ const Profile = () => {
                                 </>
                             )}
                         </View>
-                        <Icon className="bg-white/20" shadowColor="transparent">
-                            <GearSix size={20} color="white" weight="regular" />
+                        <Icon className="bg-dark w-12 h-12" shadowColor="#000000">
+                            <GearSix size={24} color="white" weight="regular"/>
                         </Icon>
                     </Animated.View>
                     <Animated.View

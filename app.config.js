@@ -26,7 +26,6 @@ export default {
       adaptiveIcon: {
         backgroundColor: "#121212",
       },
-      edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
     },
     web: {
@@ -46,7 +45,22 @@ export default {
       ],
       "expo-web-browser",
       "expo-font",
-      "expo-barcode-scanner",
+      [
+        "expo-camera",
+        {
+          cameraPermission: "Yumi uses your camera to scan and recognise your food.",
+          recordAudioAndroid: false,
+        },
+      ],
+      [
+        "expo-image-picker",
+        {
+          photosPermission: "Yumi uses your photos so you can add pictures of your meals.",
+        },
+      ],
+      "expo-image",
+      "expo-status-bar",
+      "expo-notifications",
     ],
     experiments: {
       typedRoutes: true,

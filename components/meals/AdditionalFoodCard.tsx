@@ -1,6 +1,6 @@
 import type { FoodSearchResult } from "@/types/foodSearchResult";
 import { Minus as MinusIcon, Plus, X } from "phosphor-react-native";
-import { type FC, useEffect, useRef, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 import { Animated, Image, Text, TouchableOpacity, View } from "react-native";
 import ReAnimated, { FadeInDown, FadeInRight, FadeOutRight } from "react-native-reanimated";
 import { Icon } from "@/components";
@@ -12,11 +12,10 @@ type AdditionalFoodCardProps = {
   onCountChange?: (count: number) => void;
   isLoading?: boolean;
 };
-
 const AdditionalFoodCard: FC<AdditionalFoodCardProps> = ({ food, mealType, onDone, onCountChange, isLoading }) => {
   const [count, setCount] = useState(1);
   const [isCountOpen, setIsCountOpen] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(0.3)).current;
+  const [fadeAnim] = useState(() => new Animated.Value(0.3));
 
   useEffect(() => {
     if (!isLoading) return;
@@ -29,12 +28,10 @@ const AdditionalFoodCard: FC<AdditionalFoodCardProps> = ({ food, mealType, onDon
     loop.start();
     return () => loop.stop();
   }, [isLoading, fadeAnim]);
-
   const handleCountChange = (newCount: number) => {
     setCount(newCount);
     onCountChange?.(newCount);
   };
-
   return (
     <ReAnimated.View entering={FadeInDown.duration(250).springify()} style={{ marginTop: 16 }}>
       {isCountOpen && (
@@ -114,5 +111,4 @@ const AdditionalFoodCard: FC<AdditionalFoodCardProps> = ({ food, mealType, onDon
     </ReAnimated.View>
   );
 };
-
 export default AdditionalFoodCard;

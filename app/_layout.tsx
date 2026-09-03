@@ -5,8 +5,7 @@ import { SearchItemProvider } from "@/contexts/SearchItemContext";
 import IndexProvider from "@/contexts/IndexContext";
 import { useCachedFonts } from "@/lib/hooks/useCachedFonts";
 import { posthog } from "@/lib/config/posthog";
-import { DarkTheme, ThemeProvider } from "@react-navigation/native";
-import { Redirect, useSegments, usePathname, useGlobalSearchParams } from "expo-router";
+import { DarkTheme, ThemeProvider, useGlobalSearchParams, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -27,7 +26,6 @@ const customTheme = {
 const RootLayout = () => {
   //Hooks
   const fontsLoaded = useCachedFonts();
-  const segments = useSegments();
   const pathname = usePathname();
   const params = useGlobalSearchParams();
   const previousPathname = useRef<string | undefined>(undefined);
@@ -58,22 +56,6 @@ const RootLayout = () => {
             {(auth) => {
               if (!auth?.isReady) {
                 return <AppLoadingSkeleton/>;
-              }
-              const { session, hasOnboarded } = auth;
-              const inAuthGroup = segments[0] === "(auth)";
-              const inOnboardingGroup = segments[0] === "(onboarding)";
-              if (session) {
-                if (inAuthGroup || inOnboardingGroup) {
-                  return <Redirect href="/(tabs)"/>;
-                }
-              } else if (hasOnboarded) {
-                if (!inAuthGroup) {
-                  return <Redirect href="/(auth)/login"/>;
-                }
-              } else {
-                if (!inAuthGroup && !inOnboardingGroup) {
-                  return <Redirect href="/(onboarding)"/>;
-                }
               }
               return (
                 <OnboardingProvider>

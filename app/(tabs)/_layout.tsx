@@ -1,4 +1,4 @@
-import { Tabs } from "expo-router";
+import { Tabs } from "expo-router/js-tabs";
 import { Navigation } from "@/components";
 
 const _Layout = () => {
@@ -7,6 +7,7 @@ const _Layout = () => {
       tabBar={(props) => <Navigation {...props}/>}
       screenOptions={{
         headerShown: false,
+        sceneStyle: { backgroundColor: "transparent" },
       }}
     >
       <Tabs.Screen name="index" options={{ title: "Home" }}/>

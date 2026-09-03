@@ -1,7 +1,7 @@
 import { useEffect, type FC } from "react";
 import { View, TextInput, type TextInputProps } from "react-native";
 import Svg, { Circle } from "react-native-svg";
-import Animated, { useSharedValue, useAnimatedProps, withTiming, Easing, useDerivedValue, withDelay } from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedProps, withTiming, Easing } from "react-native-reanimated";
 import { Fire } from "phosphor-react-native";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);

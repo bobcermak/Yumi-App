@@ -1,4 +1,4 @@
-﻿import { Icon, Toast, Button } from "@/components";
+import { Icon, Toast, Button } from "@/components";
 import { requestCameraAccess, takeCameraPhoto } from "@/lib/helpers/camera";
 import { useIndexContext } from "@/lib/hooks/useIndexContext";
 import { CameraView, useCameraPermissions } from "expo-camera";

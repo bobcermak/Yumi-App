@@ -9,7 +9,7 @@ import { updateMealLogCount } from "@/lib/services/supabase/queries/mealLogs";
 import { consumeQuickAdd } from "@/lib/helpers/quickAddSource";
 import { useGlobalSearchParams, useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
-import { CaretDown, CaretLeft, Drop, Heart, Info, Plus, X } from "phosphor-react-native";
+import { CaretDown, CaretLeft, Drop, Heart, Info, Plus } from "phosphor-react-native";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, ScrollView, Switch, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import Animated, { FadeInDown, FadeInUp, FadeOutUp, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";

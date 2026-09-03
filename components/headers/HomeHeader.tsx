@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import ProfilePicture from "./ProfilePicture";
 import Icon from "../buttons/Icon";
 import { type FC } from "react";
-import { CalendarDots, Bell } from "phosphor-react-native";
+import { CalendarDots } from "phosphor-react-native";
 import { useRouter } from "expo-router";
 import { getEffectiveStreak } from "@/lib/services/supabase/queries/profiles";
 

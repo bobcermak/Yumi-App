@@ -67,4 +67,5 @@ const CalendarBottomSheet = forwardRef<BottomSheet, CalendarBottomSheetProps>(({
         </Modal>
     );
 });
+CalendarBottomSheet.displayName = "CalendarBottomSheet";
 export default CalendarBottomSheet;
