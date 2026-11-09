@@ -192,7 +192,7 @@ const CreateMeal = () => {
         { label: "Protein", value: protein100, setter: setManualProtein, color: PROTEIN },
     ] as const;
     return (
-        /* No background of its own — the app-wide green blur in AnimatedBackground
+        /* No background of its own - the app-wide green blur in AnimatedBackground
            shows through, the same way it does on every other screen. */
         <View className="flex-1">
             <View style={{ paddingTop: insets.top + 8 }} className="px-5">
@@ -257,7 +257,7 @@ const CreateMeal = () => {
                         style={{ fontSize: 22, letterSpacing: -0.4, padding: 0, paddingBottom: 10 }}
                         maxLength={60}
                     />
-                    {/* The rule under the field carries the state — no glowing box needed. */}
+                    {/* The rule under the field carries the state - no glowing box needed. */}
                     <View
                         style={{
                             height: 1.5,
@@ -282,7 +282,7 @@ const CreateMeal = () => {
                             </Text>
                         </View>
 
-                        {/* One primary way in, two shortcuts under it — not three identical tiles. */}
+                        {/* One primary way in, two shortcuts under it - not three identical tiles. */}
                         <PressableScale
                             onPress={() => setShowSearchModal(true)}
                             className="flex-row items-center px-3.5 mb-2.5"

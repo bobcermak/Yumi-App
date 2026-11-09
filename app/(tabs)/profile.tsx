@@ -183,7 +183,7 @@ const Profile = () => {
                                 style={{ color: INK.hi, fontSize: 28, lineHeight: 40, letterSpacing: -0.7 }}
                                 numberOfLines={1}
                             >
-                                {userProfile?.full_name || userProfile?.username || "—"}
+                                {userProfile?.full_name || userProfile?.username || "-"}
                             </Text>
                             {userProfile?.is_premium && (
                                 <View className="px-2 py-0.5 rounded-md" style={{ backgroundColor: "rgba(132,199,84,0.16)" }}>
@@ -194,14 +194,14 @@ const Profile = () => {
                             )}
                         </View>
                         <Text className="font-nunito-600 text-[15px]" style={{ color: INK.faint }}>
-                            @{userProfile?.username || "—"}
+                            @{userProfile?.username || "-"}
                         </Text>
                         <View className="flex-row items-center" style={{ gap: SP.md, marginTop: SP.md }}>
                             <Text
                                 className="font-nunito-800 text-[13px]"
                                 style={{ color: getRatingColor(userProfile?.total_rating), fontVariant: ["tabular-nums"] }}
                             >
-                                {userProfile?.total_rating?.toFixed(1) ?? "—"}
+                                {userProfile?.total_rating?.toFixed(1) ?? "-"}
                                 <Text className="font-nunito-600" style={{ color: INK.faint }}> rating</Text>
                             </Text>
                             <View style={{ width: 3, height: 3, borderRadius: 2, backgroundColor: INK.ghost }} />
@@ -225,7 +225,7 @@ const Profile = () => {
                                 className="font-nunito-800"
                                 style={{ color: INK.hi, fontSize: 25, lineHeight: 31, letterSpacing: -0.6, fontVariant: ["tabular-nums"] }}
                             >
-                                {userProfile?.current_weight ?? "—"}
+                                {userProfile?.current_weight ?? "-"}
                                 <Text className="font-nunito-600 text-[13px]" style={{ color: INK.faint }}> kg</Text>
                             </Text>
                         </View>
@@ -236,7 +236,7 @@ const Profile = () => {
                                 className="font-nunito-800"
                                 style={{ color: GREEN.full, fontSize: 25, lineHeight: 31, letterSpacing: -0.6, fontVariant: ["tabular-nums"] }}
                             >
-                                {userProfile?.daily_calorie_limit ?? "—"}
+                                {userProfile?.daily_calorie_limit ?? "-"}
                                 <Text className="font-nunito-600 text-[13px]" style={{ color: INK.faint }}> cal</Text>
                             </Text>
                         </View>
@@ -250,7 +250,7 @@ const Profile = () => {
                                 className="font-nunito-800"
                                 style={{ color: INK.hi, fontSize: 25, lineHeight: 31, letterSpacing: -0.6, fontVariant: ["tabular-nums"] }}
                             >
-                                {userProfile?.daily_water_limit != null ? userProfile.daily_water_limit.toFixed(1) : "—"}
+                                {userProfile?.daily_water_limit != null ? userProfile.daily_water_limit.toFixed(1) : "-"}
                                 <Text className="font-nunito-600 text-[13px]" style={{ color: INK.faint }}> L</Text>
                             </Text>
                         </View>

@@ -2,7 +2,7 @@
 
 ## React Native
 - Always use NativeWind for styling
-- Use the existing app color palette and style — do not introduce new colors or design patterns
+- Use the existing app color palette and style - do not introduce new colors or design patterns
 
 ## Code Quality
 - Follow best practices at all times

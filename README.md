@@ -47,12 +47,12 @@ Aplikace je navržena jako udržitelný **Freemium** model.
 
 **Jednotková ekonomika (Unit Economics):**
 
-*Aktuální model – Gemini 2.0 Flash-Lite (free tier: 1 500 req/den):*
+*Aktuální model - Gemini 2.0 Flash-Lite (free tier: 1 500 req/den):*
 * Náklad na 1 AI sken: cca **0,003 Kč**
 * Výnos z 1 video reklamy (Rewarded): cca **0,35 Kč**
 * *1 zhlédnutá video reklama zaplatí provoz pro ~130 AI skenů.*
 
-*Plánovaný upgrade – Gemini 3.1 Flash-Lite (GA: TBD):*
+*Plánovaný upgrade - Gemini 3.1 Flash-Lite (GA: TBD):*
 * Náklad na 1 AI sken: cca **0,009 Kč**
 * Výnos z 1 video reklamy (Rewarded): cca **0,35 Kč**
 * *1 zhlédnutá video reklama zaplatí provoz pro ~40 AI skenů.*
